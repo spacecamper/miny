@@ -17,13 +17,13 @@ Features:
  - timing in milliseconds
  - high score logging
  - separate tables for flagging and non-flagging high scores
+ - pause
 
 To do:
 
- - pause
  - fix how numbers look with nonstandard square sizes
 
-
+        
 To compile run 'make'. You'll need to have OpenGL libraries installed. On
 Ubuntu try the package freeglut3-dev.
 
@@ -31,6 +31,9 @@ To play run './miny'. For best results run from terminal.
 
 To start a new game when game has ended click anywhere outside the mine field,
 or press Space at any other time.
+
+To pause/unpause while playing press P.
+
 
 Options:
 
