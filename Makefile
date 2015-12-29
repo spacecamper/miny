@@ -1,27 +1,20 @@
-CC = g++
-CFLAGS = -Wall
+CXX = g++
+CXXFLAGS = -Wall
 PROG = miny
 
 
 ifeq ($(shell uname),Darwin)
-	LIBS = -framework OpenGL -framework GLUT
+	LDLIBS = -framework OpenGL -framework GLUT
 else
-	LIBS = -lglut -lGL -lGLU
+	LDLIBS = -lglut -lGL -lGLU
 endif
 
 all: $(PROG)
 
-$(PROG):	conly lonly
+$(PROG): main.o
+	${CXX} -o $@ $^ ${LDLIBS}
 
-#$(SRCS)
-#	$(CC) $(CFLAGS) -o $(PROG) *.cpp $(LIBS)
-
-conly: 
-	$(CC) $(CFLAGS) -c *.cpp
-
+main.o: main.cpp
 
 clean:
-	rm -f $(PROG)
-
-lonly:
-	$(CC) $(CFLAGS) -o $(PROG) *.o $(LIBS)
+	rm -f $(PROG) *.o
