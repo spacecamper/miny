@@ -31,7 +31,7 @@
 
 #define MAX_HS 20
 
-#define VERSION "0.1.0"
+#define VERSION "0.1.1"
 
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
@@ -54,7 +54,9 @@ int hitMineX,hitMineY;  // when game is lost
 string playerName;
 char highScoreDir[100];
 bool isFlagging;
-
+bool gamePaused;
+long totalTimePaused;
+long pausedSince;
 
 class hiScore {
 public:
@@ -180,33 +182,71 @@ float myTan(float v) {
     return tan(v/ 180 * 3.141592654f);
 }
 
+
+
+long calculateTimeSinceStart() {
+    long seconds, useconds;    
+
+    struct timeval now;
+
+    gettimeofday(&now, NULL);
+
+    seconds  = now.tv_sec  - timeStarted.tv_sec;
+    useconds = now.tv_usec - timeStarted.tv_usec;
+
+    return ((seconds) * 1000 + useconds/1000.0) + 0.5;
+
+}
+
+
+long calculateTimePaused() {
+
+    if (gameState==GAME_INITIALIZED) {
+        return 0;
+    }
+    else if (gameState==GAME_PLAYING) {
+        if (gamePaused) {
+            return totalTimePaused+calculateTimeSinceStart()-pausedSince;  // TODO add time since game was paused to this
+        }
+        else {
+            return totalTimePaused;
+        }
+    }
+    else  { //if (gameState==GAME_LOST or gameState==GAME_WON) 
+        return totalTimePaused;
+    }
+
+
+}
+
 long calculateElapsedTime() {
 
     // calculates time from first click till now (when playing) or till game has ended
 
     long seconds, useconds;    
+    long elapsedTime;
 
     
 
     if (gameState==GAME_PLAYING) {
-        struct timeval now;
-    
-        gettimeofday(&now, NULL);
-    
-        seconds  = now.tv_sec  - timeStarted.tv_sec;
-        useconds = now.tv_usec - timeStarted.tv_usec;
 
-        return ((seconds) * 1000 + useconds/1000.0) + 0.5;
+
+        elapsedTime=calculateTimeSinceStart()-calculateTimePaused();
+
     }
+    else if (gameState==GAME_LOST or gameState==GAME_WON) {
 
-    if (gameState==GAME_LOST or gameState==GAME_WON) {
         seconds  = timeFinished.tv_sec  - timeStarted.tv_sec;
         useconds = timeFinished.tv_usec - timeStarted.tv_usec;
 
-        return ((seconds) * 1000 + useconds/1000.0) + 0.5;
-    }
+        elapsedTime=((seconds) * 1000 + useconds/1000.0) + 0.5-totalTimePaused;
 
-    return 0; // if (gameState==GAME_INITIALIZED)
+    }
+    else
+        elapsedTime=0;
+
+    return elapsedTime;
+
         
 }
 
@@ -217,6 +257,7 @@ void stopTimer() {
 }
 
 void drawRect(float x, float y, float w, float h) {
+
     glBegin(GL_TRIANGLES);
 
     glVertex2f(x,y);
@@ -366,6 +407,8 @@ void initField() {
     gameState=GAME_INITIALIZED;
     glutPostRedisplay();
     isFlagging=false;
+    totalTimePaused=0;
+    gamePaused=false;
 
 //    cout << "Field initialized." << endl;
 }
@@ -378,7 +421,22 @@ void keyDown(unsigned char key, int x, int y) {
     case ' ':   // restart game
         initField();
         break;
+    case 'p':   // pause
+        if (gameState==GAME_PLAYING) {
+            if (!gamePaused) {
 
+                gamePaused=true;
+                pausedSince=calculateTimeSinceStart();
+                cout << "Game paused. Press P to continue. Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
+            }
+            else {
+
+                gamePaused=false;
+                totalTimePaused+=calculateTimeSinceStart()-pausedSince;
+                cout << "Game unpaused."<<endl;// Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
+            }
+        }
+        break;
     case 27:
         exit(0);
     
@@ -464,148 +522,192 @@ void drawScene() {
             24+DISPLAY_BORDER_WIDTH);
 
     
-    // grid
-
-    glColor3f(.2,.2,.2);
-
     
 
-    for (int i=0;i<fieldHeight+1;i++) {
+    if (gamePaused) {    // hide field when game is paused
+
         glBegin(GL_LINES);    
-        glVertex2f(FIELD_X,FIELD_Y+i*squareSize);
-        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+i*squareSize);
+        glVertex2f(FIELD_X,FIELD_Y);
+        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y);
+        glEnd();
+
+        glBegin(GL_LINES);    
+        glVertex2f(FIELD_X,FIELD_Y+fieldHeight*squareSize);
+        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+fieldHeight*squareSize);
+        glEnd();
+
+        glBegin(GL_LINES);    
+        glVertex2f(FIELD_X,FIELD_Y);
+        glVertex2f(FIELD_X,FIELD_Y+fieldHeight*squareSize);
+        glEnd();
+
+        glBegin(GL_LINES);    
+        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y);
+        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+fieldHeight*squareSize);
+        glEnd();
+
+
+        glColor3f(.5,.5,.5);
+
+        glBegin(GL_TRIANGLES);
+        glVertex2f(FIELD_X,FIELD_Y);
+        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y);
+        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+fieldHeight*squareSize);
+
+        glVertex2f(FIELD_X,FIELD_Y);
+        glVertex2f(FIELD_X,FIELD_Y+fieldHeight*squareSize);
+        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+fieldHeight*squareSize);
+
+
+        
         glEnd();
 
     }
+    else {
 
-    for (int i=0;i<fieldWidth+1;i++) {
-        glBegin(GL_LINES);    
-        glVertex2f(FIELD_X+i*squareSize,FIELD_Y);
-        glVertex2f(FIELD_X+i*squareSize,FIELD_Y+fieldHeight*squareSize);
-        glEnd();
+        // grid
 
-    }
+        glColor3f(.2,.2,.2);
+
+        
+
+        for (int i=0;i<fieldHeight+1;i++) {
+            glBegin(GL_LINES);    
+            glVertex2f(FIELD_X,FIELD_Y+i*squareSize);
+            glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+i*squareSize);
+            glEnd();
+
+        }
+
+        for (int i=0;i<fieldWidth+1;i++) {
+            glBegin(GL_LINES);    
+            glVertex2f(FIELD_X+i*squareSize,FIELD_Y);
+            glVertex2f(FIELD_X+i*squareSize,FIELD_Y+fieldHeight*squareSize);
+            glEnd();
+
+        }
 
 
-    // squares
+        // squares
+        
 
-    for (int x=0;x<fieldWidth;x++) 
-        for (int y=0;y<fieldHeight;y++) {
+        for (int x=0;x<fieldWidth;x++) 
+            for (int y=0;y<fieldHeight;y++) {
 
 
-            // revealed squares
-            if (state[x][y]>=0 and state[x][y]<=8) {
-                
-                switch(state[x][y]) {
-                case 0: glColor3f(.5,.5,.5); break;
-                case 1: glColor3f(0,0,1); break;
-                case 2: glColor3f(0,1,0); break;
-                case 3: glColor3f(1,0,0); break;
-                case 4: glColor3f(0,0,.5); break;
-                case 5: glColor3f(.5,0,0); break;
-                case 6: glColor3f(0,1,1); break;
-                case 7: glColor3f(0,0,0); break;
-                case 8: glColor3f(.7,.7,.7); break;
+                // revealed squares
+                if (state[x][y]>=0 and state[x][y]<=8) {
+                    
+                    switch(state[x][y]) {
+                    case 0: glColor3f(.5,.5,.5); break;
+                    case 1: glColor3f(0,0,1); break;
+                    case 2: glColor3f(0,1,0); break;
+                    case 3: glColor3f(1,0,0); break;
+                    case 4: glColor3f(0,0,.5); break;
+                    case 5: glColor3f(.5,0,0); break;
+                    case 6: glColor3f(0,1,1); break;
+                    case 7: glColor3f(0,0,0); break;
+                    case 8: glColor3f(.7,.7,.7); break;
 
-                default: glColor3f(0,0,0);
+                    default: glColor3f(0,0,0);
+                    }
+
+
+                    // number
+                    float zoom=1.5*squareSize/25;
+
+                    drawDigit(state[x][y],FIELD_X+x*squareSize+.5*squareSize-3.0*zoom,FIELD_Y+y*squareSize+.5*squareSize-5.0*zoom,zoom);
+
+
+
+                    // background
+                    glColor3f(.5,.5,.5);
+
+                    glBegin(GL_TRIANGLES);
+                    glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+                    glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+y*squareSize);
+                    glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+(y+1)*squareSize);
+
+                    glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize);
+                    glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+(y+1)*squareSize);
+          
+
+                    
+                    glEnd();
                 }
 
-
-                // number
-                float zoom=1.5*squareSize/25;
-
-                drawDigit(state[x][y],FIELD_X+x*squareSize+.5*squareSize-3.0*zoom,FIELD_Y+y*squareSize+.5*squareSize-5.0*zoom,zoom);
-
-
-
-                // background
-                glColor3f(.5,.5,.5);
-
-                glBegin(GL_TRIANGLES);
-                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
-                glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+y*squareSize);
-                glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+(y+1)*squareSize);
-
-                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
-                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize);
-                glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+(y+1)*squareSize);
-      
-
-                
-                glEnd();
-            }
-
-            // unflagged mines when game is over
-            if ((gameState==GAME_LOST or gameState==GAME_WON) and state[x][y]==9 and mine[x][y]) {
-                glColor3f(0,0,0);
-                glBegin(GL_TRIANGLES);
-                glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
-                glVertex2f(FIELD_X+x*squareSize+.1*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
-                glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+(y+1)*squareSize-.1*squareSize);
-
-                glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
-                glVertex2f(FIELD_X+(x+1)*squareSize-.1*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
-                glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+(y+1)*squareSize-.1*squareSize);
-                
-                glEnd();
-
-                float gap=.25;
-
-                glBegin(GL_TRIANGLES);
-                glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
-                glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
-                glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
-
-                glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
-                glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
-                glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
-        
-                glEnd();
-            }
-
-
-
-            // flags
-            if (state[x][y]==10) {
-
-                // cross out flags where there is no mine
-
-                if (gameState==GAME_LOST and !mine[x][y]) {
-                    float crossGap=.1;
+                // unflagged mines when game is over
+                if ((gameState==GAME_LOST or gameState==GAME_WON) and state[x][y]==9 and mine[x][y]) {
                     glColor3f(0,0,0);
-                    glBegin(GL_LINES);
-                    glVertex2f(FIELD_X+x*squareSize+crossGap*squareSize,FIELD_Y+y*squareSize+crossGap*squareSize);
-                    glVertex2f(FIELD_X+(x+1)*squareSize-crossGap*squareSize,FIELD_Y+(y+1)*squareSize-crossGap*squareSize);
+                    glBegin(GL_TRIANGLES);
+                    glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+.1*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+(y+1)*squareSize-.1*squareSize);
 
-                    glVertex2f(FIELD_X+(x+1)*squareSize-crossGap*squareSize,FIELD_Y+y*squareSize+crossGap*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+crossGap*squareSize,FIELD_Y+(y+1)*squareSize-crossGap*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
+                    glVertex2f(FIELD_X+(x+1)*squareSize-.1*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+(y+1)*squareSize-.1*squareSize);
+                    
+                    glEnd();
+
+                    float gap=.25;
+
+                    glBegin(GL_TRIANGLES);
+                    glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
+                    glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
+                    glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
+
+                    glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
+                    glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
+            
                     glEnd();
                 }
 
 
-                // flag
+
+                // flags
+                if (state[x][y]==10) {
+
+                    // cross out flags where there is no mine
+
+                    if (gameState==GAME_LOST and !mine[x][y]) {
+                        float crossGap=.1;
+                        glColor3f(0,0,0);
+                        glBegin(GL_LINES);
+                        glVertex2f(FIELD_X+x*squareSize+crossGap*squareSize,FIELD_Y+y*squareSize+crossGap*squareSize);
+                        glVertex2f(FIELD_X+(x+1)*squareSize-crossGap*squareSize,FIELD_Y+(y+1)*squareSize-crossGap*squareSize);
+
+                        glVertex2f(FIELD_X+(x+1)*squareSize-crossGap*squareSize,FIELD_Y+y*squareSize+crossGap*squareSize);
+                        glVertex2f(FIELD_X+x*squareSize+crossGap*squareSize,FIELD_Y+(y+1)*squareSize-crossGap*squareSize);
+                        glEnd();
+                    }
 
 
-                glColor3f(1,0,0);
-                glBegin(GL_TRIANGLES);
-                glVertex2f(FIELD_X+x*squareSize+.1*squareSize,FIELD_Y+y*squareSize+.3*squareSize);
-                glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
-                glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
-                glColor3f(0,0,0);
-                glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.6*squareSize);
-                glVertex2f(FIELD_X+x*squareSize+.15*squareSize,FIELD_Y+y*squareSize+.9*squareSize);
-                glVertex2f(FIELD_X+x*squareSize+.9*squareSize,FIELD_Y+y*squareSize+.9*squareSize);
+                    // flag
 
 
-                glEnd();
+                    glColor3f(1,0,0);
+                    glBegin(GL_TRIANGLES);
+                    glVertex2f(FIELD_X+x*squareSize+.1*squareSize,FIELD_Y+y*squareSize+.3*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
+                    glColor3f(0,0,0);
+                    glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.6*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+.15*squareSize,FIELD_Y+y*squareSize+.9*squareSize);
+                    glVertex2f(FIELD_X+x*squareSize+.9*squareSize,FIELD_Y+y*squareSize+.9*squareSize);
+
+
+                    glEnd();
+
+
+                }
+
 
 
             }
-
-
-
-        }
-
+    }
 
     // background for hit mine
     if (gameState==GAME_LOST) {
@@ -843,65 +945,67 @@ int calculateRemainingMines() {
 void mouseClick(int button, int mState, int x, int y) {
 
  
-       
-    if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
+    if (!gamePaused) {
+        if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
 
-        if (x>FIELD_X and x<FIELD_X+fieldWidth*squareSize and y>FIELD_Y and y<FIELD_Y+fieldHeight*squareSize) {
-            
-            if (mState==GLUT_DOWN) {
-                int squareX=(x-FIELD_X)/squareSize;
-                int squareY=(y-FIELD_Y)/squareSize;
+            if (x>FIELD_X and x<FIELD_X+fieldWidth*squareSize and y>FIELD_Y and y<FIELD_Y+fieldHeight*squareSize) {
+                
+                if (mState==GLUT_DOWN) {
+                    int squareX=(x-FIELD_X)/squareSize;
+                    int squareY=(y-FIELD_Y)/squareSize;
 
-              //  cout << "mouse button at [" << squareX << ", " << squareY << "], state " << state[squareX][squareY] << endl;
-            
-                if (button==GLUT_LEFT_BUTTON) {
-                    if (state[squareX][squareY]==9) {
-                        if (gameState==GAME_INITIALIZED) {
-                            placeMines(squareX,squareY);
+                  //  cout << "mouse button at [" << squareX << ", " << squareY << "], state " << state[squareX][squareY] << endl;
+                
+                    if (button==GLUT_LEFT_BUTTON) {
+                        if (state[squareX][squareY]==9) {
+                            if (gameState==GAME_INITIALIZED) {
+                                placeMines(squareX,squareY);
 
-                            // start timer
-                            gettimeofday(&timeStarted, NULL);
-            
-                       //     cout << "Timer started." << endl;
-                            gameState=GAME_PLAYING;
+                                // start timer
+                                gettimeofday(&timeStarted, NULL);
+                
+                           //     cout << "Timer started." << endl;
+                                gameState=GAME_PLAYING;
+                            }
+                            squareClicked(squareX,squareY);
                         }
-                        squareClicked(squareX,squareY);
+                        else if (state[squareX][squareY]<=8)
+                            checkAndRevealAround(squareX,squareY);
                     }
-                    else if (state[squareX][squareY]<=8)
-                        checkAndRevealAround(squareX,squareY);
-                }
-                else if (button==GLUT_RIGHT_BUTTON) {
-                    // toggle flag or check and reveal surrounding squares
-                    if (state[squareX][squareY]==9) {
-                        state[squareX][squareY]=10;
-                        if (!isFlagging)
-                            cout<<"You are now playing with flagging."<<endl;
+                    else if (button==GLUT_RIGHT_BUTTON) {
+                        // toggle flag or check and reveal surrounding squares
+                        if (state[squareX][squareY]==9) {
+                            state[squareX][squareY]=10;
+                            if (!isFlagging)
+                                cout<<"You are now playing with flagging."<<endl;
 
-                        isFlagging=true;
-               //         cout << "Remaining mines: " << calculateRemainingMines() << endl;
+                            isFlagging=true;
+                   //         cout << "Remaining mines: " << calculateRemainingMines() << endl;
+                        }
+                        else if (state[squareX][squareY]==10) {
+                            state[squareX][squareY]=9;
+                   //         cout << "Remaining mines: " << calculateRemainingMines() << endl;
+                        }
+                        else {
+                            checkAndRevealAround(squareX,squareY);
+                        }
+                            
+                        
                     }
-                    else if (state[squareX][squareY]==10) {
-                        state[squareX][squareY]=9;
-               //         cout << "Remaining mines: " << calculateRemainingMines() << endl;
-                    }
-                    else {
+                    else if (button==GLUT_MIDDLE_BUTTON and state[squareX][squareY]<=8) {
                         checkAndRevealAround(squareX,squareY);
                     }
-                        
-                    
-                }
-                else if (button==GLUT_MIDDLE_BUTTON and state[squareX][squareY]<=8) {
-                    checkAndRevealAround(squareX,squareY);
                 }
             }
-        }
 
-        glutPostRedisplay();
+            glutPostRedisplay();
+        }
+        else if (!(x>FIELD_X and x<FIELD_X+fieldWidth*squareSize and y>FIELD_Y and y<FIELD_Y+fieldHeight*squareSize)) {
+            initField();
+        //    placeMines();
+        }
     }
-    else if (!(x>FIELD_X and x<FIELD_X+fieldWidth*squareSize and y>FIELD_Y and y<FIELD_Y+fieldHeight*squareSize)) {
-        initField();
-    //    placeMines();
-    }
+
 }
 
  
@@ -976,6 +1080,8 @@ int main(int argc, char** argv) {
 
     squareSize=25;
     gameState=GAME_INITIALIZED;
+    gamePaused=false;
+
 
     cout<<"Miny v"<<VERSION<<" (c) 2015 spacecamper"<<endl;
     cout << "See README for info and help."<<endl;
