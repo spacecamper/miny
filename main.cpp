@@ -206,7 +206,7 @@ long calculateTimePaused() {
     }
     else if (gameState==GAME_PLAYING) {
         if (gamePaused) {
-            return totalTimePaused+calculateTimeSinceStart()-pausedSince;  // TODO add time since game was paused to this
+            return totalTimePaused+calculateTimeSinceStart()-pausedSince;
         }
         else {
             return totalTimePaused;
