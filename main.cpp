@@ -1,7 +1,7 @@
 /*
  * Miny
  * a minesweeper clone
- * (c) 2015 spacecamper
+ * (c) 2016 spacecamper
 */
 
 #include <stdlib.h>
@@ -31,7 +31,7 @@
 
 #define MAX_HS 20
 
-#define VERSION "0.1.1"
+#define VERSION "0.2.0"
 
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
@@ -221,7 +221,7 @@ long calculateTimePaused() {
 
 long calculateElapsedTime() {
 
-    // calculates time from first click till now (when playing) or till game has ended
+    // calculates time from first click till now (when playing) or till game has ended, minus time when game was paused
 
     long seconds, useconds;    
     long elapsedTime;
@@ -485,16 +485,18 @@ void drawScene() {
 
     if (rem>999) rem=999;
 
+    int dxy=BORDER_WIDTH+DISPLAY_BORDER_WIDTH;
+
     for (int i=0;i<3;i++) {
         int digit=rem%10;
         rem/=10;
-        drawDigit(digit,16*3-16*(i+1)+BORDER_WIDTH+DISPLAY_BORDER_WIDTH,BORDER_WIDTH+DISPLAY_BORDER_WIDTH,2);
+        drawDigit(digit,32-16*i+dxy,dxy,2);
     }
 
     glColor3f(0,0,0);
     drawRect(BORDER_WIDTH,
             BORDER_WIDTH,
-            16*3+DISPLAY_BORDER_WIDTH,
+            48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
 
 
@@ -509,14 +511,17 @@ void drawScene() {
 
     if (etime>999) etime=999;
 
+    int dx=originalWidth-BORDER_WIDTH-16;
+    int dy=BORDER_WIDTH+DISPLAY_BORDER_WIDTH;
+
     for (int i=0;i<3;i++) {
         int digit=etime%10;
         etime/=10;
-        drawDigit(digit,originalWidth-16*(i+1)-BORDER_WIDTH,BORDER_WIDTH+DISPLAY_BORDER_WIDTH,2);
+        drawDigit(digit,-16*i+dx,dy,2);
     }
 
     glColor3f(0,0,0);
-    drawRect(originalWidth-BORDER_WIDTH-16*3-DISPLAY_BORDER_WIDTH,
+    drawRect(dx-32-DISPLAY_BORDER_WIDTH,
             BORDER_WIDTH,
             16*3+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
@@ -565,7 +570,7 @@ void drawScene() {
     }
     else {
 
-        // grid
+        // grid lines
 
         glColor3f(.2,.2,.2);
 
@@ -593,10 +598,13 @@ void drawScene() {
 
         for (int x=0;x<fieldWidth;x++) 
             for (int y=0;y<fieldHeight;y++) {
+                int x1=FIELD_X+x*squareSize;
+                int x2=FIELD_X+(x+1)*squareSize;
+                int y1=FIELD_Y+y*squareSize;
+                int y2=FIELD_Y+(y+1)*squareSize;
 
-
-                // revealed squares
-                if (state[x][y]>=0 and state[x][y]<=8) {
+                
+                if (state[x][y]>=0 and state[x][y]<=8) {    // revealed square
                     
                     switch(state[x][y]) {
                     case 0: glColor3f(.5,.5,.5); break;
@@ -616,7 +624,7 @@ void drawScene() {
                     // number
                     float zoom=1.5*squareSize/25;
 
-                    drawDigit(state[x][y],FIELD_X+x*squareSize+.5*squareSize-3.0*zoom,FIELD_Y+y*squareSize+.5*squareSize-5.0*zoom,zoom);
+                    drawDigit(state[x][y],x1+.5*squareSize-3.0*zoom,y1+.5*squareSize-5.0*zoom,zoom);
 
 
 
@@ -624,63 +632,58 @@ void drawScene() {
                     glColor3f(.5,.5,.5);
 
                     glBegin(GL_TRIANGLES);
-                    glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
-                    glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+y*squareSize);
-                    glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+(y+1)*squareSize);
+                    glVertex2f(x1,y1);
+                    glVertex2f(x2,y1);
+                    glVertex2f(x2,y2);
 
-                    glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize);
-                    glVertex2f(FIELD_X+(x+1)*squareSize,FIELD_Y+(y+1)*squareSize);
+                    glVertex2f(x1,y1);
+                    glVertex2f(x1,y2);
+                    glVertex2f(x2,y2);
           
 
                     
                     glEnd();
                 }
-
-                // unflagged mines when game is over
-                if ((gameState==GAME_LOST or gameState==GAME_WON) and state[x][y]==9 and mine[x][y]) {
+                else if (state[x][y]==9 and (gameState==GAME_LOST or gameState==GAME_WON) and mine[x][y]) { // unflagged mine when game is over
+                                        
                     glColor3f(0,0,0);
                     glBegin(GL_TRIANGLES);
-                    glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+.1*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+(y+1)*squareSize-.1*squareSize);
+                    glVertex2f(x1+.5*squareSize,y1+.1*squareSize);
+                    glVertex2f(x1+.1*squareSize,y1+.5*squareSize);
+                    glVertex2f(x1+.5*squareSize,y2-.1*squareSize);
 
-                    glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
-                    glVertex2f(FIELD_X+(x+1)*squareSize-.1*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+.5*squareSize,FIELD_Y+(y+1)*squareSize-.1*squareSize);
+                    glVertex2f(x1+.5*squareSize,y1+.1*squareSize);
+                    glVertex2f(x2-.1*squareSize,y1+.5*squareSize);
+                    glVertex2f(x1+.5*squareSize,y2-.1*squareSize);
                     
                     glEnd();
 
-                    float gap=.25;
+                    float gap=.25*squareSize;
 
                     glBegin(GL_TRIANGLES);
-                    glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
-                    glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
-                    glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
+                    glVertex2f(x1+gap,y1+gap);
+                    glVertex2f(x2-gap,y1+gap);
+                    glVertex2f(x2-gap,y2-gap);
 
-                    glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+y*squareSize+gap*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
-                    glVertex2f(FIELD_X+(x+1)*squareSize-gap*squareSize,FIELD_Y+(y+1)*squareSize-gap*squareSize);
+                    glVertex2f(x1+gap,y1+gap);
+                    glVertex2f(x1+gap,y2-gap);
+                    glVertex2f(x2-gap,y2-gap);
             
                     glEnd();
                 }
+                else if (state[x][y]==10) {  // flag
 
-
-
-                // flags
-                if (state[x][y]==10) {
-
-                    // cross out flags where there is no mine
+                    // cross out flag where there is no mine
 
                     if (gameState==GAME_LOST and !mine[x][y]) {
-                        float crossGap=.1;
+                        float crossGap=.1*squareSize;
                         glColor3f(0,0,0);
                         glBegin(GL_LINES);
-                        glVertex2f(FIELD_X+x*squareSize+crossGap*squareSize,FIELD_Y+y*squareSize+crossGap*squareSize);
-                        glVertex2f(FIELD_X+(x+1)*squareSize-crossGap*squareSize,FIELD_Y+(y+1)*squareSize-crossGap*squareSize);
+                        glVertex2f(x1+crossGap,y1+crossGap);
+                        glVertex2f(x2-crossGap,y2-crossGap);
 
-                        glVertex2f(FIELD_X+(x+1)*squareSize-crossGap*squareSize,FIELD_Y+y*squareSize+crossGap*squareSize);
-                        glVertex2f(FIELD_X+x*squareSize+crossGap*squareSize,FIELD_Y+(y+1)*squareSize-crossGap*squareSize);
+                        glVertex2f(x2-crossGap,y1+crossGap);
+                        glVertex2f(x1+crossGap,y2-crossGap);
                         glEnd();
                     }
 
@@ -690,13 +693,13 @@ void drawScene() {
 
                     glColor3f(1,0,0);
                     glBegin(GL_TRIANGLES);
-                    glVertex2f(FIELD_X+x*squareSize+.1*squareSize,FIELD_Y+y*squareSize+.3*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.1*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.5*squareSize);
+                    glVertex2f(x1+.1*squareSize,y1+.3*squareSize);
+                    glVertex2f(x1+.6*squareSize,y1+.1*squareSize);
+                    glVertex2f(x1+.6*squareSize,y1+.5*squareSize);
                     glColor3f(0,0,0);
-                    glVertex2f(FIELD_X+x*squareSize+.6*squareSize,FIELD_Y+y*squareSize+.6*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+.15*squareSize,FIELD_Y+y*squareSize+.9*squareSize);
-                    glVertex2f(FIELD_X+x*squareSize+.9*squareSize,FIELD_Y+y*squareSize+.9*squareSize);
+                    glVertex2f(x1+.6*squareSize,y1+.6*squareSize);
+                    glVertex2f(x1+.15*squareSize,y1+.9*squareSize);
+                    glVertex2f(x1+.9*squareSize,y1+.9*squareSize);
 
 
                     glEnd();
@@ -710,17 +713,25 @@ void drawScene() {
     }
 
     // background for hit mine
+
+    int hitMineDisplayX1=FIELD_X+hitMineX*squareSize;
+    int hitMineDisplayX2=FIELD_X+(hitMineX+1)*squareSize;
+    int hitMineDisplayY1=FIELD_Y+hitMineY*squareSize;
+    int hitMineDisplayY2=FIELD_Y+(hitMineY+1)*squareSize;
+    
+
+
     if (gameState==GAME_LOST) {
         glColor3f(1,0,0);
 
         glBegin(GL_TRIANGLES);
-        glVertex2f(FIELD_X+hitMineX*squareSize,FIELD_Y+hitMineY*squareSize);
-        glVertex2f(FIELD_X+(hitMineX+1)*squareSize,FIELD_Y+hitMineY*squareSize);
-        glVertex2f(FIELD_X+(hitMineX+1)*squareSize,FIELD_Y+(hitMineY+1)*squareSize);
+        glVertex2f(hitMineDisplayX1,hitMineDisplayY1);
+        glVertex2f(hitMineDisplayX2,hitMineDisplayY1);
+        glVertex2f(hitMineDisplayX2,hitMineDisplayY2);
 
-        glVertex2f(FIELD_X+hitMineX*squareSize,FIELD_Y+hitMineY*squareSize);
-        glVertex2f(FIELD_X+hitMineX*squareSize,FIELD_Y+(hitMineY+1)*squareSize);
-        glVertex2f(FIELD_X+(hitMineX+1)*squareSize,FIELD_Y+(hitMineY+1)*squareSize);
+        glVertex2f(hitMineDisplayX1,hitMineDisplayY1);
+        glVertex2f(hitMineDisplayX1,hitMineDisplayY2);
+        glVertex2f(hitMineDisplayX2,hitMineDisplayY2);
         glEnd();
     }
 
@@ -1083,7 +1094,7 @@ int main(int argc, char** argv) {
     gamePaused=false;
 
 
-    cout<<"Miny v"<<VERSION<<" (c) 2015 spacecamper"<<endl;
+    cout<<"Miny v"<<VERSION<<" (c) 2016 spacecamper"<<endl;
     cout << "See README for info and help."<<endl;
 
     // high score directory
