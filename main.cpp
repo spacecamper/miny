@@ -32,7 +32,7 @@
 
 #define MAX_HS 20
 
-#define VERSION "0.3.0"
+#define VERSION "0.3.1"
 
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
@@ -499,24 +499,19 @@ void keyDown(unsigned char key, int x, int y) {
 
     switch (key) {
     case ' ':   
-        if (gamePaused) 
-            unpauseGame();
-        else
+        if (!gamePaused) 
             initField(); // restart game
 
         break;
     case 'p':   // pause
         if (gameState==GAME_PLAYING) {
             if (!gamePaused) {
-
                 gamePaused=true;
                 pausedSince=calculateTimeSinceStart();
                 cout << "Game paused. Press P to continue. Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
             }
             else 
                 unpauseGame();
-                
-            
         }
         break;
     case 27:
