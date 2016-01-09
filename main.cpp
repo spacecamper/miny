@@ -32,7 +32,7 @@
 
 #define MAX_HS 20
 
-#define VERSION "0.3.1"
+#define VERSION "0.3.2"
 
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
@@ -100,7 +100,7 @@ void displayHiScores(hiScore *hs, int count,int highlight) {
         if (hs[i].name.length()>maxlen)
             maxlen=hs[i].name.length();
 
-    cout << endl<<"     " << setw(maxlen+1) << left << "Name"<<setw(9)<<right<< "Time"<<setw(8)<<right<< "Date"<<endl<<endl;
+    cout << endl<<"     " << setw(maxlen+1) << left << "Name"<<setw(9)<<right<< "Time"<<setw(10)<<right<< "Date"<<endl<<endl;
 
 
     for (int i=0;i<count;i++) {
@@ -131,7 +131,7 @@ void displayHiScores(hiScore *hs, int count,int highlight) {
         cout << " " << setw(2) << setfill(' ') << right << i+1 
             << "  " << setw(maxlen+1) << left << hs[i].name
             << setw(9) << right << hs[i].time
-            << (i==highlight?'*':' ') << "   "            
+            << (i==highlight?'*':' ') << "     "            
             << dateString;
 
         cout << endl;
@@ -506,12 +506,14 @@ void keyDown(unsigned char key, int x, int y) {
     case 'p':   // pause
         if (gameState==GAME_PLAYING) {
             if (!gamePaused) {
+
                 gamePaused=true;
                 pausedSince=calculateTimeSinceStart();
                 cout << "Game paused. Press P to continue. Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
             }
-            else 
+            else
                 unpauseGame();
+            
         }
         break;
     case 27:
