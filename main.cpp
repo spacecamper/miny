@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <fstream>
 #include <iomanip>
+#include <sstream>
 
 #define BORDER_WIDTH 10
 #define DISPLAY_BORDER_WIDTH 4
@@ -31,7 +32,7 @@
 
 #define MAX_HS 20
 
-#define VERSION "0.2.0"
+#define VERSION "0.3.0"
 
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
@@ -63,7 +64,7 @@ public:
 
     string name;
     int time;
-
+    time_t timeStamp;
 
 };
 
@@ -99,14 +100,41 @@ void displayHiScores(hiScore *hs, int count,int highlight) {
         if (hs[i].name.length()>maxlen)
             maxlen=hs[i].name.length();
 
-    cout << endl<<"     " << setw(maxlen+1) << left << "Name"<<setw(9)<<right<< "Time"<<endl<<endl;
+    cout << endl<<"     " << setw(maxlen+1) << left << "Name"<<setw(9)<<right<< "Time"<<setw(8)<<right<< "Date"<<endl<<endl;
 
 
     for (int i=0;i<count;i++) {
+        string dateString;
+        if (hs[i].timeStamp==0) {
+            dateString="unknown";
         
-        cout <<" "<< setw(2)<<right<<i+1 <<"  "<< setw(maxlen+1) << left << hs[i].name<<setw(9)<<right<<hs[i].time ;
-        if (i==highlight) cout<<"*";
-        cout <<endl;
+        }
+        else {
+            struct tm *lt;
+            lt=localtime(&hs[i].timeStamp);
+            ostringstream stringStream;
+            stringStream <<setw(2)<< setfill('0')<<lt->tm_mday
+                <<'-'
+                <<setw(2)<< setfill('0')<<lt->tm_mon+1
+                <<'-'
+                <<setw(4)<< setfill(' ')<<right<< lt->tm_year+1900
+                <<' '         
+                <<setw(2)<< setfill('0')<<lt->tm_hour
+                <<':'
+                <<setw(2)<< setfill('0')<<lt->tm_min
+                <<':'
+                <<setw(2)<< setfill('0')<<lt->tm_sec;
+
+            dateString = stringStream.str();
+        }
+
+        cout << " " << setw(2) << setfill(' ') << right << i+1 
+            << "  " << setw(maxlen+1) << left << hs[i].name
+            << setw(9) << right << hs[i].time
+            << (i==highlight?'*':' ') << "   "            
+            << dateString;
+
+        cout << endl;
     }
     cout<<endl;
 }
@@ -130,16 +158,58 @@ int readHiScoreFile(char *fname,hiScore *scores,int *count) {
         return 1;
     }
 
-    *count=0;
+    
+    string firstString;
 
-    while (!ifile.eof()) {
-        ifile >> scores[*count].name >> scores[*count].time;
-        (*count)++;
-        if ((*count)==MAX_HS) break;
+    ifile >> firstString;
+
+
+    int fileVersion;
+
+    if (firstString=="miny-high-score-file-version:") {
+        ifile >> fileVersion;
+    }
+    else {
+        // TODO maybe implement a better check for whether the file is really of the 1st version
+        fileVersion=1;
+
+        ifile.clear();
+        ifile.seekg(0, ios::beg);
     }
 
-    if (ifile.eof())
-        (*count)--;
+    switch(fileVersion) {
+    case 2:
+        *count=0;
+
+        while (!ifile.eof()) {
+            ifile >> scores[*count].name >> scores[*count].time >> scores[*count].timeStamp;
+            (*count)++;
+            if ((*count)==MAX_HS) break;
+        }
+
+        if (ifile.eof())
+            (*count)--;
+        break;
+    case 1:
+        cout << "This high score file was created by an old version of the game and will become"<<endl<<"unreadable to that version after being written to."<<endl;
+
+        *count=0;
+
+        while (!ifile.eof()) {
+            ifile >> scores[*count].name >> scores[*count].time;
+            scores[*count].timeStamp=0;
+            (*count)++;
+            if ((*count)==MAX_HS) break;
+        }
+
+        if (ifile.eof())
+            (*count)--;
+        break;
+    default:
+        cout << "Unknown high score file version. You are probably running an old version of the"<<endl<<"game. Please upgrade to the latest version." << endl;
+        exit(1);
+    }
+
 
     ifile.close();
 
@@ -158,8 +228,12 @@ void writeHiScoreFile(char *fname, hiScore *scores, int count) {
  //   cout << "Writing high score file " << fullpath <<endl;
 
     ofile.open (fullpath);
+
+
+    ofile << "miny-high-score-file-version: 2"<<endl;
+
     for (int i=0;i<count;i++) {
-        ofile << scores[i].name << " " << scores[i].time << endl;
+        ofile << scores[i].name << " " << scores[i].time << " " << scores[i].timeStamp << endl;
     }
 
     ofile.close();
@@ -414,12 +488,22 @@ void initField() {
 }
 
 
+void unpauseGame() {
+    gamePaused=false;
+    totalTimePaused+=calculateTimeSinceStart()-pausedSince;
+    cout << "Game unpaused."<<endl;// Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
+}
+
 
 void keyDown(unsigned char key, int x, int y) {
 
     switch (key) {
-    case ' ':   // restart game
-        initField();
+    case ' ':   
+        if (gamePaused) 
+            unpauseGame();
+        else
+            initField(); // restart game
+
         break;
     case 'p':   // pause
         if (gameState==GAME_PLAYING) {
@@ -429,12 +513,10 @@ void keyDown(unsigned char key, int x, int y) {
                 pausedSince=calculateTimeSinceStart();
                 cout << "Game paused. Press P to continue. Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
             }
-            else {
-
-                gamePaused=false;
-                totalTimePaused+=calculateTimeSinceStart()-pausedSince;
-                cout << "Game unpaused."<<endl;// Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
-            }
+            else 
+                unpauseGame();
+                
+            
         }
         break;
     case 27:
@@ -773,7 +855,7 @@ void revealAround(int squareX, int squareY) {
     
 }
 
-void hiScoreTestAndWrite(char *fname,string name,int time) {
+void hiScoreTestAndWrite(char *fname,string name,int time, time_t timeStamp) {
     // test and output a line saying whether player got a high score, if yes write it and display new high score table
 
     int count=0;
@@ -785,6 +867,7 @@ void hiScoreTestAndWrite(char *fname,string name,int time) {
   //      cout << "no high scores yet"<<endl;
         hs[0].name=name;
         hs[0].time=time;
+        hs[0].timeStamp=timeStamp;
         cout << "YOU GOT A HIGH SCORE."<<endl;
         displayHiScores(hs,1,0);
         writeHiScoreFile(fname,hs,1);
@@ -807,6 +890,7 @@ void hiScoreTestAndWrite(char *fname,string name,int time) {
 */
                 hs[i].name=name;
                 hs[i].time=time;
+                hs[i].timeStamp=timeStamp;
         //        cout << "high score inserted"<<endl;
                 cout << "YOU GOT A HIGH SCORE."<<endl;
                 displayHiScores(hs,count,i);
@@ -824,7 +908,7 @@ void hiScoreTestAndWrite(char *fname,string name,int time) {
                 count++;
                 hs[count-1].name=name;
                 hs[count-1].time=time;
-                
+                hs[count-1].timeStamp=timeStamp;
        //         cout << "high score appended"<<endl;
                 cout << "YOU GOT A HIGH SCORE."<<endl;
                 displayHiScores(hs,count,count-1);
@@ -889,7 +973,7 @@ void revealSquare(int squareX, int squareY) {
             cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
             sprintf(fname,"%i-%i-%i%s.hiscore",fieldWidth,fieldHeight,mineCount,isFlagging?"":"-nf");
 
-            hiScoreTestAndWrite(fname,playerName,calculateElapsedTime());
+            hiScoreTestAndWrite(fname,playerName,calculateElapsedTime(),time(NULL));
 
         }    
     }
@@ -1193,14 +1277,14 @@ int main(int argc, char** argv) {
     else if (squareSize>100) 
         squareSize=100;
 
-    if (fieldHeight<1) 
-        fieldHeight=1;
+    if (fieldHeight<2) 
+        fieldHeight=2;
     else if (fieldHeight>MAX_HEIGHT) 
         fieldHeight=MAX_HEIGHT;
     
 
-    if (fieldWidth<1) 
-        fieldWidth=1;
+    if (fieldWidth<2) 
+        fieldWidth=2;
     else if (fieldWidth>MAX_WIDTH) 
         fieldWidth=MAX_WIDTH;
     
