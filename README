@@ -11,8 +11,6 @@ Features:
  - separate tables for flagging and non-flagging high scores
  - to reveal squares around a numbered square with flagged adjacent mines you
    can click the square with any button
- - it's not necessary to flag all mines to win (you can play without flagging
-   for example)
  - adjustable square size
  - graphical interface
  - no "?" marks
@@ -51,4 +49,4 @@ Examples:
  ./miny -w10 -h10 -m10
 
 
-(c) 2016 spacecamper
+(c) 2015-2016 spacecamper
