@@ -6,31 +6,30 @@ Features:
 
  - Linux native
  - responsive on slow hardware
+ - high score logging with millisecond precision and the date and time high 
+   scores were achieved
+ - separate tables for flagging and non-flagging high scores
  - to reveal squares around a numbered square with flagged adjacent mines you
    can click the square with any button
- - reasonable (and adjustable) square size
- - graphical interface
- - (hopefully) actually runs
  - it's not necessary to flag all mines to win (you can play without flagging
    for example)
- - no "?" marks (I consider that a feature)
- - timing in milliseconds
- - high score logging
- - separate tables for flagging and non-flagging high scores
+ - adjustable square size
+ - graphical interface
+ - no "?" marks
  - pause
 
 To do:
 
  - fix how numbers look with nonstandard square sizes
 
-        
+
 To compile run 'make'. You'll need to have OpenGL libraries installed. On
 Ubuntu try the package freeglut3-dev.
 
 To play run './miny'. For best results run from terminal.
 
-To start a new game when game has ended click anywhere outside the mine field,
-or press Space at any other time.
+To start a new game press Space or, when game has ended, click anywhere 
+outside the mine field.
 
 To pause/unpause while playing press P.
 
@@ -52,4 +51,4 @@ Examples:
  ./miny -w10 -h10 -m10
 
 
-(c) 2015 spacecamper
+(c) 2016 spacecamper
