@@ -6,9 +6,10 @@ Features:
 
  - Linux native
  - responsive on slow hardware
- - high score logging with millisecond precision and the date and time high 
-   scores were achieved
+ - high score logging in milliseconds and with the date and time high scores 
+   were achieved
  - separate tables for flagging and non-flagging high scores
+ - recording and playing replays
  - to reveal squares around a numbered square with flagged adjacent mines you
    can click the square with any button
  - adjustable square size
@@ -16,37 +17,63 @@ Features:
  - no "?" marks
  - pause
 
+
 To do:
 
+ - replay files assigned to high scores pushed out of high score tables are 
+   being kept - maybe do something about it
  - fix how numbers look with nonstandard square sizes
 
 
-To compile run 'make'. You'll need to have OpenGL libraries installed. On
-Ubuntu try the package freeglut3-dev.
+Compiling and playing:
 
-To play run './miny'. For best results run from terminal.
+ To compile run 'make'. You'll need to have OpenGL libraries installed. On
+ Ubuntu try the package freeglut3-dev.
 
-To start a new game press Space or, when game has ended, click anywhere 
-outside the mine field.
+ To play run './miny'. For best results run from terminal.
 
-To pause/unpause while playing press P.
+
+Mouse and keyboard controls:
+
+ To start a new game press Space or, when game has ended, click anywhere 
+ outside the mine field.
+
+ To pause/unpause while playing press P.
 
 
 Options:
 
- -d  difficulty - 1, 2 or 3 (1 - Beginner, 2 - Intermediate, 3 - Expert).
+ -d  difficulty - 1, 2 or 3 (1 - Beginner, 2 - Intermediate, 3 - Expert) 
+     (default=2)
  -s  square size in px (default=25)
  -m  number of mines
  -w  field width
  -h  field height
  -n  player name
  -l  list high scores and exit
+ -r  selects place in the high score table for current setup for which replay 
+     will be played
+ -f  play replay from non-flagging table (used with -r)
+ -p  play replay file by name (works for replay files in ~/.miny)
 
 
 Examples:
 
- ./miny -d3 -njoe
- ./miny -w10 -h10 -m10
+ ./miny -d3 -njoe           # start game on expert difficulty, player name joe
+
+ ./miny -w10 -h10 -m10      # start game with the specified parameters
+
+ ./miny -d2 -l              # list high scores and exit
+
+ ./miny -d1 -r3             # play replay for the 3rd place in the beginner 
+                            #   flagging high score table (add -f for 
+                            #   non-flagging)
+
+ ./miny -w10 -h10 -m10 -r1  # play replay for the 1st place in the selected
+                            #   flagging high score table (add -f for 
+                            #   non-flagging)
+
+ ./miny -p last.replay      # play replay for the last game played
 
 
 (c) 2015-2016 spacecamper
