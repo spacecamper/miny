@@ -11,10 +11,10 @@ endif
 
 all: $(PROG)
 
-$(PROG): main.o
+$(PROG): Timer.o main.o Replay.o Field.o
 	${CXX} -o $@ $^ ${LDLIBS}
 
-main.o: main.cpp
+main.o: main.cpp 
 
 clean:
 	rm -f $(PROG) *.o
