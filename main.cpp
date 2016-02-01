@@ -37,10 +37,13 @@
 
 #define MAX_HS 20
 
-#define VERSION "0.4.0"
+#define VERSION "0.4.1"
+
+// TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
+//   events
+// TODO set window class to use with some window managers
 
 
- 
 using namespace std;
 
 int windowWidth, windowHeight, originalWidth, originalHeight;
@@ -58,12 +61,7 @@ bool gamePaused;
 bool playReplay;
 
 
-
-
 Timer timer;
-
-
-
 
 
 class HiScore {
@@ -74,10 +72,6 @@ public:
     time_t timeStamp;
     char replayFile[100];
 };
-
-
-
-
 
 
 Replay replay;
@@ -121,7 +115,8 @@ void displayHiScores(HiScore *hs, int count,int highlight) {
         if (hs[i].name.length()>maxlen)
             maxlen=hs[i].name.length();
 
-    cout << endl<<"     " << setw(maxlen+1) << left << "Name"<<setw(9)<<right<< "Time"<<setw(10)<<right<< "Date"<<setw(25)<<right<< "Replay"<<endl<<endl;
+    cout << endl<<"     " << setw(maxlen+1) << left << "Name"<<setw(9)<<right<< "Time"
+        <<setw(10)<<right<< "Date"<<setw(25)<<right<< "Replay"<<endl<<endl;
 
 
     for (int i=0;i<count;i++) {
@@ -247,7 +242,8 @@ int readHiScoreFile(char *fname,HiScore *scores,int *count) {
         *count=0;
 
         while (!ifile.eof()) {
-            ifile >> scores[*count].name >> scores[*count].time >> scores[*count].timeStamp >> scores[*count].replayFile;
+            ifile >> scores[*count].name >> scores[*count].time >> scores[*count].timeStamp 
+                >> scores[*count].replayFile;
             (*count)++;
             if ((*count)==MAX_HS) break;
         }
@@ -314,7 +310,8 @@ void writeHiScoreFile(char *fname, HiScore *scores, int count) {
     ofile << "miny-high-score-file-version: 3"<<endl;
 
     for (int i=0;i<count;i++) {
-        ofile << scores[i].name << " " << scores[i].time << " " << scores[i].timeStamp << " " << scores[i].replayFile << endl;
+        ofile << scores[i].name << " " << scores[i].time << " " << scores[i].timeStamp << " "
+             << scores[i].replayFile << endl;
     }
 
     ofile.close();
@@ -490,7 +487,8 @@ void keyDown(unsigned char key, int x, int y) {
                 gamePaused=true;
                 timer.pause(); 
                 replay.pauseRecording();
-                cout << "Game paused. Press P to continue. Elapsed time: "<<timer.calculateElapsedTime()<<" ms"<<endl;
+                cout << "Game paused. Press P to continue. Elapsed time: "
+                    <<timer.calculateElapsedTime()<<" ms"<<endl;
             }
             else
                 unpauseGame();
@@ -503,6 +501,7 @@ void keyDown(unsigned char key, int x, int y) {
     case 'd':
         cout << field.width << "x" << field.height<<endl;
         break;
+    case 'q':
     case 27:
         exit(0);
     
@@ -707,7 +706,8 @@ void drawScene() {
                     // number
                     float zoom=1.5*squareSize/25;
 
-                    drawDigit(field.state[x][y],x1+.5*squareSize-3.0*zoom,y1+.5*squareSize-5.0*zoom,zoom);
+                    drawDigit(field.state[x][y],x1+.5*squareSize-3.0*zoom,
+                                y1+.5*squareSize-5.0*zoom,zoom);
 
 
 
@@ -727,7 +727,9 @@ void drawScene() {
                     
                     glEnd();
                 }
-                else if (field.state[x][y]==9 and (gameState==GAME_LOST or gameState==GAME_WON) and field.isMine(x,y)) { // unflagged mine when game is over
+                else if (field.state[x][y]==9 and (gameState==GAME_LOST or gameState==GAME_WON)
+                         and field.isMine(x,y)
+                        ) { // unflagged mine when game is over
                                         
                     glColor3f(0,0,0);
                     glBegin(GL_TRIANGLES);
@@ -831,7 +833,8 @@ void drawScene() {
 
 
 bool hiScoreTestAndWrite(char *fname,string name,int time, time_t timeStamp, char *replayFile) {
-    // test and output a line saying whether player got a high score, if yes write it and display new high score table
+    // test and output a line saying whether player got a high score, if yes write it and 
+    //  display new high score table
 
     int count=0;
     HiScore hs[MAX_HS];
@@ -917,11 +920,13 @@ void mouseClick(int button, int mState, int x, int y) {
     if (!gamePaused) {
         if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
 
-            if (x>FIELD_X and x<FIELD_X+field.width*squareSize and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) {
+            if (x>FIELD_X and x<FIELD_X+field.width*squareSize 
+                and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) {
                 
                 if (mState==GLUT_DOWN) {
                     
-                  //  cout << "mouse button at [" << squareX << ", " << squareY << "], state " << state[squareX][squareY] << endl;
+                  //  cout << "mouse button at [" << squareX << ", " << squareY << "], state "
+                  // << state[squareX][squareY] << endl;
                 
                     field.click(x,y,button);
                 }
@@ -929,7 +934,8 @@ void mouseClick(int button, int mState, int x, int y) {
 
             glutPostRedisplay();
         }
-        else if (!(x>FIELD_X and x<FIELD_X+field.width*squareSize and y>FIELD_Y and y<FIELD_Y+field.height*squareSize)) {
+        else if (!(x>FIELD_X and x<FIELD_X+field.width*squareSize 
+            and y>FIELD_Y and y<FIELD_Y+field.height*squareSize)) {
             field.init();
         //    placeMines();
         }
@@ -1015,6 +1021,7 @@ void initGraph() {
     glutReshapeFunc(handleResize);
     glutMouseFunc(mouseClick);
     glutPassiveMotionFunc(mouseMove);
+    glutMotionFunc(mouseMove);
     
 }
 
@@ -1163,7 +1170,9 @@ int main(int argc, char** argv) {
             case 'f':
                 playReplayNf=true;
                 break;
-
+            case '?':
+                //cerr << "Unknown option: -" << optopt << endl;
+                exit(1);
 
         }
 
@@ -1176,7 +1185,8 @@ int main(int argc, char** argv) {
             HiScore hs[MAX_HS];
             char fname[100];
             int count;
-            sprintf(fname,"%i-%i-%i%s.hiscore",field.width,field.height,field.mineCount,playReplayNf?"-nf":"");
+            sprintf(fname,"%i-%i-%i%s.hiscore",field.width,field.height,field.mineCount,
+                    playReplayNf?"-nf":"");
             readHiScoreFile(fname,hs,&count);
             cout << "High scores loaded."<<endl;
             displayHiScores(hs,count,-1);
@@ -1186,6 +1196,11 @@ int main(int argc, char** argv) {
                 exit(1);
             }
 
+            if (strcmp(hs[playReplayPlace].replayFile,"*")==0) {
+                cout << "The selected place doesn't have a replay file assigned."<<endl;
+                exit(1);
+            }
+ 
             cout << "Load replay " << hs[playReplayPlace].replayFile<<endl;
             strcpy(replayFileName,hs[playReplayPlace].replayFile);
 
@@ -1213,7 +1228,8 @@ int main(int argc, char** argv) {
 
 
 
-        cout<<"Current high scores for WIDTH: "<<field.width<<" HEIGHT: "<<field.height<<" MINES: "<<field.mineCount<<endl;
+        cout<<"Current high scores for WIDTH: "<<field.width<<" HEIGHT: "<<field.height
+            <<" MINES: "<<field.mineCount<<endl;
 
         cout << "Flagging:"<<endl;
 
@@ -1251,19 +1267,23 @@ int main(int argc, char** argv) {
         
 
         if (playerName==""){
-            cout << "No name entered with the -n option. "<<endl<<"Enter your name: "; //In future you can enter your name with the -n option."<<endl<<"
+            cout << "No name entered with the -n option. "<<endl<<"Enter your name: "; 
+            //In future you can enter your name with the -n option."<<endl<<"
             cin >> playerName;
         }    
 
-        if (playerName.length()>20 or playerName.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_") != std::string::npos) {
-            cout << "You entered an invalid name. Name can be max. 20 characters long and can only "<<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
+        if (playerName.length()>20 or playerName.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_") != std::string::npos
+            ) {
+            cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
+                <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
             exit(1);
         }
 
 
         if (playerName=="") {   
-          /*  cout << "Couldn't get player name. Using username as player name." << endl; // this should set player name when prog not run from terminal but it doesn't work 
-                                                                                          // - uncomment the getlogin line and program exits when not run from terminal
+          /*  cout << "Couldn't get player name. Using username as player name." << endl; 
+            // this should set player name when prog not run from terminal but it doesn't work 
+             // - uncomment the getlogin line and program exits when not run from terminal
             playerName=getlogin();*/
             cout << "Couldn't get player name. Using 'unnamed'." << endl;
             playerName="unnamed";
@@ -1276,12 +1296,6 @@ int main(int argc, char** argv) {
 
         glutTimerFunc(50, update, 0);
     }
-
-    
-
-
-
-    
 
     glutMainLoop();    
     return 0;
