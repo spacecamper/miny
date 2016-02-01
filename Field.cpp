@@ -117,6 +117,9 @@ void Field::init() {
 
     gamePaused=false;
 
+    cout << endl;   // empty line in terminal between games
+
+
 //    cout << "Field initialized." << endl;
 }
 
@@ -156,7 +159,8 @@ void Field::revealSquare(int squareX, int squareY) {
             timer.stop();
             replay.stopRecording();
             if (!playReplay) {
-                cout << "YOU HIT A MINE. You played for "<<timer.calculateElapsedTime()<<" milliseconds." << endl;
+                cout << "YOU HIT A MINE. You played for "<<timer.calculateElapsedTime()
+                    <<" milliseconds." << endl;
                 saveReplay("last.replay",&replay);
             }
             
@@ -207,7 +211,8 @@ void Field::revealSquare(int squareX, int squareY) {
                     
 
                     if (!playReplay) {
-                        cout << "YOU WIN! It took you "<<timer.calculateElapsedTime()<<" milliseconds." << endl;
+                        cout << "YOU WIN! It took you "<<timer.calculateElapsedTime()
+                            <<" milliseconds." << endl;
                         
                         cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
 
@@ -217,10 +222,15 @@ void Field::revealSquare(int squareX, int squareY) {
                         char rfname[100];
                         long ts=time(NULL);
                         sprintf(rfname,"%lu.replay",ts);
-                        saveReplay("last.replay",&replay);
                         
-                        if (hiScoreTestAndWrite(fname,playerName,timer.calculateElapsedTime(),ts,rfname))
+                        
+                        if (hiScoreTestAndWrite(fname,playerName,timer.calculateElapsedTime(),
+                            ts,rfname)) {
+            
                             saveReplay(rfname,&replay);
+                        }
+
+                        saveReplay("last.replay",&replay);
                         
                     }
 
