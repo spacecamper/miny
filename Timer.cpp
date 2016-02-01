@@ -47,7 +47,8 @@ long Timer::calculateTimePaused() {
 
 long Timer::calculateElapsedTime() {
 
-    // calculates time from first click till now (when playing) or till game has ended, minus time when game was paused
+    // calculates time from first click till now (when playing) or till game has ended,
+    //  minus the time when game was paused
 
     long seconds, useconds;    
     long elapsedTime;
