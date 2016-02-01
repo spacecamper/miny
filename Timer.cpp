@@ -11,16 +11,22 @@ extern bool gamePaused;
 
 
 long Timer::calculateTimeSinceStart() {
-    long seconds, useconds;    
+    
+    if (gameState==GAME_INITIALIZED)
+        return 0;
+    else {
 
-    struct timeval now;
+        long seconds, useconds;    
 
-    gettimeofday(&now, NULL);
+        struct timeval now;
 
-    seconds  = now.tv_sec  - timeStarted.tv_sec;
-    useconds = now.tv_usec - timeStarted.tv_usec;
+        gettimeofday(&now, NULL);
 
-    return ((seconds) * 1000 + useconds/1000.0) + 0.5;
+        seconds  = now.tv_sec  - timeStarted.tv_sec;
+        useconds = now.tv_usec - timeStarted.tv_usec;
+
+        return ((seconds) * 1000 + useconds/1000.0) + 0.5;
+    }
 
 }
 
