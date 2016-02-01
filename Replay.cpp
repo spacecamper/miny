@@ -111,7 +111,6 @@ void Replay::writeToFile(ofstream *file) {
 
     *file << field.width << " " << field.height << endl;
 
-
     for (int j=0;j<field.height;j++) {
         for (int i=0;i<field.width;i++) 
             *file << field.isMine(i,j) << " ";
@@ -156,7 +155,7 @@ void Replay::readFromFile(ifstream *ifile) {
     case -1:
         cout << "Unknown replay file format. Exiting." << endl;
         exit(1);
-    case 1:
+    case 1: {
         *ifile >> playerName;
         *ifile >> squareSize;
         
@@ -164,14 +163,20 @@ void Replay::readFromFile(ifstream *ifile) {
 
         cout << "Reading mines."<<endl;
 
+        
+        int mineCount=0;
         bool tmpmine;
         for (int j=0;j<field.height;j++) 
             for (int i=0;i<field.width;i++) {
                 
                 *ifile >> tmpmine;
-                if (tmpmine) field.setMine(i,j);
+                if (tmpmine) {
+                    field.setMine(i,j);
+                    mineCount++;    
+                }
             }
 
+        field.mineCount=mineCount;
 
         int count;
         *ifile>>count;
@@ -200,7 +205,7 @@ void Replay::readFromFile(ifstream *ifile) {
 
         nextPlayed=data.begin();
         break;
-
+        }
     default:
         cout << "Unknown replay file version. You are probably running an old version of the"<<endl<<"game. Please upgrade to the latest version." << endl;
         exit(1);
