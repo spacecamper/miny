@@ -2,77 +2,117 @@ Miny
 
 A minesweeper clone.
 
-Features:
+
+FEATURES
 
  - Linux native
  - responsive on slow hardware
- - high score logging in milliseconds and with the date and time high scores 
-   were achieved
- - separate tables for flagging and non-flagging high scores
+ - adjustable square size
+ - timing in milliseconds
+ - time, 3BV/s and IOE high scores, including non-flagging versions
  - recording and playing replays
  - to reveal squares around a numbered square with flagged adjacent mines you
    can click the square with any button
- - adjustable square size
  - graphical interface
  - no "?" marks
  - pause
 
 
-To do:
+TO DO
 
- - replay files assigned to high scores pushed out of high score tables are 
-   being kept - maybe do something about it
+ - set window class to use with some window managers
+ - redisplay the field at the end of the game before writing replay (i.e.
+   remove the delay)
+ - truncate lines in score output to prevent wrapping
+ - prevent buffer overflows
 
 
-Compiling and playing:
+COMPILING AND PLAYING
 
  To compile run 'make'. You'll need to have OpenGL libraries installed. On
  Ubuntu try the package freeglut3-dev.
 
- To play run './miny'. For best results run from terminal.
+ To play run './miny [options]'. For best results run from terminal.
+
+ If lines are wrapped in score output, maximize your terminal.
+
+ While playing, you can see how many effective / ineffective clicks you have
+ made.
 
 
-Mouse and keyboard controls:
+MOUSE AND KEYBOARD CONTROLS
+
+ Apart from intuitive minesweeper mouse controls, these work:
 
  To start a new game press Space or, when game has ended, click anywhere 
  outside the mine field.
 
  To pause/unpause while playing press P.
 
-
-Options:
-
- -d  difficulty - 1, 2 or 3 (1 - Beginner, 2 - Intermediate, 3 - Expert) 
-     (default=2)
- -s  square size in px (default=25)
- -m  number of mines
- -w  field width
- -h  field height
- -n  player name
- -l  list high scores and exit
- -r  selects place in the high score table for current setup for which replay 
-     will be played
- -f  play replay from non-flagging table (used with -r)
- -p  play replay file by name (works for replay files in ~/.miny)
+ To quit press Escape or Q.
 
 
-Examples:
+OPTIONS
 
- ./miny -d3 -njoe           # start game on expert difficulty, player name joe
+  Game setup:
+
+ -n?  player name
+ -d?  difficulty - 1, 2 or 3 (1 - Beginner, 2 - Intermediate, 3 - Expert) 
+ -s?  square size in px (3 to 100, default=25)
+ -m?  number of mines
+ -w?  field width (2 to 100)
+ -h?  field height (2 to 100)
+
+
+  Score display:
+
+ -t   list best times for the selected setup
+ -3   list best 3BV/s for the selected setup
+ -i   list best IOE-s for the selected setup
+
+
+  Score filter:
+
+ -f?  select scores by flagging (0 - all (default), 1 - flagging only, 
+      2 - nf only)
+ -g?  select scores by whether the game was won (0 - all, 1 - won only 
+      (default), 2 - lost only) (using this option may produce buggy results)
+ -l?  number of best scores to display (0 - all (default))
+
+
+  Replay:
+
+ -p?  play replay file by name (works for replay files in ~/.miny)
+
+
+NOTES
+ 
+ Since version 0.5.0, the game stores scores in a new way, with more data 
+ about played games. There currently isn't and probably won't be a tool to 
+ convert old scores to the new system. If you don't want to keep them, you 
+ can delete .hiscore (and whichever .replay you don't want) files from your 
+ ~/.miny directory.
+
+
+EXAMPLES
+
+ ./miny -d3 -njoe -s35      # start game on expert difficulty, player name joe,
+                            # square size 35
 
  ./miny -w10 -h10 -m10      # start game with the specified parameters
 
- ./miny -d2 -l              # list high scores and exit
+ ./miny -t		    # list best times for beg, int and exp combined
 
- ./miny -d1 -r3             # play replay for the 3rd place in the beginner 
-                            #   flagging high score table (add -f for 
-                            #   non-flagging)
+ ./miny -d2 -t              # list best times for intermediate
 
- ./miny -w10 -h10 -m10 -r1  # play replay for the 1st place in the selected
-                            #   flagging high score table (add -f for 
-                            #   non-flagging)
+ ./miny -d2 -f2 -t          # list best times for intermediate, non-flagging 
+                            # only
+
+ ./miny -d1 -3              # list best 3BV/s for beginner
 
  ./miny -p last.replay      # play replay for the last game played
+
+ ./miny -p 4.replay         # play the selected replay
 
 
 (c) 2015-2016 spacecamper

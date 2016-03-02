@@ -33,15 +33,15 @@
 #include "Replay.h"
 #include "common.h"
 #include "Field.h"
+#include "scores.h"
 
 
-#define MAX_HS 20
-
-#define VERSION "0.4.1"
+#define VERSION "0.5.0"
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
 //   events
-// TODO set window class to use with some window managers
+// TODO prevent buffer overflows (strcpy and strcat)
+// TODO free allocated memory (after using scores from loadScores and filterScores is finished)
 
 
 using namespace std;
@@ -52,27 +52,18 @@ int squareSize;
 int gameState; // -1 - initialized, 0 - playing, 1 - lost, 2 - won
 char option_char;
 
-int hitMineX,hitMineY;  // when game is lost
-string playerName;
+unsigned short hitMineX,hitMineY;  // when game is lost
+char playerName[21];
 char highScoreDir[100];
 bool isFlagging;
 bool gamePaused;
 
 bool playReplay;
 
+int difficulty;   // 0-unspecified 1-beg 2-int 3-exp
+    
 
 Timer timer;
-
-
-class HiScore {
-public:
-
-    string name;
-    int time;
-    time_t timeStamp;
-    char replayFile[100];
-};
-
 
 Replay replay;
 
@@ -80,11 +71,33 @@ Field field;
 
 
 
+void endGameWon();
+
+
+void ordinalNumberSuffix(char *suffix, int n) {
+
+    int rem100=n%100;
+
+    if (rem100==11 or rem100==12 or rem100==13) {
+        strcpy(suffix,"th");
+        return;
+    }
+
+    switch(n%10) {
+    case 1: strcpy(suffix,"st"); break;
+    case 2: strcpy(suffix,"nd"); break;
+    case 3: strcpy(suffix,"rd"); break;
+    default: strcpy(suffix,"th"); break;
+    }
+    
+}
+
+
 
 void redisplay() {
 
     glutPostRedisplay();
-
+    
 }
 
 
@@ -107,58 +120,10 @@ bool directoryExists( const char* pzPath )
 }
 
 
-void displayHiScores(HiScore *hs, int count,int highlight) {
-
-    unsigned int maxlen=0;
-
-    for (int i=0;i<count;i++)
-        if (hs[i].name.length()>maxlen)
-            maxlen=hs[i].name.length();
-
-    cout << endl<<"     " << setw(maxlen+1) << left << "Name"<<setw(9)<<right<< "Time"
-        <<setw(10)<<right<< "Date"<<setw(25)<<right<< "Replay"<<endl<<endl;
-
-
-    for (int i=0;i<count;i++) {
-        string dateString;
-        if (hs[i].timeStamp==0) {
-            dateString="unknown";
-        
-        }
-        else {
-            struct tm *lt;
-            lt=localtime(&hs[i].timeStamp);
-            ostringstream stringStream;
-            stringStream <<setw(2)<< setfill('0')<<lt->tm_mday
-                <<'-'
-                <<setw(2)<< setfill('0')<<lt->tm_mon+1
-                <<'-'
-                <<setw(4)<< setfill(' ')<<right<< lt->tm_year+1900
-                <<' '         
-                <<setw(2)<< setfill('0')<<lt->tm_hour
-                <<':'
-                <<setw(2)<< setfill('0')<<lt->tm_min
-                <<':'
-                <<setw(2)<< setfill('0')<<lt->tm_sec;
-
-            dateString = stringStream.str();
-        }
-
-        
-        cout << " " << setw(2) << setfill(' ') << right << i+1 
-            << "  " << setw(maxlen+1) << left << hs[i].name
-            << setw(9) << right << hs[i].time
-            << (i==highlight?'*':' ') << "     "            
-            << setw(19) << left << dateString
-            << "    "<< (strcmp(hs[i].replayFile,"*")?hs[i].replayFile:"N/A");
-
-        cout << endl;
-    }
-    cout<<endl;
-}
 
 
 
+// ---------------------- REPLAY ------------------//
 void saveReplay(char *fname, Replay *r) {
 
 
@@ -167,28 +132,38 @@ void saveReplay(char *fname, Replay *r) {
     char fullpath[100];
     strcpy(fullpath,highScoreDir);
     strcat(fullpath,fname);
-    cout << "Writing replay file " << fullpath <<endl;
+    cout << "Writing replay file " << fullpath <<"...";
 
     ofile.open (fullpath);
 
+    if (!ofile.is_open()) {
+        cerr<<"Error opening file for writing replay."<<endl;
+        return;
+    }
+
+ //   cout<< "Before r->writeToFile"<<endl;
+
     r->writeToFile(&ofile);
+  //  cout<< "After r->writeToFile"<<endl;
 
     ofile.close();
+
+    cout << "Done."<<endl;
     
 
 }
 
 int loadReplay(char *fname, Replay *r) {
     ifstream ifile;
-
+/*
     char fullpath[100];
     strcpy(fullpath,highScoreDir);
-    strcat(fullpath,fname);
+    strcat(fullpath,fname);*/
  //   cout << "Reading replay file " << fullpath <<endl;
 
-    ifile.open (fullpath);
+    ifile.open (fname);
     if (!ifile.is_open()) {
-        cerr<<"Error opening file."<<endl;
+        cerr<<"Error opening replay file '"<<fname<<"'."<<endl;
         return 1;
     }
 
@@ -203,123 +178,9 @@ int loadReplay(char *fname, Replay *r) {
 
 
 
-int readHiScoreFile(char *fname,HiScore *scores,int *count) {
-    ifstream ifile;
-
-    char fullpath[100];
-    strcpy(fullpath,highScoreDir);
-    strcat(fullpath,fname);
- //   cout << "Reading high score file " << fullpath <<endl;
-
-    ifile.open (fullpath);
-    if (!ifile.is_open()) {
-//        cerr<<"Error opening file."<<endl;
-        *count=0;   
-        return 1;
-    }
-
-    
-    string firstString;
-
-    ifile >> firstString;
 
 
-    int fileVersion;
-
-    if (firstString=="miny-high-score-file-version:") {
-        ifile >> fileVersion;
-    }
-    else {
-        // TODO maybe implement a better check for whether the file is really of the 1st version
-        fileVersion=1;
-
-        ifile.clear();
-        ifile.seekg(0, ios::beg);
-    }
-
-    switch(fileVersion) {
-    case 3:
-        *count=0;
-
-        while (!ifile.eof()) {
-            ifile >> scores[*count].name >> scores[*count].time >> scores[*count].timeStamp 
-                >> scores[*count].replayFile;
-            (*count)++;
-            if ((*count)==MAX_HS) break;
-        }
-
-        if (ifile.eof())
-            (*count)--;
-        break;
-        
-    case 2:
-        cout << "This high score file was created by an old version of the game and will become"<<endl<<"unreadable to that version after being written to."<<endl;
-        *count=0;
-
-        while (!ifile.eof()) {
-            ifile >> scores[*count].name >> scores[*count].time >> scores[*count].timeStamp;
-            strcpy(scores[*count].replayFile,"*");
-            (*count)++;
-            if ((*count)==MAX_HS) break;
-        }
-
-        if (ifile.eof())
-            (*count)--;
-        break;
-    case 1:
-        cout << "This high score file was created by an old version of the game and will become"<<endl<<"unreadable to that version after being written to."<<endl;
-
-        *count=0;
-
-        while (!ifile.eof()) {
-            ifile >> scores[*count].name >> scores[*count].time;
-            scores[*count].timeStamp=0;
-            strcpy(scores[*count].replayFile,"*");
-            (*count)++;
-            if ((*count)==MAX_HS) break;
-        }
-
-        if (ifile.eof())
-            (*count)--;
-        break;
-    default:
-        cout << "Unknown high score file version. You are probably running an old version of the"<<endl<<"game. Please upgrade to the latest version." << endl;
-        exit(1);
-    }
-
-
-    ifile.close();
-
-    return 0;
-
-}
-
-void writeHiScoreFile(char *fname, HiScore *scores, int count) {
-
-
-    ofstream ofile;
-    
-    char fullpath[100];
-    strcpy(fullpath,highScoreDir);
-    strcat(fullpath,fname);
- //   cout << "Writing high score file " << fullpath <<endl;
-
-    ofile.open (fullpath);
-
-
-    ofile << "miny-high-score-file-version: 3"<<endl;
-
-    for (int i=0;i<count;i++) {
-        ofile << scores[i].name << " " << scores[i].time << " " << scores[i].timeStamp << " "
-             << scores[i].replayFile << endl;
-    }
-
-    ofile.close();
-    
-
-}
-
-
+// ----------------------- GRAPHICS -------------------- //
 
 float mySin(float v) {
     return sin(v/ 180 * 3.141592654f);
@@ -375,6 +236,7 @@ void drawDigitRect(int i, int x, int y, float zoom=1) {
 
 
 }
+
 
 void drawDigit(int n, int x, int y, float zoom) {
     // draw a digit 10 px high, 6 px wide (if zoom==1)
@@ -463,75 +325,32 @@ void drawDigit(int n, int x, int y, float zoom) {
 
 
 
-
-void unpauseGame() {
-    gamePaused=false;
-    timer.unpause();
-    replay.resumeRecording();
-    cout << "Game unpaused."<<endl;// Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
-}
-
-
-void keyDown(unsigned char key, int x, int y) {
-
-    switch (key) {
-    case ' ':   
-        if (!gamePaused and !playReplay) 
-            field.init(); // restart game
-
-        break;
-    case 'p':   // pause
-        if (gameState==GAME_PLAYING and !playReplay) {
-            if (!gamePaused) {
-
-                gamePaused=true;
-                timer.pause(); 
-                replay.pauseRecording();
-                cout << "Game paused. Press P to continue. Elapsed time: "
-                    <<timer.calculateElapsedTime()<<" ms"<<endl;
-            }
-            else
-                unpauseGame();
-            
-        }
-        break;
-    case 'r':
-        replay.dump();
-        break;
-    case 'd':
-        cout << field.width << "x" << field.height<<endl;
-        break;
-    case 'q':
-    case 27:
-        exit(0);
-    
-
-    }
-
-
-}
-
-
-
 void drawScene() {
 
 
     glClearColor(.7, .7, .7, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
+/*
+    // uncomment this if graphics is broken
 
     glPopMatrix();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
+*/
+
     glOrtho(0.0, windowWidth, windowHeight, 0.0, -1.0, 10.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glDisable(GL_CULL_FACE);
+ 
+/*
+    // uncomment this if graphics is broken
 
+    glDisable(GL_CULL_FACE);
     glClear(GL_DEPTH_BUFFER_BIT);
+*/
 
 
     if (playReplay) {
@@ -550,14 +369,6 @@ void drawScene() {
     }
 
 
-/*
-    // "smiley face" (actually a square)
-
-    int radius=12;
-
-    glColor3f(1,1,0);
-    drawRect(originalWidth/2-radius,FIELD_Y/2-radius,radius*2,radius*2);
-*/
 
 
     // number of remaining mines
@@ -727,7 +538,8 @@ void drawScene() {
                     
                     glEnd();
                 }
-                else if (field.state[x][y]==9 and (gameState==GAME_LOST or gameState==GAME_WON)
+                else if (field.state[x][y]==9 
+                         and (gameState==GAME_LOST or gameState==GAME_WON /* or true*/)
                          and field.isMine(x,y)
                         ) { // unflagged mine when game is over
                                         
@@ -821,97 +633,227 @@ void drawScene() {
     }
 
 
+/*
+    // uncomment this if graphics is broken
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
+*/
 
     glutSwapBuffers();
 
 }
 
 
+// ------------------------- GAME ---------------------- //
 
-bool hiScoreTestAndWrite(char *fname,string name,int time, time_t timeStamp, char *replayFile) {
-    // test and output a line saying whether player got a high score, if yes write it and 
-    //  display new high score table
-
-    int count=0;
-    HiScore hs[MAX_HS];
-
- //   cout << "High score file: "<<fname<<endl;
-
-    // TODO set replay file name for new high score
+void unpauseGame() {
+    gamePaused=false;
+    timer.unpause();
+    replay.resumeRecording();
+    cout << "Game unpaused."<<endl;// Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
+}
 
 
-    if (readHiScoreFile(fname,hs,&count)) {
-  //      cout << "no high scores yet"<<endl;
-        hs[0].name=name;
-        hs[0].time=time;
-        hs[0].timeStamp=timeStamp;
-        strcpy(hs[0].replayFile,replayFile);
-        cout << "YOU GOT A HIGH SCORE."<<endl;
-        displayHiScores(hs,1,0);
-        writeHiScoreFile(fname,hs,1);
-        return true;
-    }
-    else {
 
-        bool written=false;
+void endGameLost() {
 
-        for (int i=0;i<count;i++) {
-            if (time<hs[i].time) {
-                count++;
-                if (count>MAX_HS) count=MAX_HS;
+    redisplay();
 
-                for (int j=count-1;j>i;j--) 
-                    hs[j]=hs[j-1];
+    cout << endl<< "YOU HIT A MINE. You played for "<<timer.calculateElapsedTime()
+        <<" milliseconds." << endl;
+    long timeTaken=timer.calculateElapsedTime();
+    long ts=time(NULL);
+    
+    Score newScore;
 
-                
-              /*  cout << "hs after shift: "<<endl;
-                displayHiScores(hs,count);
-*/
-                hs[i].name=name;
-                hs[i].time=time;
-                hs[i].timeStamp=timeStamp;
-                strcpy(hs[i].replayFile,replayFile);
-        //        cout << "high score inserted"<<endl;
-                cout << "YOU GOT A HIGH SCORE."<<endl;
-                displayHiScores(hs,count,i);
+    newScore.timeStamp=ts;
+    strcpy(newScore.name,playerName);
+    //char replayFile[100];
+    newScore.width=field.width;
+    newScore.height=field.height;
+    newScore.mines=field.mineCount;
 
-                writeHiScoreFile(fname,hs,count);
-                written=true;
-                return true;
-            }
+    newScore.time=timeTaken;
+    newScore.val3BV=field.get3BV();
+    newScore.flagging=isFlagging;
 
 
-        }
+    newScore.effectiveClicks=field.effectiveClicks;
+    newScore.ineffectiveClicks=field.ineffectiveClicks;
 
-        if (!written) {
-            if (count<MAX_HS) {
-                count++;
-                hs[count-1].name=name;
-                hs[count-1].time=time;
-                hs[count-1].timeStamp=timeStamp;
-                strcpy(hs[count-1].replayFile,replayFile);
-       //         cout << "high score appended"<<endl;
-                cout << "YOU GOT A HIGH SCORE."<<endl;
-                displayHiScores(hs,count,count-1);
+    //    cout << "IOE: " << newScore.getIOE()<<endl;
 
-                writeHiScoreFile(fname,hs,count);
-                return true;
-            }
-            else {
-                cout << "You didn't get a high score."<<endl;
-                return false;
-               // displayHiScores(hs,count,-1);
-            }
-        }
-    }
-    return false;
+    newScore.squareSize=squareSize;
+    newScore.gameWon=false;
+    
+
+    char fullpath[100];
+    strcpy(fullpath,highScoreDir);
+    strcat(fullpath,"scores.dat");
+
+
+    newScore.replayNumber=0;
+    appendScore(fullpath,newScore);
+
+  //  cout << "width=" << field.width << endl;
+    saveReplay("last.replay",&replay);
 
 }
 
+
+
+
+void endGameWon() {
+
+    redisplay();
+
+    gameState=GAME_WON;
+    timer.stop();
+    replay.stopRecording();
+
+      
+
+    if (!playReplay) {
+        long timeTaken=timer.calculateElapsedTime();
+        
+
+
+     /*   char fname[100];
+        sprintf(fname,"%i-%i-%i.times",field.width,field.height,field.mineCount);
+        */
+
+        char rfname[100];
+        long ts=time(NULL);
+
+        long nr=1;
+
+       
+        Score newScore;
+
+        newScore.timeStamp=ts;
+        strcpy(newScore.name,playerName);
+        //char replayFile[100];
+        newScore.width=field.width;
+        newScore.height=field.height;
+        newScore.mines=field.mineCount;
+
+        newScore.time=timeTaken;
+        newScore.val3BV=field.get3BV();
+        newScore.flagging=isFlagging;
+
+        newScore.effectiveClicks=field.effectiveClicks;
+        newScore.ineffectiveClicks=field.ineffectiveClicks;
+        
+
+        cout << endl<<"YOU WIN!"<<endl;
+        cout << setw(8)<<left << "Time: "<<timeTaken<<" ms" << endl;
+        cout << setw(8)<<left << "3BV: " << field.get3BV()<<endl;
+        cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
+        cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
+        
+        cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
+        cout << endl;
+
+        newScore.squareSize=squareSize;
+        newScore.gameWon=true;
+        
+
+        char fullpath[100];
+        strcpy(fullpath,highScoreDir);
+        strcat(fullpath,"scores.dat");
+
+        Score *scores;
+
+     //   cout << "about to load scores"<<endl;
+
+        int count=loadScores(fullpath,&scores);
+
+     //   cout << "loaded scores"<<endl;
+
+        evalScore(newScore,scores, count,difficulty);
+
+
+    //    cout << "here1"<<endl;
+        free(scores);
+        
+
+        // find the lowest unused replay file number
+
+
+        while (true) {
+    
+            char tmp[100];
+            strcpy(tmp,highScoreDir);
+            sprintf(rfname,"%lu.replay",nr);
+
+            strcat(tmp,rfname);
+          //  cout << "Testing "<<tmp<<endl;
+            ifstream testFile(tmp);
+            if (!testFile)
+                break;
+            nr++;
+        }
+
+        newScore.replayNumber=nr;
+        appendScore(fullpath,newScore);
+
+
+        saveReplay(rfname,&replay);
+
+   //     cout << "About to save replay."<<endl;
+
+        saveReplay("last.replay",&replay);
+    //    cout << "Done saving replay."<<endl;
+
+    }
+
+
+}
+
+
+
+// -------------------------- GLUT ----------------------- //
+
+void keyDown(unsigned char key, int x, int y) {
+
+    switch (key) {
+    case ' ':   
+        if (!gamePaused and !playReplay) 
+            field.init(); // restart game
+
+        break;
+    case 'p':   // pause
+        if (gameState==GAME_PLAYING and !playReplay) {
+            if (!gamePaused) {
+
+                gamePaused=true;
+                timer.pause(); 
+                replay.pauseRecording();
+                cout << "Game paused. Press P to continue. Elapsed time: "
+                    <<timer.calculateElapsedTime()<<" ms"<<endl;
+            }
+            else
+                unpauseGame();
+            
+        }
+        break;
+    case 'r':
+        replay.dump();
+        break;
+    case 'd':
+        cout << sizeof(Score)<<endl;
+        break;
+    case 'q':
+    case 27:    // escape
+        exit(0);
+    
+
+    }
+
+
+}
 
 
 void mouseClick(int button, int mState, int x, int y) {
@@ -959,7 +901,6 @@ void handleResize(int w, int h) {
 void update(int value) {
 
    // cout << timer.calculateTimeSinceStart() << endl;
-
     glutPostRedisplay(); 
 	
     glutTimerFunc(50, update, 0);
@@ -1010,7 +951,7 @@ void initGraph() {
     strcpy(title,"Miny v");
     strcpy(title+6,VERSION);
     strcpy(title+6+strlen(VERSION),". Player: ");
-    sprintf(title+16+strlen(VERSION), "%s", playerName.c_str());
+    strcpy(title+16+strlen(VERSION),playerName);
 
     glutCreateWindow(title);
            
@@ -1041,7 +982,7 @@ void initGraphR() {
     strcpy(title,"Miny v");
     strcpy(title+6,VERSION);
     strcpy(title+6+strlen(VERSION),". Player: ");
-    sprintf(title+16+strlen(VERSION), "%s", playerName.c_str());
+    strcpy(title+16+strlen(VERSION),playerName);
 
     glutCreateWindow(title);
            
@@ -1064,18 +1005,142 @@ int main(int argc, char** argv) {
 
     glutInit(&argc, argv);
 
+  //  Score *testarray=new Score[10000000000];
 
+
+//    cout << "size="<<sizeof(int)<<endl;
+
+/*
+//debug
+
+    difficulty=3;   // 0-unspecified 1-beg 2-int 3-exp
+    
+    Score s;
+    s.flagging=false;
+
+    s.time=10000;
+    s.val3BV=90;
+
+strcpy(highScoreDir,getenv("HOME"));
+    strcat(highScoreDir,"/.miny/");
+
+
+    char fullpath[100];
+    strcpy(fullpath,highScoreDir);
+    strcat(fullpath,"scores.dat");
+
+    Score *scores;
+
+ //   cout << "about to load scores"<<endl;
+
+    int count=loadScores(fullpath,&scores);
+
+ //   cout << "loaded scores"<<endl;
+
+    evalScore(s,scores, count,difficulty);
+
+    exit(0);
+
+// end debug
+*/
     field.height=16;
     field.width=16;
     field.mineCount=40;
 
-    squareSize=25;
+    squareSize=0;
     gameState=GAME_INITIALIZED;
     gamePaused=false;
 
     char replayFileName[100];
     int playReplayPlace=-1;
-    bool playReplayNf=false;
+    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s
+    
+    difficulty=0;   // 0-unspecified 1-beg 2-int 3-exp
+    int listFlagging=0;  // 0-both, 1-flagging, 2-nf
+    int listFinished=1; //  0-both, 1-finished, 2-unfinished
+    int limit=MAX_HS;        // how many scores to display
+
+    strcpy(highScoreDir,getenv("HOME"));
+    strcat(highScoreDir,"/.miny/");
+
+    playerName[0]='\0';
+
+
+    strcpy(playerName,"");
+
+
+
+    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:c:g:il:")) != -1)
+        switch (option_char) {  
+            case 'd': {
+                difficulty=atoi(optarg);
+                
+                break;
+            }
+            case 's': 
+                squareSize=atoi(optarg);
+                break;
+            case 'm': 
+                difficulty=4;
+                field.mineCount=atoi(optarg);
+                break;
+            case 'w': 
+                difficulty=4;
+                field.width=atoi(optarg);
+                break;
+            case 'h': 
+                difficulty=4;
+                field.height=atoi(optarg);
+                break;
+            case 'n':
+                strncpy(playerName,optarg,20);
+                
+                break;
+            case 'p':
+                strcpy(replayFileName,highScoreDir);       
+                strcat(replayFileName,optarg);
+                playReplay=true;
+                break;
+            case 'r':
+                playReplay=true;
+                playReplayPlace=atoi(optarg)-1;
+                break;
+            case 'l':
+                limit=atoi(optarg);
+                break;
+            case '3':
+                listScoresType=2;
+                break;
+            case 't':
+                listScoresType=1;
+                break;
+            case 'i':
+                listScoresType=3;
+                break;
+
+            case 'f':
+                listFlagging=optarg[0]-'0';
+            //    cout << "listFlagging="<<listFlagging<<endl;
+                break;
+            case 'g':
+                listFinished=optarg[0]-'0';
+             //   cout << "listFinished="<<listFinished<<endl;
+                break;
+            case 'c':   // output 3BV of replay file given as argument and exit
+                        // TAKES THE FULL PATH TO THE FILE AS ARGUMENT
+               // strcpy(replayFileName,highScoreDir);
+                strcpy(replayFileName,optarg);
+                if (loadReplay(replayFileName,&replay)) {
+                    exit(1);
+                }
+                cout << field.get3BV() << endl;
+                exit(0);
+                break;
+            case '?':
+                //cerr << "Unknown option: -" << optopt << endl;
+                exit(1);
+
+        }
 
 
     cout<<"Miny v"<<VERSION<<" (c) 2015-2016 spacecamper"<<endl;
@@ -1083,8 +1148,7 @@ int main(int argc, char** argv) {
 
     // high score directory
 
-    strcpy(highScoreDir,getenv("HOME"));
-    strcat(highScoreDir,"/.miny/");
+    
 
     //cout << "hsdir: " << highScoreDir<<endl;
 
@@ -1104,112 +1168,14 @@ int main(int argc, char** argv) {
 
 
 
-    playerName="";
-
-  //  bool levelSelected=false;
-
-    bool onlyListHiScores=false;
-
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:lp:r:f")) != -1)
-        switch (option_char) {  
-            case 'd': {
-                int level=atoi(optarg);
-                switch(level) {
-                    case 1:
-            //            cout << "Level: Beginner" << endl;
-                        field.height=9;
-                        field.width=9;
-                        field.mineCount=10;
-            //            levelSelected=true;
-                        break;
-                    case 2:
-            //            cout << "Level: Intermediate" << endl;
-                        field.height=16;
-                        field.width=16;
-                        field.mineCount=40;
-              //          levelSelected=true;
-                        break;
-                    case 3:
-              //          cout << "Level: Expert" << endl;
-                        field.height=16;
-                        field.width=30;
-                        field.mineCount=99;
-                //        levelSelected=true;
-                        break;
-                }
-                break;
-            }
-            case 's': 
-                squareSize=atoi(optarg);
-                break;
-            case 'm': 
-                field.mineCount=atoi(optarg);
-                break;
-            case 'w': 
-                field.width=atoi(optarg);
-                break;
-            case 'h': 
-                field.height=atoi(optarg);
-                break;
-            case 'n':
-                playerName=optarg;
-                
-                break;
-            case 'l':
-                onlyListHiScores=true;
-                
-                break;
-            case 'p':
-                strcpy(replayFileName,optarg);
-                playReplay=true;
-                break;
-            case 'r':
-                playReplay=true;
-                playReplayPlace=atoi(optarg)-1;
-                break;
-            case 'f':
-                playReplayNf=true;
-                break;
-            case '?':
-                //cerr << "Unknown option: -" << optopt << endl;
-                exit(1);
-
-        }
-
-
-
-
     if (playReplay) {
-        if (playReplayPlace!=-1)  {     // select from high score table
-            cout << "Playing replay from high score table."<<endl;
-            HiScore hs[MAX_HS];
-            char fname[100];
-            int count;
-            sprintf(fname,"%i-%i-%i%s.hiscore",field.width,field.height,field.mineCount,
-                    playReplayNf?"-nf":"");
-            readHiScoreFile(fname,hs,&count);
-            cout << "High scores loaded."<<endl;
-            displayHiScores(hs,count,-1);
-            
-            if (playReplayPlace<0 or playReplayPlace>=count) {
-                cout << "Invalid place number."<<endl;
-                exit(1);
-            }
 
-            if (strcmp(hs[playReplayPlace].replayFile,"*")==0) {
-                cout << "The selected place doesn't have a replay file assigned."<<endl;
-                exit(1);
-            }
- 
-            cout << "Load replay " << hs[playReplayPlace].replayFile<<endl;
-            strcpy(replayFileName,hs[playReplayPlace].replayFile);
-
-        }
-
+        cout << replayFileName<<endl;
         
         if (loadReplay(replayFileName,&replay)) {
             exit(1);
         }
+        cout<<"Replay loaded."<<endl;
         field.init();
         cout << "Playing replay..." << endl;
         initGraphR();
@@ -1218,83 +1184,175 @@ int main(int argc, char** argv) {
         glutTimerFunc(1, updateR, 0);
     }
     else {
+        if (listScoresType!=0) { // list scores
 
-        if (squareSize<3) 
-            squareSize=3;
-        else if (squareSize>100) 
-            squareSize=100;
-        
-        field.checkValues();
+            // TODO 'other' setups may produce too high 3BV/s etc and break layout
+
+            char fullpath[100];
+            strcpy(fullpath,highScoreDir);
+            strcat(fullpath,"scores.dat");
 
 
+            Score *scores;
+            int count=loadScores(fullpath,&scores);
 
-        cout<<"Current high scores for WIDTH: "<<field.width<<" HEIGHT: "<<field.height
-            <<" MINES: "<<field.mineCount<<endl;
+       //     cout << "Loaded " << count << " scores."<<endl;
+            
 
-        cout << "Flagging:"<<endl;
+            if (count==0) {
+                cout<<"No high scores yet."<<endl;
+            }
+            else {
+                
+                cout << endl << "Displaying scores."<<endl;
+                cout << setw(16)<<left<<"Sorted by: ";
 
-        HiScore hs[MAX_HS];
-        char fname[100];
-        int count;
-        sprintf(fname,"%i-%i-%i.hiscore",field.width,field.height,field.mineCount);
-        readHiScoreFile(fname,hs,&count);
-        
+                int (*compareFunc)(const void *,const void *)=NULL;
+                switch(listScoresType) {
+                case 1:    //time
+                    cout << "time" << endl;
+                    compareFunc=compareByTime; break;
+                case 2:
+                    cout << "3BV/s" << endl;
+                    compareFunc=compareBy3BVs; break;
+                case 3:
+                    cout << "IOE" << endl;
+                    compareFunc=compareByIOE; break;
+                }
+    
+                cout << setw(16)<<left<<"Flagging: ";
+                switch (listFlagging) {
+                case 0: cout << "all"<<endl; break;
+                case 1: cout << "flagging only"<<endl; break;
+                case 2: cout << "non-flagging only"<<endl; break;
+                }
 
-        if (count==0) {
-            cout<<"No high scores yet."<<endl;
+                cout << setw(16)<<left<<"Finished: ";
+                switch (listFinished) {
+                case 0: cout << "all"<<endl; break;
+                case 1: cout << "finished only"<<endl; break;
+                case 2: cout << "unfinished only"<<endl; break;
+                }
+
+                cout << setw(16)<<left<<"Difficulty: ";
+                switch (difficulty) {
+                case 0: cout << "all"<<endl; break;
+                case 1: cout << "beginner only"<<endl; break;
+                case 2: cout << "intermediate only"<<endl; break;
+                case 3: cout << "expert only"<<endl; break;
+                }
+
+                cout << setw(16)<<left<<"Square size: ";
+                if (squareSize!=0)
+                    cout <<squareSize<<endl;
+                else
+                    cout << "all"<<endl;
+
+                cout << setw(16)<<left<<"Player name: ";
+                if (!strcmp(playerName,""))
+                    cout<<"all"<<endl;
+                else
+                    cout<<playerName<<endl;
+
+                cout << setw(16)<<left<<"Count: ";
+                if (limit!=0)
+                    cout <<limit<<endl;
+                else
+                    cout << "all"<<endl;
+
+
+                qsort(scores,count,sizeof(Score),compareFunc);
+
+
+                Score *filteredScores;
+
+
+                count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
+                    difficulty, squareSize,playerName);
+
+                displayScores(filteredScores,count,limit);
+
+                cout<<endl;
+           //     cout << "here2"<<endl;
+                free(scores);
+
+            }
+
+
         }
         else {
-            displayHiScores(hs,count,-1);
+
+
+            if (difficulty==0) 
+                difficulty=2;
+
+
+            switch(difficulty) {
+                case 1:
+                    field.height=9;
+                    field.width=9;
+                    field.mineCount=10;
+                    break;
+                case 2:
+                    field.height=16;
+                    field.width=16;
+                    field.mineCount=40;
+                    break;
+                case 3:
+                    field.height=16;
+                    field.width=30;
+                    field.mineCount=99;
+                    break;
+            }
+
+            if (squareSize==0)
+                squareSize=25;
+
+            if (squareSize<3) 
+                squareSize=3;
+            else if (squareSize>100) 
+                squareSize=100;
+            
+            field.checkValues();
+
+
+            char *validChars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_";
+            char *c=playerName;
+
+            while(*c) {
+                if (!strchr(validChars,*c)) {
+                    cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
+                    <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
+                    exit(1);    
+                }
+                c++;
+            }
+
+
+            if (strlen(playerName)>20) {
+                cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
+                    <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
+                exit(1);
+            }
+
+
+            if (!strcmp(playerName,"")) {   
+              /*  cout << "Couldn't get player name. Using username as player name." << endl; 
+                // this should set player name when prog not run from terminal but it doesn't work 
+                 // - uncomment the getlogin line and program exits when not run from terminal
+                playerName=getlogin();*/
+
+                cout << "No name entered with the -n option. Using 'unnamed'." << endl;
+                strcpy(playerName,"unnamed");
+            }
+
+            cout << "Your name: "<<playerName<<endl;
+
+            initGraph();
+            field.init();
+
+            glutTimerFunc(50, update, 0);
         }
-
-        cout << "Non-flagging:"<<endl;
-        sprintf(fname,"%i-%i-%i-nf.hiscore",field.width,field.height,field.mineCount);
-        readHiScoreFile(fname,hs,&count);
-        
-
-        if (count==0) {
-            cout<<"No high scores yet."<<endl;
-        }
-        else {
-            displayHiScores(hs,count,-1);
-        }
-
-
-       // cout << "argv[0]=="<< argv[1]<<endl;
-        
-        if (onlyListHiScores)
-            exit(0);
-        
-
-        if (playerName==""){
-            cout << "No name entered with the -n option. "<<endl<<"Enter your name: "; 
-            //In future you can enter your name with the -n option."<<endl<<"
-            cin >> playerName;
-        }    
-
-        if (playerName.length()>20 or playerName.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_") != std::string::npos
-            ) {
-            cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
-                <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
-            exit(1);
-        }
-
-
-        if (playerName=="") {   
-          /*  cout << "Couldn't get player name. Using username as player name." << endl; 
-            // this should set player name when prog not run from terminal but it doesn't work 
-             // - uncomment the getlogin line and program exits when not run from terminal
-            playerName=getlogin();*/
-            cout << "Couldn't get player name. Using 'unnamed'." << endl;
-            playerName="unnamed";
-        }
-
-        cout << "Your name: "<<playerName<<endl;
-
-        initGraph();
-        field.init();
-
-        glutTimerFunc(50, update, 0);
     }
 
     glutMainLoop();    

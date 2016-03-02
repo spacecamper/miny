@@ -1,7 +1,3 @@
-#include <iostream>
-#include <fstream>
-
-
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
 #include <GLUT/glut.h>
@@ -10,8 +6,6 @@
 #endif
 
 
-#include <list>
-#include <iomanip>
 
 #include "common.h"
 #include "Timer.h"
@@ -23,7 +17,7 @@
 extern bool playReplay;
 extern int gameState;
 extern Timer timer;
-extern string playerName;
+extern char playerName[21];
 extern int squareSize;
 extern Field field;
 
@@ -104,10 +98,10 @@ void Replay::recordEvent(int x, int y, int button) {
 
 
 void Replay::writeToFile(ofstream *file) {
-
+   // cout << "width=" << field.width << endl;
     *file << "miny-replay-file-version: 1" << endl;
 
-    *file << playerName << endl << squareSize << endl;
+    *file << playerName << endl << squareSize << endl; 
 
     *file << field.width << " " << field.height << endl;
 
@@ -156,12 +150,16 @@ void Replay::readFromFile(ifstream *ifile) {
         cout << "Unknown replay file format. Exiting." << endl;
         exit(1);
     case 1: {
-        *ifile >> playerName;
+
+        string tmpname;
+        
+        *ifile >> playerName; 
+        
         *ifile >> squareSize;
         
         *ifile >> field.width >> field.height;
 
-        cout << "Reading mines."<<endl;
+      //  cout << "Reading mines."<<endl;
 
         
         int mineCount=0;
@@ -180,7 +178,7 @@ void Replay::readFromFile(ifstream *ifile) {
 
         int count;
         *ifile>>count;
-        cout << "Reading " << count << " events." << endl;
+    //    cout << "Reading " << count << " events." << endl;
         ReplayPoint *rp;
 
         for (int i=0;i<count;i++) {
@@ -255,7 +253,7 @@ unsigned int Replay::playStep() {
     else {
 
         int ret=(*(next)).timeSinceStart-timer.calculateTimeSinceStart();//-(*nextPlayed).timeSinceStart;
-
+        
         if (ret<0) ret=0;
 
         nextPlayed=next;
@@ -263,5 +261,6 @@ unsigned int Replay::playStep() {
         return ret;
     }
 }
+
 
 

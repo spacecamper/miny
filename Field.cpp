@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <iostream>
-#include <stdlib.h>
-#include <list>
-#include <iomanip>
-
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
 #include <GLUT/glut.h>
@@ -23,18 +17,151 @@ extern void redisplay();
 
 extern bool playReplay;
 extern int gameState;
-extern string playerName;
 extern bool isFlagging;
 extern Timer timer;
 extern bool gamePaused;
 extern Replay replay;
-extern int hitMineX, hitMineY,squareSize;
+extern unsigned short hitMineX, hitMineY;
+extern int squareSize;
 
 extern void saveReplay(char *, Replay *);
+ 
+
+extern void endGameWon();
+extern void endGameLost();
 
 
-extern bool hiScoreTestAndWrite(char *,string ,int , time_t, char* );
 
+void Field::ffmProc(int tmpField[MAX_WIDTH][MAX_HEIGHT],int i,int j) {
+
+   // cout << "ffmproc(" << i << ", " << j << ")" << endl;
+
+    if (tmpField[i][j]!=3) { 
+        bool isZero=(tmpField[i][j]==0);
+
+        tmpField[i][j]=3;
+
+        if (isZero) 
+            floodFillMark(tmpField,i,j);
+        
+    }
+
+}
+
+
+void Field::floodFillMark(int tmpField[MAX_WIDTH][MAX_HEIGHT],int i,int j) {
+
+    if (i>0) {
+        if (j>0) ffmProc(tmpField,i-1,j-1);
+        ffmProc(tmpField,i-1,j);
+        if (j<height-1) ffmProc(tmpField,i-1,j+1);
+        
+    }
+
+    if (j>0) ffmProc(tmpField,i,j-1);
+    if (j<height-1) ffmProc(tmpField,i,j+1);
+
+    if (i<width-1) {
+        if (j>0) ffmProc(tmpField,i+1,j-1);
+        ffmProc(tmpField,i+1,j);
+        if (j<height-1) ffmProc(tmpField,i+1,j+1);
+    }
+    
+
+}
+
+int Field::calculate3BV() {
+
+    int tmpField[MAX_WIDTH][MAX_HEIGHT];    // 0=0, 1=other number, 2=mine, 3=processed
+
+    int tmp3BV=0;
+
+
+    // temp zero all
+
+    for (int i=0;i<width;i++) 
+        for (int j=0;j<height;j++) 
+            tmpField[i][j]=0;
+
+
+    // mark "numbers" as 1
+
+    for (int i=0;i<width;i++) 
+        for (int j=0;j<height;j++) 
+            if (mine[i][j]) {
+                
+                if (i>0) {
+                    if (j>0) tmpField[i-1][j-1]=1;
+                    tmpField[i-1][j]=1;
+                    if (j<height-1) tmpField[i-1][j+1]=1;
+                }
+                
+                if (j>0) tmpField[i][j-1]=1;
+                if (j<height-1) tmpField[i][j+1]=1;
+            
+                if (i<width-1) {
+                    if (j>0) tmpField[i+1][j-1]=1;
+                    tmpField[i+1][j]=1;
+                    if (j<height-1) tmpField[i+1][j+1]=1;
+                }
+            }
+
+    // mark mines as 2
+
+    for (int i=0;i<width;i++) 
+        for (int j=0;j<height;j++) 
+            if (mine[i][j]) 
+                tmpField[i][j]=2;
+
+/*
+    // debug output
+
+    for (int j=0;j<height;j++) {
+        for (int i=0;i<width;i++)
+            cout << tmpField[i][j] << " ";
+        cout << endl;
+    }*/
+
+    // count
+
+    for (int i=0;i<width;i++) 
+        for (int j=0;j<height;j++) 
+            if (tmpField[i][j]==0) {
+                tmp3BV++;
+                tmpField[i][j]=3;
+
+                floodFillMark(tmpField,i,j);
+            }
+    /*
+    // debug output
+
+    for (int j=0;j<height;j++) {
+        for (int i=0;i<width;i++)
+            cout << tmpField[i][j] << " ";
+        cout << endl;
+    }*/
+
+    // count
+
+    for (int i=0;i<width;i++) 
+        for (int j=0;j<height;j++) 
+            if (tmpField[i][j]==1)
+                tmp3BV++;
+    
+
+   // cout << "3bv==" << tmp3BV << endl;
+
+    return tmp3BV;
+
+}
+
+int Field::get3BV() {
+    if (val3BV==0)
+        val3BV=calculate3BV();
+
+    return val3BV;
+
+}
 
 
 void Field::checkValues() {
@@ -62,10 +189,14 @@ void Field::checkValues() {
 
 bool Field::isMine(int x, int y) {
 
-    if (x>0 && x>=width) 
+    if (x<0 || x>=width) {
         cerr << "x=="<<x<<" out of bounds"<<endl;
-    else if (y<0 && y>=height)
+        exit(1);
+    }
+    else if (y<0 || y>=height) {
         cerr << "y=="<<y<<" out of bounds"<<endl;
+        exit(1);
+    }
     else
         return mine[x][y];
 
@@ -96,7 +227,12 @@ void Field::placeMines(int firstClickX, int firstClickY) {
         else
             mine[x][y]=true;
     }
+
+   // calculate3BV();
+    val3BV=0;
+
     redisplay();
+
   //  cout << "Mines placed." << endl;
 
 
@@ -106,7 +242,7 @@ void Field::init() {
     
 
     for (int i=0;i<width;i++) {
-        for (int j=0;j<width;j++) {
+        for (int j=0;j<height;j++) {
             state[i][j]=9;
         }
     }
@@ -116,6 +252,9 @@ void Field::init() {
     timer.reset();
 
     gamePaused=false;
+
+    effectiveClicks=0;
+    ineffectiveClicks=0;
 
     cout << endl;   // empty line in terminal between games
 
@@ -158,13 +297,12 @@ void Field::revealSquare(int squareX, int squareY) {
             hitMineY=squareY;
             timer.stop();
             replay.stopRecording();
+            gameState=GAME_LOST;
             if (!playReplay) {
-                cout << "YOU HIT A MINE. You played for "<<timer.calculateElapsedTime()
-                    <<" milliseconds." << endl;
-                saveReplay("last.replay",&replay);
+                endGameLost();
             }
             
-            gameState=GAME_LOST;
+
         }
         else {
 
@@ -204,38 +342,8 @@ void Field::revealSquare(int squareX, int squareY) {
                             notFinished=true;
 
                 if (!notFinished) {
-                    gameState=GAME_WON;
-                    timer.stop();
-                    replay.stopRecording();
-                    
-                    
-
-                    if (!playReplay) {
-                        cout << "YOU WIN! It took you "<<timer.calculateElapsedTime()
-                            <<" milliseconds." << endl;
-                        
-                        cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
-
-                        char fname[100];
-                        sprintf(fname,"%i-%i-%i%s.hiscore",width,height,mineCount,isFlagging?"":"-nf");
-                        
-                        char rfname[100];
-                        long ts=time(NULL);
-                        sprintf(rfname,"%lu.replay",ts);
-                        
-                        
-                        if (hiScoreTestAndWrite(fname,playerName,timer.calculateElapsedTime(),
-                            ts,rfname)) {
-            
-                            saveReplay(rfname,&replay);
-                        }
-
-                        saveReplay("last.replay",&replay);
-                        
-                    }
-
-
-                    
+                   // redisplay();
+                    endGameWon();
                 }    
             }
     
@@ -243,7 +351,7 @@ void Field::revealSquare(int squareX, int squareY) {
     } 
 }
 
-void Field::checkAndRevealAround(int squareX,int squareY) {
+bool Field::adjacentMinesFlagged(int squareX,int squareY) {
     // count adjacent mines and possibly reveal adjacent squares
 
     int flaggedAdjacentMines=0;
@@ -262,9 +370,11 @@ void Field::checkAndRevealAround(int squareX,int squareY) {
         flaggedAdjacentMines+=state[squareX+1][squareY]==10?1:0;
         if (squareY<height) flaggedAdjacentMines+=state[squareX+1][squareY+1]==10?1:0;
     }
-    if (flaggedAdjacentMines==state[squareX][squareY]) {
-        revealAround(squareX,squareY);
-    }
+
+    if (flaggedAdjacentMines==state[squareX][squareY]) 
+        return true;
+    else
+        return false;
 }
 
 int Field::calculateRemainingMines() {
@@ -279,6 +389,10 @@ int Field::calculateRemainingMines() {
     return remaining;
 }
 
+void Field::viewClicks() {
+    cout << "Clicks: "<<effectiveClicks<<" / "<<ineffectiveClicks<<endl;
+}
+
 
 void Field::click(int x,int y,int button) {
 
@@ -287,7 +401,7 @@ void Field::click(int x,int y,int button) {
     
     if (button==GLUT_LEFT_BUTTON) {
         
-        if (state[squareX][squareY]==9) {
+        if (state[squareX][squareY]==9) {   // unrevealed
             if (gameState==GAME_INITIALIZED) {
                 if (!playReplay)
                     placeMines(squareX,squareY);
@@ -296,20 +410,38 @@ void Field::click(int x,int y,int button) {
 
                 timer.start();
                 gameState=GAME_PLAYING;
+                
 
                 if (!replay.isRecording()) {
                     replay.deleteData();
                     replay.startRecording();
                 }                                
             }
+            effectiveClicks++;
+            viewClicks();
             replay.recordEvent(x,y,GLUT_LEFT_BUTTON);
             revealSquare(squareX,squareY);
+            
         }
-        else if (state[squareX][squareY]<=8) {
+        else if (state[squareX][squareY]<=8) {  // number
             replay.recordEvent(x,y,GLUT_LEFT_BUTTON);
-            checkAndRevealAround(squareX,squareY);
+        
+            if (state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY)) {
+                effectiveClicks++;
+                viewClicks();
+                revealAround(squareX,squareY);
+                
+            }
+            else {
+                ineffectiveClicks++;
+                viewClicks();
+            }
         }
-
+        else {  // flag?
+            replay.recordEvent(x,y,GLUT_LEFT_BUTTON);
+            ineffectiveClicks++; 
+            viewClicks();
+        }
         
     }
     else if (button==GLUT_RIGHT_BUTTON) {
@@ -321,27 +453,58 @@ void Field::click(int x,int y,int button) {
 
         replay.recordEvent(x,y,GLUT_RIGHT_BUTTON);
         // toggle flag or check and reveal surrounding squares
-        if (state[squareX][squareY]==9) {
+        if (state[squareX][squareY]==9) {   // unrevealed
             state[squareX][squareY]=10;
             if (!isFlagging and !playReplay)
                 cout<<"You are now playing with flagging."<<endl;
 
             isFlagging=true;
    //         cout << "Remaining mines: " << calculateRemainingMines() << endl;
+
+            effectiveClicks++;
+            viewClicks();
         }
-        else if (state[squareX][squareY]==10) {
+        else if (state[squareX][squareY]==10) { // flag
+            effectiveClicks++;
+            viewClicks();
             state[squareX][squareY]=9;
    //         cout << "Remaining mines: " << calculateRemainingMines() << endl;
         }
-        else {
-            checkAndRevealAround(squareX,squareY);
+        else {  // number
+            if (state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY)) {
+                effectiveClicks++;
+                viewClicks();
+                revealAround(squareX,squareY);
+                
+            }
+            else {
+                ineffectiveClicks++;
+                viewClicks();
+            }
         }
             
         
     }
-    else if (button==GLUT_MIDDLE_BUTTON and state[squareX][squareY]<=8) {
-        replay.recordEvent(x,y,GLUT_MIDDLE_BUTTON);
-        checkAndRevealAround(squareX,squareY);
+    else if (button==GLUT_MIDDLE_BUTTON) {
+        if (state[squareX][squareY]<=8) {  // number      
+            replay.recordEvent(x,y,GLUT_MIDDLE_BUTTON);
+            
+            if (state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY)) {
+                effectiveClicks++;
+                revealAround(squareX,squareY);
+            }
+            else {
+                ineffectiveClicks++;
+            }
+            viewClicks();   
+        }
+        else {
+            ineffectiveClicks++;
+            viewClicks();   
+
+        }
     }
+
+    
 
 }

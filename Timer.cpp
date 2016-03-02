@@ -1,6 +1,5 @@
 
-#include <stdlib.h>
-#include <sys/time.h>
+
 #include "Timer.h"
 #include "common.h"
 
@@ -103,4 +102,5 @@ void Timer::pause() {
 void Timer::unpause() {
     totalTimePaused+=calculateTimeSinceStart()-pausedSince;
 }
+
 

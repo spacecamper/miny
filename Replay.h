@@ -1,3 +1,9 @@
+#include <list>
+#include <fstream>
+
+#include <iostream>
+#include <iomanip>
+
 
 using namespace std;
 
@@ -64,3 +70,4 @@ public:
     unsigned int playStep();
 
 };
+

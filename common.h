@@ -11,3 +11,10 @@
 #define DISPLAY_BORDER_WIDTH 4
 #define FIELD_X 10
 #define FIELD_Y 48
+
+
+#define MAX_HS 20
+#define SCORE_FILE_VERSION 5
+
+
+void ordinalNumberSuffix(char *, int);

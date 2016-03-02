@@ -1,4 +1,7 @@
 
+#include <stdlib.h>
+#include <sys/time.h>
+
 class Timer {
 public:
 
