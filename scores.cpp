@@ -420,7 +420,6 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
        // displayScores(scoresNF, countNF, MAX_HS);
         for (posNF=0;posNF<countNF;posNF++) {
             if (compareFunc((const void*) &s,(const void*) &scoresNF[posNF])<0) {
-                free(scoresNF);
                 break;
             }
         }
