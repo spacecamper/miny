@@ -1236,7 +1236,7 @@ strcpy(highScoreDir,getenv("HOME"));
 
                 cout << setw(16)<<left<<"Difficulty: ";
                 switch (difficulty) {
-                case 0: cout << "all"<<endl; break;
+                case 0: cout << "beginner, intermediate, expert"<<endl; break;
                 case 1: cout << "beginner only"<<endl; break;
                 case 2: cout << "intermediate only"<<endl; break;
                 case 3: cout << "expert only"<<endl; break;
