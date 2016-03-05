@@ -338,7 +338,7 @@ void Field::revealSquare(int squareX, int squareY) {
 
                 for (int i=0;i<width;i++) 
                     for (int j=0;j<height;j++) 
-                        if (state[i][j]==9 and not mine[i][j])
+                        if ((state[i][j]==9 or state[i][j]==10) and not mine[i][j])
                             notFinished=true;
 
                 if (!notFinished) {
@@ -391,6 +391,13 @@ int Field::calculateRemainingMines() {
 
 void Field::viewClicks() {
     cout << "Clicks: "<<effectiveClicks<<" / "<<ineffectiveClicks<<endl;
+
+    return;
+
+    float progress=getGameProgress();
+    
+    if (progress==0) return;
+    cout << "Est.:   "<<(int)(effectiveClicks/progress)<<" / "<<(int)(ineffectiveClicks/progress)<< " Time: " << (int)(timer.calculateElapsedTime()/progress)<<"  "<<(int)(progress*100)<<"%"<<endl;
 }
 
 
@@ -506,5 +513,23 @@ void Field::click(int x,int y,int button) {
     }
 
     
+
+}
+
+
+
+float Field::getGameProgress() {
+
+    int count=0;
+
+    for (int x=0;x<width;x++)
+        for (int y=0;y<height;y++)
+            if (state[x][y]<=8)
+                count++;
+
+    if (count==0) return 0;
+
+    //cout<<count<<endl;
+    return (float)count/(width*height-mineCount);
 
 }
