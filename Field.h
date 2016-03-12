@@ -43,4 +43,6 @@ public:
     int get3BV();
 
     void viewClicks();
+    
+    float getGameProgress();
 };
