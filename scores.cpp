@@ -164,14 +164,14 @@ void displayScores(Score *scores, int count,int limit) {
 
     cout << endl<<"     " << setw(maxlen+1) << left << "Name"
         <<setw(9)<<right<< "Time"
-        <<"   "<<setw(6)<<right<< "3BV/s"
+        <<"  "<<setw(6)<<right<< "3BV/s"
         <<"  "<<setw(4)<<right<< "3BV"
         <<"  "<<setw(6)<<right<< "IOE"
-        <<"   "<<setw(3)<<right<< "Fla"
-        <<"   "<<setw(3)<<right<< "Fin"
-        <<"   "<<setw(3)<<right<< "Dif"
-        <<"   "<<setw(19)<<left<< "Date"
-        <<"    "<<setw(6)<<left<< "Replay"<<endl<<endl;
+        <<"  "<<setw(3)<<right<< "Fla"
+        <<"  "<<setw(3)<<right<< "Fin"
+        <<"  "<<setw(3)<<right<< "Dif"
+        <<"  "<<setw(19)<<left<< "Date"
+        <<"  "<<setw(6)<<left<< "Replay"<<endl<<endl;
 
 
    
@@ -247,28 +247,28 @@ void displayScores(Score *scores, int count,int limit) {
         if (scores[i].val3BV==0)
             cout <<"  "<<setw(4)<<right<< setfill(' ')<< ".";
         else
-            cout <<"  "<<setw(4)<<right<< setfill(' ')<< scores[i].val3BV;
+            cout <<" "<<setw(4)<<right<< setfill(' ')<< scores[i].val3BV;
         
         cout <<"  "<<setw(6)<<right<< setfill(' ')<< scores[i].getIOE();
         
-        cout <<"   "<<setw(3)<<right<< (scores[i].flagging?"yes":"no");
-        cout <<"   "<<setw(3)<<right<< (scores[i].gameWon?"yes":"no");
+        cout <<"  "<<setw(3)<<right<< (scores[i].flagging?"yes":"no");
+        cout <<"  "<<setw(3)<<right<< (scores[i].gameWon?"yes":"no");
 
         if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
-            cout  <<"   "<< "beg";
+            cout  <<"  "<< "beg";
         else if (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
-            cout  <<"   "<< "int";
+            cout  <<"  "<< "int";
         else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
-            cout  <<"   "<< "exp";
+            cout  <<"  "<< "exp";
         else
-            cout  <<"   "<< "oth";
+            cout  <<"  "<< "oth";
 
-        cout  << "   " << setw(19) << left << dateString;
+        cout  << "  " << setw(19) << left << dateString;
 
         if (scores[i].replayNumber!=0)
-            cout<< "    " << scores[i].replayNumber;
+            cout<< "  " << scores[i].replayNumber;
         else
-            cout<< "    " << ".";
+            cout<< "  " << ".";
         cout << endl;
         
     }
@@ -358,6 +358,8 @@ int loadScores(char *fname, Score **scores) {
 
 void appendScore(char *fname, Score score) {
 
+    cout << "Opening score file... "<<flush;
+    
     std::ifstream inFile(fname); 
 
     if (inFile.is_open()) {
@@ -371,7 +373,7 @@ void appendScore(char *fname, Score score) {
         }  
         inFile.close();
         std::ofstream outFile(fname,ios_base::app); 
-        cout << "Writing...";
+        cout << "Writing..."<<flush;
     //    outFile.write((const char *) &score, sizeof(Score));
         score.writeToFile(&outFile);
         cout << "done."<<endl;

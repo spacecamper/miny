@@ -222,7 +222,7 @@ void Field::placeMines(int firstClickX, int firstClickY) {
     for (int i=0;i<mineCount;i++) {
         int x=rand()%width;
         int y=rand()%height;
-        if (mine[x][y] or (abs(firstClickX-x)<=0 and abs(firstClickY-y)<=0))
+        if (mine[x][y] or (firstClickX==x and firstClickY==y))
             i--;
         else
             mine[x][y]=true;

@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.1"
+#define VERSION "0.5.2"
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
 //   events
@@ -132,7 +132,7 @@ void saveReplay(char *fname, Replay *r) {
     char fullpath[100];
     strcpy(fullpath,highScoreDir);
     strcat(fullpath,fname);
-    cout << "Writing replay file " << fullpath <<"...";
+    cout << "Writing replay file " << fullpath <<"..."<<flush;
 
     ofile.open (fullpath);
 
@@ -781,6 +781,7 @@ void endGameWon() {
 
         // find the lowest unused replay file number
 
+        cout << "Finding lowest unused replay number..."<<endl;
 
         while (true) {
     
@@ -845,6 +846,7 @@ void keyDown(unsigned char key, int x, int y) {
     case 'd':
         cout << sizeof(Score)<<endl;
         break;
+
     case 'q':
     case 27:    // escape
         exit(0);
