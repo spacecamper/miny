@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.2"
+#define VERSION "0.5.3"
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
 //   events
@@ -74,23 +74,7 @@ Field field;
 void endGameWon();
 
 
-void ordinalNumberSuffix(char *suffix, int n) {
 
-    int rem100=n%100;
-
-    if (rem100==11 or rem100==12 or rem100==13) {
-        strcpy(suffix,"th");
-        return;
-    }
-
-    switch(n%10) {
-    case 1: strcpy(suffix,"st"); break;
-    case 2: strcpy(suffix,"nd"); break;
-    case 3: strcpy(suffix,"rd"); break;
-    default: strcpy(suffix,"th"); break;
-    }
-    
-}
 
 
 
@@ -772,7 +756,7 @@ void endGameWon() {
 
      //   cout << "loaded scores"<<endl;
 
-        evalScore(newScore,scores, count,difficulty);
+        evalScore(newScore,scores, count,difficulty/*,true*/);
 
 
     //    cout << "here1"<<endl;
@@ -783,6 +767,9 @@ void endGameWon() {
 
         cout << "Finding lowest unused replay number..."<<endl;
 
+        struct stat buffer;   
+
+
         while (true) {
     
             char tmp[100];
@@ -790,11 +777,22 @@ void endGameWon() {
             sprintf(rfname,"%lu.replay",nr);
 
             strcat(tmp,rfname);
+
+          //  cout << "Testing "<<tmp<<endl;
+            
+            if (stat(tmp, &buffer) != 0)
+                break;
+            nr++;
+
+
+/*
           //  cout << "Testing "<<tmp<<endl;
             ifstream testFile(tmp);
             if (!testFile)
                 break;
             nr++;
+
+*/
         }
 
         newScore.replayNumber=nr;
@@ -1072,7 +1070,7 @@ strcpy(highScoreDir,getenv("HOME"));
 
 
 
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:c:g:il:")) != -1)
+    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:c:g:il:a")) != -1)
         switch (option_char) {  
             case 'd': {
                 difficulty=atoi(optarg);
@@ -1137,6 +1135,9 @@ strcpy(highScoreDir,getenv("HOME"));
                 }
                 cout << field.get3BV() << endl;
                 exit(0);
+                break;
+            case 'a':
+//                viewAllRanks=true;
                 break;
             case '?':
                 //cerr << "Unknown option: -" << optopt << endl;

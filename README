@@ -22,7 +22,6 @@ TO DO
  - set window class to use with some window managers
  - redisplay the field at the end of the game before writing replay (i.e.
    remove the delay)
- - truncate lines in score output to prevent wrapping
  - prevent buffer overflows
 
 
@@ -32,8 +31,6 @@ COMPILING AND PLAYING
  Ubuntu try the package freeglut3-dev.
 
  To play run './miny [options]'. For best results run from terminal.
-
- If lines are wrapped in score output, maximize your terminal.
 
  While playing, you can see how many effective / ineffective clicks you have
  made.
@@ -100,7 +97,7 @@ EXAMPLES
 
  ./miny -w10 -h10 -m10      # start game with the specified parameters
 
- ./miny -t		    # list best times for beg, int and exp combined
+ ./miny -t                  # list best times for beg, int and exp combined
 
  ./miny -d2 -t              # list best times for intermediate
 

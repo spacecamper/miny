@@ -143,27 +143,65 @@ int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fi
 }
 
 
+unsigned int intLength(int n)
+{    
+   // cout << "length("<<n<<")==";
 
+    int length=0;
+    while(n!=0) {        
+        n=n/10;
+        length++;
+    }
+
+   // cout<<length<<endl;
+
+    return length;
+}
 
 void displayScores(Score *scores, int count,int limit) {
 
 
- //   cout << pname << endl;
 
 
-    // TODO stop line wrapping
+    int outputCount;
+
+    
+    if (limit==0)
+        outputCount=count;
+    else
+        if (limit<count)
+            outputCount=limit;
+        else
+            outputCount=count;
 
 
-    unsigned int maxlen=0;
+    int tw=terminalWidth();
 
-    for (int i=0;i<count;i++)
-        if (strlen(scores[i].name)>maxlen)
-            maxlen=strlen(scores[i].name);
 
-    if (maxlen<4) maxlen=4;
+    unsigned int maxRankLen=intLength(outputCount);
+    unsigned int maxNameLen=0;
+    unsigned int maxTimeLen=0;
 
-    cout << endl<<"     " << setw(maxlen+1) << left << "Name"
-        <<setw(9)<<right<< "Time"
+    for (int i=0;i<outputCount;i++) {
+        if (strlen(scores[i].name)>maxNameLen)
+            maxNameLen=strlen(scores[i].name);
+        int currentTimeLen=intLength(scores[i].time);
+        if (currentTimeLen>maxTimeLen) 
+            maxTimeLen=currentTimeLen;
+
+    }
+
+    if (maxNameLen<4) maxNameLen=4;
+    if (maxTimeLen<4) maxTimeLen=4;
+
+    
+
+    bool truncated=false;
+
+    ostringstream headerLine;
+
+    headerLine << endl << setw(maxRankLen+7) << right << "Name"
+        <<setw(maxTimeLen+maxNameLen-2)<<right<< "Time"
         <<"  "<<setw(6)<<right<< "3BV/s"
         <<"  "<<setw(4)<<right<< "3BV"
         <<"  "<<setw(6)<<right<< "IOE"
@@ -171,39 +209,25 @@ void displayScores(Score *scores, int count,int limit) {
         <<"  "<<setw(3)<<right<< "Fin"
         <<"  "<<setw(3)<<right<< "Dif"
         <<"  "<<setw(19)<<left<< "Date"
-        <<"  "<<setw(6)<<left<< "Replay"<<endl<<endl;
+        <<"  "<<left<< "Rep";
 
 
-   
+    // output table header
 
-    
-  //  cout << count << " "<<countFiltered<< " " <<limit<<endl;
-    int min;
+    if (outputLine(headerLine.str(),tw+1)) {  // it should be just tw, not tw+1, but that way it 
+                                              // truncates the first row to 1 char shorter, this fixes
+                                              // it
+        truncated=true;
+    }
 
-    min=count;
-
-
-    int outputCount;//=((limit==0)?min:limit);
-
-
-    if (limit==0)
-        outputCount=min;
-    else
-        if (limit<min)
-            outputCount=limit;
-        else
-            outputCount=min;
+    cout<<endl;
 
 
-    
-        
+    // table rows
 
     for (int i=0;i<outputCount;i++) {        
-            
-        // TODO add something to select/display/format columns
-
-
-
+                
+        ostringstream currentLine;
 
         string dateString;
         if (scores[i].timeStamp==0) {
@@ -232,48 +256,53 @@ void displayScores(Score *scores, int count,int limit) {
         
         float val3BVs=scores[i].get3BVs();//(float)1000*scores[i].val3BV/scores[i].time;
 
-        cout << " " << setw(2) << setfill(' ') << right << i+1
-            << "  " << setw(maxlen+1) << left << scores[i].name
-            << setw(9) << right << scores[i].time;
+        currentLine << " " << setw(maxRankLen) << setfill(' ') << right << i+1
+            << "  " << setw(maxNameLen+1) << left << scores[i].name
+            << setw(maxTimeLen+1) << right << scores[i].time;
              
-        cout <<fixed;
+        currentLine <<fixed;
 
         if (val3BVs==0)
-            cout <<"   "<<setw(6)<< setprecision(4)<<right<<".";
+            currentLine <<"   "<<setw(6)<< setprecision(4)<<right<<".";
         else
-            cout <<"   "<<setw(6)<< setprecision(4)<<right<<val3BVs;
+            currentLine <<"   "<<setw(6)<< setprecision(4)<<right<<val3BVs;
 
 
         if (scores[i].val3BV==0)
-            cout <<"  "<<setw(4)<<right<< setfill(' ')<< ".";
+            currentLine <<"  "<<setw(4)<<right<< setfill(' ')<< ".";
         else
-            cout <<" "<<setw(4)<<right<< setfill(' ')<< scores[i].val3BV;
+            currentLine <<" "<<setw(4)<<right<< setfill(' ')<< scores[i].val3BV;
         
-        cout <<"  "<<setw(6)<<right<< setfill(' ')<< scores[i].getIOE();
+        currentLine <<"  "<<setw(6)<<right<< setfill(' ')<< scores[i].getIOE();
         
-        cout <<"  "<<setw(3)<<right<< (scores[i].flagging?"yes":"no");
-        cout <<"  "<<setw(3)<<right<< (scores[i].gameWon?"yes":"no");
+        currentLine <<"  "<<setw(3)<<right<< (scores[i].flagging?"yes":"no");
+        currentLine <<"  "<<setw(3)<<right<< (scores[i].gameWon?"yes":"no");
 
         if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
-            cout  <<"  "<< "beg";
+            currentLine  <<"  "<< "beg";
         else if (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
-            cout  <<"  "<< "int";
+            currentLine  <<"  "<< "int";
         else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
-            cout  <<"  "<< "exp";
+            currentLine  <<"  "<< "exp";
         else
-            cout  <<"  "<< "oth";
+            currentLine  <<"  "<< "oth";
 
-        cout  << "  " << setw(19) << left << dateString;
+        currentLine  << "  " << setw(19) << left << dateString;
 
         if (scores[i].replayNumber!=0)
-            cout<< "  " << scores[i].replayNumber;
+            currentLine<< "  " << scores[i].replayNumber;
         else
-            cout<< "  " << ".";
-        cout << endl;
-        
+            currentLine<< "  " << ".";
+
+        if (outputLine(currentLine.str(),tw))
+            truncated=true;
+
+
     }
 
 
+    if (truncated)
+        cout <<endl<< "Lines truncated. To see the full output resize this terminal."<<endl;
 }
 
 
@@ -396,7 +425,7 @@ void appendScore(char *fname, Score score) {
 
 
 
-bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *)) {
+bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int anyRank=0) {
 
     qsort(scoresAll,countAll,sizeof(Score),compareFunc);
  //   displayScores(scoresFiltered, countFiltered, MAX_HS);
@@ -431,8 +460,9 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
         posNF=MAX_HS+1;
 
 
-    
-    if (posAll<MAX_HS and posNF<MAX_HS) {
+    // TODO don't display NF ranking if flagging
+
+    if (anyRank or (posAll<MAX_HS and posNF<MAX_HS)) {
         ordinalNumberSuffix(suffixAll,posAll+1);
         ordinalNumberSuffix(suffixNF,posNF+1);
         *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll
@@ -454,7 +484,9 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
 
 }
 
-void evalScore(Score s, Score *scores, int count,int difficulty) {
+void evalScore(Score s, Score *scores, int count,int difficulty,bool anyRank) {
+
+    // anyRank = display how score ranks even if it ranks below MAX_HS
 
     if (difficulty!=1 and difficulty!=2 and difficulty!=3)
         return;
@@ -466,7 +498,7 @@ void evalScore(Score s, Score *scores, int count,int difficulty) {
 
     // only won games from the current difficulty
     int countFiltered=filterScores(scores, count,&scoresFiltered,0,1,difficulty,0,&zero); 
-    
+     
 
 
     
@@ -478,20 +510,25 @@ void evalScore(Score s, Score *scores, int count,int difficulty) {
 
     // TIME
 
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"Time",compareByTime);
+    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"Time",compareByTime,anyRank);
         
 
     // 3BV/s
 
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"3BV/s",compareBy3BVs);
+    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"3BV/s",compareBy3BVs,anyRank);
 
     // IOE
 
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"IOE",compareByIOE);
+    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"IOE",compareByIOE,anyRank);
 
 
     if (scoreString.str().length()!=0) {
-        cout << "High score reached (";
+
+        if (anyRank)
+            cout << "Your score ranks as (out of "<<countFiltered<<" ";
+        else 
+            cout << "High score reached (";
+
         switch(difficulty) {
         case 1:
             cout<<"Beginner";
@@ -501,9 +538,15 @@ void evalScore(Score s, Score *scores, int count,int difficulty) {
             break;
         case 3:
             cout<<"Expert";
-            break;
+            break; 
         }
-        cout <<" top "<<MAX_HS<<"): "<<endl<<scoreString.str();
+
+        if (anyRank)
+            cout << " scores";
+        else            
+            cout <<" top "<<MAX_HS;
+
+        cout << "): "<<endl<<scoreString.str();
     }
     else {
         cout << "You didn't get a high score."<<endl;
@@ -514,3 +557,9 @@ void evalScore(Score s, Score *scores, int count,int difficulty) {
     free(scoresFiltered);
 
 }
+
+void evalScore(Score s, Score *scores, int count, int difficulty) {
+
+    evalScore(s, scores, count, difficulty,0);
+}
+

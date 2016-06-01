@@ -64,5 +64,7 @@ void appendScore(char *fname, Score score);
 
 void evalScore(Score s, Score *scores, int count, int difficulty);
 
+void evalScore(Score s, Score *scores, int count, int difficulty, bool anyRank);
+
 #endif
 

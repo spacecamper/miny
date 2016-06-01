@@ -1,3 +1,16 @@
+#ifndef COMMON_H
+#define COMMON_H
+
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <iostream>
+#include <sys/ioctl.h>
+
+#include <unistd.h>
+
+using namespace std;
+
 #define GAME_INITIALIZED -1
 #define GAME_PLAYING 0
 #define GAME_LOST 1
@@ -18,3 +31,11 @@
 
 
 void ordinalNumberSuffix(char *, int);
+
+
+unsigned int terminalWidth();
+
+bool outputLine(string,int);
+
+#endif
+
