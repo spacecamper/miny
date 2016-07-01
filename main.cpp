@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.3"
+#define VERSION "0.5.4"
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
 //   events
@@ -166,6 +166,7 @@ int loadReplay(char *fname, Replay *r) {
 
 // ----------------------- GRAPHICS -------------------- //
 
+
 float mySin(float v) {
     return sin(v/ 180 * 3.141592654f);
 }
@@ -180,7 +181,7 @@ float myTan(float v) {
 }
 
 
-
+ 
 
 void drawRect(float x, float y, float w, float h) {
 
@@ -687,6 +688,113 @@ void endGameLost() {
 }
 
 
+bool replayFileNumberExists(long nr) {
+
+
+        struct stat buffer;  
+char rfname[100];
+        
+    char tmp[100];
+    strcpy(tmp,highScoreDir);
+    sprintf(rfname,"%lu.replay",nr);
+
+    strcat(tmp,rfname);
+    
+    if (stat(tmp, &buffer) != 0)
+        return false;
+
+
+    return true;
+
+
+    
+
+}
+
+
+
+long findLowestUnusedReplayNumber() {
+
+    // improved algorithm
+
+
+    long lower=1;
+    
+    long upper=1;
+    
+
+
+    // lower exists
+    // upper doesn't exist
+
+
+    while (true) {
+    //    cout << "Testing "<<upper<<endl;
+
+        if (!replayFileNumberExists(upper)) break;
+
+        lower=upper;
+        upper*=2;
+
+
+    }
+
+    long middle=0;
+
+
+
+    // binary search
+
+    while (lower<upper-1) {
+
+        long oldMiddle=middle;
+        middle=(lower+upper)/2;
+        if (oldMiddle==middle) {
+            cout << "oldMiddle==middle";
+            break;
+        }
+
+
+      //  cout << "Lower=" << lower << " upper=" << upper << endl;        
+    
+    //    cout << "Testing "<<middle<<endl;
+
+        if (replayFileNumberExists(middle))
+            lower=middle;
+        else
+            upper=middle;
+    }
+
+
+    return upper;
+
+
+
+}
+
+
+
+long findLowestUnusedReplayNumber_old() {
+
+
+    // linear search
+
+    long nr=1;
+
+
+    while (true) {
+
+        if (!replayFileNumberExists(nr))
+            break;
+
+        nr++;
+
+    }
+
+
+    return nr;
+}
+
 
 
 void endGameWon() {
@@ -708,7 +816,6 @@ void endGameWon() {
         sprintf(fname,"%i-%i-%i.times",field.width,field.height,field.mineCount);
         */
 
-        char rfname[100];
         long ts=time(NULL);
 
         long nr=1;
@@ -766,42 +873,33 @@ void endGameWon() {
         // find the lowest unused replay file number
 
         cout << "Finding lowest unused replay number..."<<endl;
+ 
 
-        struct stat buffer;   
+        nr=findLowestUnusedReplayNumber();
 
-
-        while (true) {
-    
-            char tmp[100];
-            strcpy(tmp,highScoreDir);
-            sprintf(rfname,"%lu.replay",nr);
-
-            strcat(tmp,rfname);
-
-          //  cout << "Testing "<<tmp<<endl;
             
-            if (stat(tmp, &buffer) != 0)
-                break;
-            nr++;
+
+    //    cout << "Lowest unused == " << nr << endl;        
+        
 
 
-/*
-          //  cout << "Testing "<<tmp<<endl;
-            ifstream testFile(tmp);
-            if (!testFile)
-                break;
-            nr++;
-
-*/
-        }
 
         newScore.replayNumber=nr;
         appendScore(fullpath,newScore);
 
 
+        char rfname[100];
+
+        char tmp[100];
+        strcpy(tmp,highScoreDir);
+        sprintf(rfname,"%lu.replay",nr);
+
+
         saveReplay(rfname,&replay);
 
+
    //     cout << "About to save replay."<<endl;
+
 
         saveReplay("last.replay",&replay);
     //    cout << "Done saving replay."<<endl;

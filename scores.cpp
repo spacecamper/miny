@@ -200,7 +200,7 @@ void displayScores(Score *scores, int count,int limit) {
 
     ostringstream headerLine;
 
-    headerLine << endl << setw(maxRankLen+7) << right << "Name"
+    headerLine << endl << setw(maxRankLen+6) << right << "Name"
         <<setw(maxTimeLen+maxNameLen-2)<<right<< "Time"
         <<"  "<<setw(6)<<right<< "3BV/s"
         <<"  "<<setw(4)<<right<< "3BV"
@@ -256,7 +256,7 @@ void displayScores(Score *scores, int count,int limit) {
         
         float val3BVs=scores[i].get3BVs();//(float)1000*scores[i].val3BV/scores[i].time;
 
-        currentLine << " " << setw(maxRankLen) << setfill(' ') << right << i+1
+        currentLine << setw(maxRankLen) << setfill(' ') << right << i+1
             << "  " << setw(maxNameLen+1) << left << scores[i].name
             << setw(maxTimeLen+1) << right << scores[i].time;
              
