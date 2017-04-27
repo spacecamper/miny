@@ -1,7 +1,7 @@
 /*
  * Miny
  * a minesweeper clone
- * (c) 2015-2016 spacecamper
+ * (c) 2015-2017 spacecamper
  */
 
 #include <stdlib.h>
@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.4"
+#define VERSION "0.5.5"
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
 //   events
@@ -60,7 +60,7 @@ bool gamePaused;
 
 bool playReplay;
 
-int difficulty;   // 0-unspecified 1-beg 2-int 3-exp
+int difficulty;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
     
 
 Timer timer;
@@ -404,8 +404,19 @@ void drawScene() {
             16*3+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
 
+
+
     
-    
+    // new game button
+
+    glColor3f(1,1,0);
+    drawRect(originalWidth/2-12-DISPLAY_BORDER_WIDTH/2,
+            BORDER_WIDTH,
+            24+DISPLAY_BORDER_WIDTH,
+            24+DISPLAY_BORDER_WIDTH);
+
+
+
 
     if (gamePaused) {    // hide field when game is paused
 
@@ -715,21 +726,12 @@ char rfname[100];
 
 long findLowestUnusedReplayNumber() {
 
-    // improved algorithm
-
 
     long lower=1;
     
     long upper=1;
     
-
-
-    // lower exists
-    // upper doesn't exist
-
-
     while (true) {
-    //    cout << "Testing "<<upper<<endl;
 
         if (!replayFileNumberExists(upper)) break;
 
@@ -754,10 +756,6 @@ long findLowestUnusedReplayNumber() {
             break;
         }
 
-
-      //  cout << "Lower=" << lower << " upper=" << upper << endl;        
-    
-    //    cout << "Testing "<<middle<<endl;
 
         if (replayFileNumberExists(middle))
             lower=middle;
@@ -972,6 +970,10 @@ void mouseClick(int button, int mState, int x, int y) {
                 }
             }
 
+            else if (x>originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 && x<originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 &&
+                     y>BORDER_WIDTH && y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH)
+                field.init();
+
             glutPostRedisplay();
         }
         else if (!(x>FIELD_X and x<FIELD_X+field.width*squareSize 
@@ -1089,8 +1091,6 @@ void initGraphR() {
     glutDisplayFunc(drawScene);
     glutKeyboardFunc(keyDown);
     glutReshapeFunc(handleResize);
- //   glutMouseFunc(mouseClick);
-  //  glutPassiveMotionFunc(mouseMove);
 
 }
 
@@ -1103,44 +1103,7 @@ int main(int argc, char** argv) {
 
     glutInit(&argc, argv);
 
-  //  Score *testarray=new Score[10000000000];
 
-
-//    cout << "size="<<sizeof(int)<<endl;
-
-/*
-//debug
-
-    difficulty=3;   // 0-unspecified 1-beg 2-int 3-exp
-    
-    Score s;
-    s.flagging=false;
-
-    s.time=10000;
-    s.val3BV=90;
-
-strcpy(highScoreDir,getenv("HOME"));
-    strcat(highScoreDir,"/.miny/");
-
-
-    char fullpath[100];
-    strcpy(fullpath,highScoreDir);
-    strcat(fullpath,"scores.dat");
-
-    Score *scores;
-
- //   cout << "about to load scores"<<endl;
-
-    int count=loadScores(fullpath,&scores);
-
- //   cout << "loaded scores"<<endl;
-
-    evalScore(s,scores, count,difficulty);
-
-    exit(0);
-
-// end debug
-*/
     field.height=16;
     field.width=16;
     field.mineCount=40;
@@ -1153,7 +1116,7 @@ strcpy(highScoreDir,getenv("HOME"));
     int playReplayPlace=-1;
     int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s
     
-    difficulty=0;   // 0-unspecified 1-beg 2-int 3-exp
+    difficulty=0;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
     int listFlagging=0;  // 0-both, 1-flagging, 2-nf
     int listFinished=1; //  0-both, 1-finished, 2-unfinished
     int limit=MAX_HS;        // how many scores to display
@@ -1179,15 +1142,15 @@ strcpy(highScoreDir,getenv("HOME"));
                 squareSize=atoi(optarg);
                 break;
             case 'm': 
-                difficulty=4;
+                difficulty=-1;
                 field.mineCount=atoi(optarg);
                 break;
             case 'w': 
-                difficulty=4;
+                difficulty=-1;
                 field.width=atoi(optarg);
                 break;
             case 'h': 
-                difficulty=4;
+                difficulty=-1;
                 field.height=atoi(optarg);
                 break;
             case 'n':
@@ -1244,7 +1207,7 @@ strcpy(highScoreDir,getenv("HOME"));
         }
 
 
-    cout<<"Miny v"<<VERSION<<" (c) 2015-2016 spacecamper"<<endl;
+    cout<<"Miny v"<<VERSION<<" (c) 2015-2017 spacecamper"<<endl;
     cout << "See README for info and help."<<endl;
 
     // high score directory
@@ -1337,10 +1300,11 @@ strcpy(highScoreDir,getenv("HOME"));
 
                 cout << setw(16)<<left<<"Difficulty: ";
                 switch (difficulty) {
-                case 0: cout << "beginner, intermediate, expert"<<endl; break;
+                case 0: cout << "beginner, intermediate, expert, beginner classic"<<endl; break;
                 case 1: cout << "beginner only"<<endl; break;
                 case 2: cout << "intermediate only"<<endl; break;
                 case 3: cout << "expert only"<<endl; break;
+				case 4: cout << "beginner classic only"<<endl; break;
                 }
 
                 cout << setw(16)<<left<<"Square size: ";
@@ -1389,6 +1353,8 @@ strcpy(highScoreDir,getenv("HOME"));
 
 
             switch(difficulty) {
+				case -1:
+					break;
                 case 1:
                     field.height=9;
                     field.width=9;
@@ -1403,6 +1369,11 @@ strcpy(highScoreDir,getenv("HOME"));
                     field.height=16;
                     field.width=30;
                     field.mineCount=99;
+                    break;
+                case 4:
+                    field.height=8;
+                    field.width=8;
+                    field.mineCount=10;
                     break;
             }
 

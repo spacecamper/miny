@@ -40,8 +40,8 @@ MOUSE AND KEYBOARD CONTROLS
 
  Apart from intuitive minesweeper mouse controls, these work:
 
- To start a new game press Space or, when game has ended, click anywhere 
- outside the mine field.
+ To start a new game press Space or click the yellow square or, when game has 
+ ended, click anywhere outside the mine field.
 
  To pause/unpause while playing press P.
 
@@ -53,7 +53,8 @@ OPTIONS
   Game setup:
 
  -n?  player name
- -d?  difficulty - 1, 2 or 3 (1 - Beginner, 2 - Intermediate, 3 - Expert) 
+ -d?  difficulty - 1, 2 or 3 (1 - Beginner, 2 - Intermediate, 3 - Expert,
+      4 - Beginner Classic) 
  -s?  square size in px (3 to 100, default=25)
  -m?  number of mines
  -w?  field width (2 to 100)
@@ -111,4 +112,4 @@ EXAMPLES
  ./miny -p 4.replay         # play the selected replay
 
 
-(c) 2015-2016 spacecamper
+(c) 2015-2017 spacecamper

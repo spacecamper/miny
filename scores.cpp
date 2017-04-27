@@ -98,42 +98,37 @@ int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fi
 
     for (int i=0;i<count;i++) {        
             
-        bool displayThisOne=((fla==0) 
-                            or (fla==1 and scores[i].flagging)
-                             or (fla==2 and !scores[i].flagging));
+
+		bool isBeg=scores[i].width==9 and scores[i].height==9 and scores[i].mines==10;
+		bool isInt=scores[i].width==16 and scores[i].height==16 and scores[i].mines==40;
+		bool isExp=scores[i].width==30 and scores[i].height==16 and scores[i].mines==99;
+		bool isBegC=scores[i].width==8 and scores[i].height==8 and scores[i].mines==10;
+	    bool isStandard=isBeg or isInt or isExp or isBegC;
+
+		if (	// flagging
+			((fla==0) or (fla==1 and scores[i].flagging) or (fla==2 and !scores[i].flagging))
         
-        displayThisOne=(displayThisOne and 
-                            ((fin==0) 
-                                or (fin==1 and scores[i].gameWon) 
-                                or (fin==2 and !scores[i].gameWon)));
+	        and
+				// finished
+			((fin==0) or (fin==1 and scores[i].gameWon) or (fin==2 and !scores[i].gameWon))
         
-        bool isStandard=(scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
-                        or (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
-                        or (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99);
+			and 
+					// difficulty
+			((dif==0 and isStandard) or (dif==1 and isBeg) or (dif==2 and isInt) or (dif==3 and isExp)
+				or (dif==4 and isBegC))
 
+			and 
+				// square size
+			(ss==0 or scores[i].squareSize==ss)
 
-        displayThisOne=(displayThisOne and 
-                        ((dif==0 and isStandard)
-                        or (dif==1 
-                            and scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
-                        or (dif==2 
-                            and scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
-                        or (dif==3 
-                            and scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
-                        or dif==4
-                        ));
+			and 
+				// player name
+			(pname[0]=='\0' or !strcmp(pname,scores[i].name))
 
-        displayThisOne=(displayThisOne and (ss==0 or scores[i].squareSize==ss));
+		    ) {
 
-        displayThisOne=(displayThisOne and (pname[0]=='\0' or !strcmp(pname,scores[i].name)));
-     //   cout << scores[i].name << endl;
-
-
-        if (displayThisOne) {
-
-            (*filteredScores)[counter]=scores[i];
-            counter++;
-
+		        (*filteredScores)[counter]=scores[i];
+		        counter++;
             
         }
     }
@@ -216,7 +211,7 @@ void displayScores(Score *scores, int count,int limit) {
 
     if (outputLine(headerLine.str(),tw+1)) {  // it should be just tw, not tw+1, but that way it 
                                               // truncates the first row to 1 char shorter, this fixes
-                                              // it
+                                              // it. for the other rows just tw works
         truncated=true;
     }
 
@@ -285,7 +280,7 @@ void displayScores(Score *scores, int count,int limit) {
         else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
             currentLine  <<"  "<< "exp";
         else
-            currentLine  <<"  "<< "oth";
+            currentLine  <<"  "<< "beC";
 
         currentLine  << "  " << setw(19) << left << dateString;
 
@@ -441,12 +436,16 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
     }
 
 
+
+
     if (!s.flagging) {
         Score *scoresNF;
         char zero='\0';
 
         // only nf games
         int countNF=filterScores(scoresAll, countAll,&scoresNF,2,1,0,0,&zero); 
+
+
       //  cout << "nf scores"<<endl;
        // displayScores(scoresNF, countNF, MAX_HS);
         for (posNF=0;posNF<countNF;posNF++) {
@@ -460,7 +459,6 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
         posNF=MAX_HS+1;
 
 
-    // TODO don't display NF ranking if flagging
 
     if (anyRank or (posAll<MAX_HS and posNF<MAX_HS)) {
         ordinalNumberSuffix(suffixAll,posAll+1);
@@ -488,8 +486,10 @@ void evalScore(Score s, Score *scores, int count,int difficulty,bool anyRank) {
 
     // anyRank = display how score ranks even if it ranks below MAX_HS
 
-    if (difficulty!=1 and difficulty!=2 and difficulty!=3)
+    if (difficulty!=1 and difficulty!=2 and difficulty!=3 and difficulty!=4) {
+		cout << "Scores for games with the current board dimensions and mine count aren't"<<endl<<"evaluated as potential high scores."<<endl<<endl;
         return;
+	}
 
 
     Score *scoresFiltered;
@@ -517,6 +517,7 @@ void evalScore(Score s, Score *scores, int count,int difficulty,bool anyRank) {
 
     evalScore2(&scoreString,s,scoresFiltered,countFiltered,"3BV/s",compareBy3BVs,anyRank);
 
+
     // IOE
 
     evalScore2(&scoreString,s,scoresFiltered,countFiltered,"IOE",compareByIOE,anyRank);
@@ -538,6 +539,9 @@ void evalScore(Score s, Score *scores, int count,int difficulty,bool anyRank) {
             break;
         case 3:
             cout<<"Expert";
+            break; 
+        case 4:
+            cout<<"Beginner classic";
             break; 
         }
 
