@@ -82,7 +82,8 @@ OPTIONS
   Replay:
 
  -p?  play replay file. Value is a file name. This is usually of the format 
-      x.replay where x is a number found in high score table.
+      x.replay where x is a number found in high score table in the rep
+      column.
 
 
 NOTES
