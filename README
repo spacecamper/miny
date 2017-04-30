@@ -50,6 +50,8 @@ MOUSE AND KEYBOARD CONTROLS
 
 OPTIONS
 
+  Options with a question mark take a value.
+
   Game setup:
 
  -n?  player name
@@ -79,7 +81,8 @@ OPTIONS
 
   Replay:
 
- -p?  play replay file by name (works for replay files in ~/.miny)
+ -p?  play replay file. Value is a file name. This is usually of the format 
+      x.replay where x is a number found in high score table.
 
 
 NOTES
@@ -106,6 +109,9 @@ EXAMPLES
                             # only
 
  ./miny -d1 -3              # list best 3BV/s for beginner
+
+ ./miny -w10 -h10 -m10 -t   # list best times for games with the specified 
+                            # parameters
 
  ./miny -p last.replay      # play replay for the last game played
 

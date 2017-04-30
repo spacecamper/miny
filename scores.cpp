@@ -87,7 +87,7 @@ int compareByIOE(const void *a,const void *b) {
 
 
 
-int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fin, int dif, int ss, char *pname) {
+int filterScores(Score *scores, int count, Score **filteredScores, int fla, int fin, int w, int h, int m, int ss, char *pname) {
 
 
 
@@ -114,8 +114,13 @@ int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fi
         
 			and 
 					// difficulty
-			((dif==0 and isStandard) or (dif==1 and isBeg) or (dif==2 and isInt) or (dif==3 and isExp)
-				or (dif==4 and isBegC))
+			/*((dif==0 and isStandard) or (dif==1 and isBeg) or (dif==2 and isInt) or (dif==3 and isExp)
+				or (dif==4 and isBegC))*/
+            (
+                (scores[i].width==w and scores[i].height==h and scores[i].mines==m)
+                or
+                (w==0 and h==0 and m==0 and isStandard)
+            )
 
 			and 
 				// square size
@@ -157,6 +162,11 @@ void displayScores(Score *scores, int count,int limit) {
 
 
 
+    if (count==0) {
+        cout << "No scores for this difficulty yet." << endl;
+        return;
+    }
+
 
     int outputCount;
 
@@ -177,9 +187,14 @@ void displayScores(Score *scores, int count,int limit) {
     unsigned int maxNameLen=0;
     unsigned int maxTimeLen=0;
 
+
+    // find max. name length and max. time length
+
     for (int i=0;i<outputCount;i++) {
+
         if (strlen(scores[i].name)>maxNameLen)
             maxNameLen=strlen(scores[i].name);
+
         int currentTimeLen=intLength(scores[i].time);
         if (currentTimeLen>maxTimeLen) 
             maxTimeLen=currentTimeLen;
@@ -195,7 +210,7 @@ void displayScores(Score *scores, int count,int limit) {
 
     ostringstream headerLine;
 
-    headerLine << endl << setw(maxRankLen+6) << right << "Name"
+    headerLine << setw(maxRankLen+6) << right << "Name"
         <<setw(maxTimeLen+maxNameLen-2)<<right<< "Time"
         <<"  "<<setw(6)<<right<< "3BV/s"
         <<"  "<<setw(4)<<right<< "3BV"
@@ -210,7 +225,7 @@ void displayScores(Score *scores, int count,int limit) {
     // output table header
 
     if (outputLine(headerLine.str(),tw+1)) {  // it should be just tw, not tw+1, but that way it 
-                                              // truncates the first row to 1 char shorter, this fixes
+                                              // truncates this row to 1 char shorter, this fixes
                                               // it. for the other rows just tw works
         truncated=true;
     }
@@ -273,14 +288,16 @@ void displayScores(Score *scores, int count,int limit) {
         currentLine <<"  "<<setw(3)<<right<< (scores[i].flagging?"yes":"no");
         currentLine <<"  "<<setw(3)<<right<< (scores[i].gameWon?"yes":"no");
 
-        if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
+        if (scores[i].width==8 and scores[i].height==8 and scores[i].mines==10)
+            currentLine  <<"  "<< "beC";
+        else if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
             currentLine  <<"  "<< "beg";
         else if (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
             currentLine  <<"  "<< "int";
         else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
             currentLine  <<"  "<< "exp";
         else
-            currentLine  <<"  "<< "beC";
+            currentLine  <<"  "<< "oth";
 
         currentLine  << "  " << setw(19) << left << dateString;
 
@@ -443,7 +460,7 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
         char zero='\0';
 
         // only nf games
-        int countNF=filterScores(scoresAll, countAll,&scoresNF,2,1,0,0,&zero); 
+        int countNF=filterScores(scoresAll, countAll,&scoresNF,2,1,0,0,0,0,&zero); 
 
 
       //  cout << "nf scores"<<endl;
@@ -482,14 +499,14 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
 
 }
 
-void evalScore(Score s, Score *scores, int count,int difficulty,bool anyRank) {
+void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyRank/*=0*/) {
 
     // anyRank = display how score ranks even if it ranks below MAX_HS
 
-    if (difficulty!=1 and difficulty!=2 and difficulty!=3 and difficulty!=4) {
+    /*if (difficulty!=1 and difficulty!=2 and difficulty!=3 and difficulty!=4) {
 		cout << "Scores for games with the current board dimensions and mine count aren't"<<endl<<"evaluated as potential high scores."<<endl<<endl;
         return;
-	}
+	}*/
 
 
     Score *scoresFiltered;
@@ -497,7 +514,7 @@ void evalScore(Score s, Score *scores, int count,int difficulty,bool anyRank) {
     char zero='\0';
 
     // only won games from the current difficulty
-    int countFiltered=filterScores(scores, count,&scoresFiltered,0,1,difficulty,0,&zero); 
+    int countFiltered=filterScores(scores, count,&scoresFiltered,0,1,w,h,m,0,&zero); 
      
 
 
@@ -530,20 +547,18 @@ void evalScore(Score s, Score *scores, int count,int difficulty,bool anyRank) {
         else 
             cout << "High score reached (";
 
-        switch(difficulty) {
-        case 1:
-            cout<<"Beginner";
-            break;
-        case 2:
-            cout<<"Intermediate";
-            break;
-        case 3:
-            cout<<"Expert";
-            break; 
-        case 4:
-            cout<<"Beginner classic";
-            break; 
-        }
+        if (w==9 and h==9 and m==10)
+            cout << "Beginner";
+        else if (w==16 and h==16 and m==40)
+            cout << "Intermediate";
+        else if (w==30 and h==16 and m==99)
+            cout << "Expert";
+        else if (w==8 and h==8 and m==10)
+            cout << "Beginner classic";
+        else
+            //cout << "\"width: " << w << ", height: " << h << ", mines: " << m << "\"";
+            cout << w << "x" << h << ", " << m << " mines";
+
 
         if (anyRank)
             cout << " scores";
@@ -560,10 +575,5 @@ void evalScore(Score s, Score *scores, int count,int difficulty,bool anyRank) {
    //   cout << "here3"<<endl;
     free(scoresFiltered);
 
-}
-
-void evalScore(Score s, Score *scores, int count, int difficulty) {
-
-    evalScore(s, scores, count, difficulty,0);
 }
 

@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.5"
+#define VERSION "0.5.6"
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
 //   events
@@ -60,8 +60,8 @@ bool gamePaused;
 
 bool playReplay;
 
-int difficulty;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
-    
+//int difficulty;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
+//int gameWidth, gameHeight, gameMines;
 
 Timer timer;
 
@@ -125,10 +125,7 @@ void saveReplay(char *fname, Replay *r) {
         return;
     }
 
- //   cout<< "Before r->writeToFile"<<endl;
-
     r->writeToFile(&ofile);
-  //  cout<< "After r->writeToFile"<<endl;
 
     ofile.close();
 
@@ -139,13 +136,8 @@ void saveReplay(char *fname, Replay *r) {
 
 int loadReplay(char *fname, Replay *r) {
     ifstream ifile;
-/*
-    char fullpath[100];
-    strcpy(fullpath,highScoreDir);
-    strcat(fullpath,fname);*/
- //   cout << "Reading replay file " << fullpath <<endl;
 
-    ifile.open (fname);
+    ifile.open(fname);
     if (!ifile.is_open()) {
         cerr<<"Error opening replay file '"<<fname<<"'."<<endl;
         return 1;
@@ -666,7 +658,6 @@ void endGameLost() {
 
     newScore.timeStamp=ts;
     strcpy(newScore.name,playerName);
-    //char replayFile[100];
     newScore.width=field.width;
     newScore.height=field.height;
     newScore.mines=field.mineCount;
@@ -678,8 +669,6 @@ void endGameLost() {
 
     newScore.effectiveClicks=field.effectiveClicks;
     newScore.ineffectiveClicks=field.ineffectiveClicks;
-
-    //    cout << "IOE: " << newScore.getIOE()<<endl;
 
     newScore.squareSize=squareSize;
     newScore.gameWon=false;
@@ -693,7 +682,6 @@ void endGameLost() {
     newScore.replayNumber=0;
     appendScore(fullpath,newScore);
 
-  //  cout << "width=" << field.width << endl;
     saveReplay("last.replay",&replay);
 
 }
@@ -807,12 +795,6 @@ void endGameWon() {
 
     if (!playReplay) {
         long timeTaken=timer.calculateElapsedTime();
-        
-
-
-     /*   char fname[100];
-        sprintf(fname,"%i-%i-%i.times",field.width,field.height,field.mineCount);
-        */
 
         long ts=time(NULL);
 
@@ -855,16 +837,10 @@ void endGameWon() {
 
         Score *scores;
 
-     //   cout << "about to load scores"<<endl;
-
         int count=loadScores(fullpath,&scores);
 
-     //   cout << "loaded scores"<<endl;
+        evalScore(newScore,scores, count,field.width,field.height,field.mineCount);
 
-        evalScore(newScore,scores, count,difficulty/*,true*/);
-
-
-    //    cout << "here1"<<endl;
         free(scores);
         
 
@@ -873,15 +849,8 @@ void endGameWon() {
         cout << "Finding lowest unused replay number..."<<endl;
  
 
-        nr=findLowestUnusedReplayNumber();
-
-            
-
-    //    cout << "Lowest unused == " << nr << endl;        
-        
-
-
-
+        nr=findLowestUnusedReplayNumber();    
+   
         newScore.replayNumber=nr;
         appendScore(fullpath,newScore);
 
@@ -1104,9 +1073,9 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
 
 
-    field.height=16;
-    field.width=16;
-    field.mineCount=40;
+    field.height=0;
+    field.width=0;
+    field.mineCount=0;
 
     squareSize=0;
     gameState=GAME_INITIALIZED;
@@ -1114,9 +1083,9 @@ int main(int argc, char** argv) {
 
     char replayFileName[100];
     int playReplayPlace=-1;
-    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s
+    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe
     
-    difficulty=0;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
+    int difficulty=0;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
     int listFlagging=0;  // 0-both, 1-flagging, 2-nf
     int listFinished=1; //  0-both, 1-finished, 2-unfinished
     int limit=MAX_HS;        // how many scores to display
@@ -1142,15 +1111,12 @@ int main(int argc, char** argv) {
                 squareSize=atoi(optarg);
                 break;
             case 'm': 
-                difficulty=-1;
                 field.mineCount=atoi(optarg);
                 break;
             case 'w': 
-                difficulty=-1;
                 field.width=atoi(optarg);
                 break;
             case 'h': 
-                difficulty=-1;
                 field.height=atoi(optarg);
                 break;
             case 'n':
@@ -1248,6 +1214,39 @@ int main(int argc, char** argv) {
         glutTimerFunc(1, updateR, 0);
     }
     else {
+
+        if (difficulty==0 and listScoresType==0)    // play game (don't list scores) and difficulty is not specified
+            difficulty=2;
+
+
+        if (field.width!=0 and field.height!=0 and field.mineCount!=0)
+            difficulty=-1;
+
+
+        switch(difficulty) {
+            case 1:
+                field.height=9;
+                field.width=9;
+                field.mineCount=10;
+                break;
+            case 2:
+                field.height=16;
+                field.width=16;
+                field.mineCount=40;
+                break;
+            case 3:
+                field.height=16;
+                field.width=30;
+                field.mineCount=99;
+                break;
+            case 4:
+                field.height=8;
+                field.width=8;
+                field.mineCount=10;
+                break;
+            
+        } 
+        
         if (listScoresType!=0) { // list scores
 
             // TODO 'other' setups may produce too high 3BV/s etc and break layout
@@ -1259,8 +1258,6 @@ int main(int argc, char** argv) {
 
             Score *scores;
             int count=loadScores(fullpath,&scores);
-
-       //     cout << "Loaded " << count << " scores."<<endl;
             
 
             if (count==0) {
@@ -1283,7 +1280,7 @@ int main(int argc, char** argv) {
                     cout << "IOE" << endl;
                     compareFunc=compareByIOE; break;
                 }
-    
+
                 cout << setw(16)<<left<<"Flagging: ";
                 switch (listFlagging) {
                 case 0: cout << "all"<<endl; break;
@@ -1299,13 +1296,22 @@ int main(int argc, char** argv) {
                 }
 
                 cout << setw(16)<<left<<"Difficulty: ";
+
+                
+                bool standardDifficulty=false;
+
                 switch (difficulty) {
-                case 0: cout << "beginner, intermediate, expert, beginner classic"<<endl; break;
-                case 1: cout << "beginner only"<<endl; break;
-                case 2: cout << "intermediate only"<<endl; break;
-                case 3: cout << "expert only"<<endl; break;
-				case 4: cout << "beginner classic only"<<endl; break;
+                case 0: cout << "beginner, intermediate, expert, beginner classic"<<endl; standardDifficulty=true; break;
+                case 1: cout << "beginner only"<<endl; standardDifficulty=true; break;
+                case 2: cout << "intermediate only"<<endl; standardDifficulty=true; break;
+                case 3: cout << "expert only"<<endl; standardDifficulty=true; break;
+		        case 4: cout << "beginner classic only"<<endl; standardDifficulty=true; break;
                 }
+
+                if (!standardDifficulty) 
+                    cout << field.width << "x" << field.height << ", " << field.mineCount << " mines" << endl;
+                
+
 
                 cout << setw(16)<<left<<"Square size: ";
                 if (squareSize!=0)
@@ -1333,7 +1339,9 @@ int main(int argc, char** argv) {
 
 
                 count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
-                    difficulty, squareSize,playerName);
+                    field.width, field.height, field.mineCount, squareSize,playerName);
+
+                cout<<endl;
 
                 displayScores(filteredScores,count,limit);
 
@@ -1342,40 +1350,13 @@ int main(int argc, char** argv) {
                 free(scores);
 
             }
-
-
         }
         else {
 
-
-            if (difficulty==0) 
-                difficulty=2;
+            // play
 
 
-            switch(difficulty) {
-				case -1:
-					break;
-                case 1:
-                    field.height=9;
-                    field.width=9;
-                    field.mineCount=10;
-                    break;
-                case 2:
-                    field.height=16;
-                    field.width=16;
-                    field.mineCount=40;
-                    break;
-                case 3:
-                    field.height=16;
-                    field.width=30;
-                    field.mineCount=99;
-                    break;
-                case 4:
-                    field.height=8;
-                    field.width=8;
-                    field.mineCount=10;
-                    break;
-            }
+            
 
             if (squareSize==0)
                 squareSize=25;

@@ -54,7 +54,7 @@ int compareBy3BVs(const void *a,const void *b);
 
 int compareByIOE(const void *a,const void *b);
 
-int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fin, int dif, int ss, char *pname);
+int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fin, int w, int h, int m, int ss, char *pname);
 
 void displayScores(Score *scores, int count,int limit);
 
@@ -62,9 +62,7 @@ int loadScores(char *fname, Score **scores);
 
 void appendScore(char *fname, Score score);
 
-void evalScore(Score s, Score *scores, int count, int difficulty);
-
-void evalScore(Score s, Score *scores, int count, int difficulty, bool anyRank);
+void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyRank=0);
 
 #endif
 
