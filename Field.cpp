@@ -256,7 +256,6 @@ void Field::init() {
     effectiveClicks=0;
     ineffectiveClicks=0;
 
-    cout << endl;   // empty line in terminal between games
 
 
 //    cout << "Field initialized." << endl;
@@ -331,9 +330,9 @@ void Field::revealSquare(int squareX, int squareY) {
                 revealAround(squareX,squareY);
             }
 
-
             // test if game finished
             if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
+                
                 bool notFinished=false;
 
                 for (int i=0;i<width;i++) 

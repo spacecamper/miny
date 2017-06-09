@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.6"
+#define VERSION "0.5.7"
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
 //   events
@@ -57,8 +57,9 @@ char playerName[21];
 char highScoreDir[100];
 bool isFlagging;
 bool gamePaused;
-
 bool playReplay;
+bool anyRank;
+
 
 //int difficulty;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
 //int gameWidth, gameHeight, gameMines;
@@ -105,6 +106,13 @@ bool directoryExists( const char* pzPath )
 
 
 
+void newGame() {
+
+    field.init();
+    cout << "------------------------------------------------------------" << endl; 
+
+
+}
 
 
 // ---------------------- REPLAY ------------------//
@@ -116,12 +124,12 @@ void saveReplay(char *fname, Replay *r) {
     char fullpath[100];
     strcpy(fullpath,highScoreDir);
     strcat(fullpath,fname);
-    cout << "Writing replay file " << fullpath <<"..."<<flush;
+  //  cout << "Writing replay file " << fullpath <<"..."<<flush;
 
     ofile.open (fullpath);
 
     if (!ofile.is_open()) {
-        cerr<<"Error opening file for writing replay."<<endl;
+        cerr<<"Error opening file " << fullpath << " for writing replay."<<endl;
         return;
     }
 
@@ -129,7 +137,7 @@ void saveReplay(char *fname, Replay *r) {
 
     ofile.close();
 
-    cout << "Done."<<endl;
+ //   cout << "Done."<<endl;
     
 
 }
@@ -308,27 +316,10 @@ void drawScene() {
     glClearColor(.7, .7, .7, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-/*
-    // uncomment this if graphics is broken
-
-    glPopMatrix();
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-*/
-
     glOrtho(0.0, windowWidth, windowHeight, 0.0, -1.0, 10.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
  
-/*
-    // uncomment this if graphics is broken
-
-    glDisable(GL_CULL_FACE);
-    glClear(GL_DEPTH_BUFFER_BIT);
-*/
-
 
     if (playReplay) {
         // draw cursor
@@ -412,22 +403,20 @@ void drawScene() {
 
     if (gamePaused) {    // hide field when game is paused
 
+
+        glColor3f(.3,.3,.3);
+
+
         glBegin(GL_LINES);    
         glVertex2f(FIELD_X,FIELD_Y);
         glVertex2f(FIELD_X+field.width*squareSize,FIELD_Y);
-        glEnd();
-
-        glBegin(GL_LINES);    
+  
         glVertex2f(FIELD_X,FIELD_Y+field.height*squareSize);
         glVertex2f(FIELD_X+field.width*squareSize,FIELD_Y+field.height*squareSize);
-        glEnd();
-
-        glBegin(GL_LINES);    
+   
         glVertex2f(FIELD_X,FIELD_Y);
         glVertex2f(FIELD_X,FIELD_Y+field.height*squareSize);
-        glEnd();
-
-        glBegin(GL_LINES);    
+   
         glVertex2f(FIELD_X+field.width*squareSize,FIELD_Y);
         glVertex2f(FIELD_X+field.width*squareSize,FIELD_Y+field.height*squareSize);
         glEnd();
@@ -443,9 +432,7 @@ void drawScene() {
         glVertex2f(FIELD_X,FIELD_Y);
         glVertex2f(FIELD_X,FIELD_Y+field.height*squareSize);
         glVertex2f(FIELD_X+field.width*squareSize,FIELD_Y+field.height*squareSize);
-
-
-        
+       
         glEnd();
 
     }
@@ -453,26 +440,35 @@ void drawScene() {
 
         // grid lines
 
-        glColor3f(.2,.2,.2);
+/*
+        float bg=.5;
+        float target=.7;
 
+        float c=1-.5*((1-target)-(1-bg))*squareSize;
         
+cout << c << endl;
+        if (c>.7) c=.7; else if (c<0) c=0;
+
+
+
+        glColor3f(c,c,c);
+  */  
+        glColor3f(.3,.3,.3);
+      
+
+        glBegin(GL_LINES); 
 
         for (int i=0;i<field.height+1;i++) {
-            glBegin(GL_LINES);    
             glVertex2f(FIELD_X,FIELD_Y+i*squareSize);
             glVertex2f(FIELD_X+field.width*squareSize,FIELD_Y+i*squareSize);
-            glEnd();
-
         }
 
         for (int i=0;i<field.width+1;i++) {
-            glBegin(GL_LINES);    
             glVertex2f(FIELD_X+i*squareSize,FIELD_Y);
             glVertex2f(FIELD_X+i*squareSize,FIELD_Y+field.height*squareSize);
-            glEnd();
-
         }
 
+        glEnd();
 
         // squares
         
@@ -480,13 +476,37 @@ void drawScene() {
         for (int x=0;x<field.width;x++) 
             for (int y=0;y<field.height;y++) {
                 int x1=FIELD_X+x*squareSize;
-                int x2=FIELD_X+(x+1)*squareSize;
+                int x2=FIELD_X+(x+1)*squareSize-1;
                 int y1=FIELD_Y+y*squareSize;
-                int y2=FIELD_Y+(y+1)*squareSize;
+                int y2=FIELD_Y+(y+1)*squareSize-1;
 
                 
                 if (field.state[x][y]>=0 and field.state[x][y]<=8) {    // revealed square
-                    
+                  
+                   /* glColor3f(.6,.6,.6);
+
+                    glBegin(GL_LINES);
+                    glVertex2f(x1,y1);
+                    glVertex2f(x2,y1);
+
+                    glVertex2f(x1,y1);
+                    glVertex2f(x1,y2);
+                    glEnd();
+  
+                    glColor3f(.8,.8,.8);
+
+                    glBegin(GL_LINES);
+                    glVertex2f(x2,y2);
+                    glVertex2f(x2,y1);
+
+                    glVertex2f(x2,y2);
+                    glVertex2f(x1,y2);
+                    glEnd();*/
+
+
+
+
+
                     switch(field.state[x][y]) {
                     case 0: glColor3f(.5,.5,.5); break;
                     case 1: glColor3f(0,0,1); break;
@@ -502,12 +522,13 @@ void drawScene() {
                     }
 
 
-                    // number
-                    float zoom=1.5*squareSize/25;
+                    if (field.state[x][y]!=0) {
+                        // number
+                        float zoom=1.5*squareSize/25;
 
-                    drawDigit(field.state[x][y],x1+.5*squareSize-3.0*zoom,
-                                y1+.5*squareSize-5.0*zoom,zoom);
-
+                        drawDigit(field.state[x][y],x1+.5*squareSize-3.0*zoom,
+                                    y1+.5*squareSize-5.0*zoom,zoom);
+                    }
 
 
                     // background
@@ -526,73 +547,96 @@ void drawScene() {
                     
                     glEnd();
                 }
-                else if (field.state[x][y]==9 
+                else {
+                    
+                   /* glColor3f(.8,.8,.8);
+
+                    glBegin(GL_LINES);
+                    glVertex2f(x1,y1);
+                    glVertex2f(x2,y1);
+
+                    glVertex2f(x1,y1);
+                    glVertex2f(x1,y2);
+                    glEnd();
+  
+                    glColor3f(.6,.6,.6);
+
+                    glBegin(GL_LINES);
+                    glVertex2f(x2,y2);
+                    glVertex2f(x2,y1);
+
+                    glVertex2f(x2,y2);
+                    glVertex2f(x1,y2);
+                    glEnd();*/
+
+
+                    if (field.state[x][y]==9 
                          and (gameState==GAME_LOST or gameState==GAME_WON /* or true*/)
                          and field.isMine(x,y)
                         ) { // unflagged mine when game is over
                                         
-                    glColor3f(0,0,0);
-                    glBegin(GL_TRIANGLES);
-                    glVertex2f(x1+.5*squareSize,y1+.1*squareSize);
-                    glVertex2f(x1+.1*squareSize,y1+.5*squareSize);
-                    glVertex2f(x1+.5*squareSize,y2-.1*squareSize);
-
-                    glVertex2f(x1+.5*squareSize,y1+.1*squareSize);
-                    glVertex2f(x2-.1*squareSize,y1+.5*squareSize);
-                    glVertex2f(x1+.5*squareSize,y2-.1*squareSize);
-                    
-                    glEnd();
-
-                    float gap=.25*squareSize;
-
-                    glBegin(GL_TRIANGLES);
-                    glVertex2f(x1+gap,y1+gap);
-                    glVertex2f(x2-gap,y1+gap);
-                    glVertex2f(x2-gap,y2-gap);
-
-                    glVertex2f(x1+gap,y1+gap);
-                    glVertex2f(x1+gap,y2-gap);
-                    glVertex2f(x2-gap,y2-gap);
-            
-                    glEnd();
-                }
-                else if (field.state[x][y]==10) {  // flag
-
-                    // cross out flag where there is no mine
-
-                    if (gameState==GAME_LOST and !field.isMine(x,y)) {
-                        float crossGap=.1*squareSize;
                         glColor3f(0,0,0);
-                        glBegin(GL_LINES);
-                        glVertex2f(x1+crossGap,y1+crossGap);
-                        glVertex2f(x2-crossGap,y2-crossGap);
+                        glBegin(GL_TRIANGLES);
+                        glVertex2f(x1+.5*squareSize,y1+.1*squareSize);
+                        glVertex2f(x1+.1*squareSize,y1+.5*squareSize);
+                        glVertex2f(x1+.5*squareSize,y2-.1*squareSize);
 
-                        glVertex2f(x2-crossGap,y1+crossGap);
-                        glVertex2f(x1+crossGap,y2-crossGap);
+                        glVertex2f(x1+.5*squareSize,y1+.1*squareSize);
+                        glVertex2f(x2-.1*squareSize,y1+.5*squareSize);
+                        glVertex2f(x1+.5*squareSize,y2-.1*squareSize);
+                        
+                        glEnd();
+
+                        float gap=.25*squareSize;
+
+                        glBegin(GL_TRIANGLES);
+                        glVertex2f(x1+gap,y1+gap);
+                        glVertex2f(x2-gap,y1+gap);
+                        glVertex2f(x2-gap,y2-gap);
+
+                        glVertex2f(x1+gap,y1+gap);
+                        glVertex2f(x1+gap,y2-gap);
+                        glVertex2f(x2-gap,y2-gap);
+                
                         glEnd();
                     }
+                    else if (field.state[x][y]==10) {  // flag
+
+                        // cross out flag where there is no mine
+
+                        if (gameState==GAME_LOST and !field.isMine(x,y)) {
+                            float crossGap=.1*squareSize;
+                            glColor3f(0,0,0);
+                            glBegin(GL_LINES);
+                            glVertex2f(x1+crossGap,y1+crossGap);
+                            glVertex2f(x2-crossGap,y2-crossGap);
+
+                            glVertex2f(x2-crossGap,y1+crossGap);
+                            glVertex2f(x1+crossGap,y2-crossGap);
+                            glEnd();
+                        }
 
 
-                    // flag
+                        // flag
 
 
-                    glColor3f(1,0,0);
-                    glBegin(GL_TRIANGLES);
-                    glVertex2f(x1+.1*squareSize,y1+.3*squareSize);
-                    glVertex2f(x1+.6*squareSize,y1+.1*squareSize);
-                    glVertex2f(x1+.6*squareSize,y1+.5*squareSize);
-                    glColor3f(0,0,0);
-                    glVertex2f(x1+.6*squareSize,y1+.6*squareSize);
-                    glVertex2f(x1+.15*squareSize,y1+.9*squareSize);
-                    glVertex2f(x1+.9*squareSize,y1+.9*squareSize);
+                        glColor3f(1,0,0);
+                        glBegin(GL_TRIANGLES);
+                        glVertex2f(x1+.1*squareSize,y1+.3*squareSize);
+                        glVertex2f(x1+.6*squareSize,y1+.1*squareSize);
+                        glVertex2f(x1+.6*squareSize,y1+.5*squareSize);
+                        glColor3f(0,0,0);
+                        glVertex2f(x1+.6*squareSize,y1+.6*squareSize);
+                        glVertex2f(x1+.15*squareSize,y1+.9*squareSize);
+                        glVertex2f(x1+.9*squareSize,y1+.9*squareSize);
 
 
-                    glEnd();
+                        glEnd();
 
+
+                    }
 
                 }
-
-
 
             }
     }
@@ -621,13 +665,7 @@ void drawScene() {
     }
 
 
-/*
-    // uncomment this if graphics is broken
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-*/
 
     glutSwapBuffers();
 
@@ -650,7 +688,7 @@ void endGameLost() {
     redisplay();
 
     cout << endl<< "YOU HIT A MINE. You played for "<<timer.calculateElapsedTime()
-        <<" milliseconds." << endl;
+        <<" milliseconds." << endl << "3BV:  " << field.get3BV() << endl;
     long timeTaken=timer.calculateElapsedTime();
     long ts=time(NULL);
     
@@ -791,44 +829,66 @@ void endGameWon() {
     timer.stop();
     replay.stopRecording();
 
-      
+
+    long timeTaken;
+
+
+ //   if (playReplay)
+        timeTaken=timer.calculateElapsedTime();
+   // else
+     //   timeTaken=replay.getEndTime();
+
+
+    long ts=time(NULL);
+
+    Score newScore;
+
+
+    newScore.timeStamp=ts;
+    strcpy(newScore.name,playerName);
+    newScore.width=field.width;
+    newScore.height=field.height;
+    newScore.mines=field.mineCount;
+
+    newScore.time=timeTaken;
+    newScore.val3BV=field.get3BV();
+    newScore.flagging=isFlagging;
+
+    newScore.effectiveClicks=field.effectiveClicks;
+    newScore.ineffectiveClicks=field.ineffectiveClicks;
+        
+
+
+
+    newScore.squareSize=squareSize;
+    newScore.gameWon=true;
+
+
+    cout << endl<<"YOU WIN!"<<endl;
+    
+    if (!playReplay) 
+        cout << setw(8)<<left << "Time: "<<timeTaken<<" ms" << endl;
+
+    cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
+    cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
+    
+    cout << setw(8)<<left << "3BV: " << field.get3BV()<<endl;
+
+    cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
+    cout << endl;
+
+
 
     if (!playReplay) {
-        long timeTaken=timer.calculateElapsedTime();
-
-        long ts=time(NULL);
+        
+        
 
         long nr=1;
 
        
-        Score newScore;
-
-        newScore.timeStamp=ts;
-        strcpy(newScore.name,playerName);
-        //char replayFile[100];
-        newScore.width=field.width;
-        newScore.height=field.height;
-        newScore.mines=field.mineCount;
-
-        newScore.time=timeTaken;
-        newScore.val3BV=field.get3BV();
-        newScore.flagging=isFlagging;
-
-        newScore.effectiveClicks=field.effectiveClicks;
-        newScore.ineffectiveClicks=field.ineffectiveClicks;
         
 
-        cout << endl<<"YOU WIN!"<<endl;
-        cout << setw(8)<<left << "Time: "<<timeTaken<<" ms" << endl;
-        cout << setw(8)<<left << "3BV: " << field.get3BV()<<endl;
-        cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
-        cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
         
-        cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
-        cout << endl;
-
-        newScore.squareSize=squareSize;
-        newScore.gameWon=true;
         
 
         char fullpath[100];
@@ -839,14 +899,14 @@ void endGameWon() {
 
         int count=loadScores(fullpath,&scores);
 
-        evalScore(newScore,scores, count,field.width,field.height,field.mineCount);
+        evalScore(newScore,scores, count,field.width,field.height,field.mineCount,anyRank);
 
         free(scores);
         
 
         // find the lowest unused replay file number
 
-        cout << "Finding lowest unused replay number..."<<endl;
+    //    cout << "Finding lowest unused replay number..."<<endl;
  
 
         nr=findLowestUnusedReplayNumber();    
@@ -860,7 +920,6 @@ void endGameWon() {
         char tmp[100];
         strcpy(tmp,highScoreDir);
         sprintf(rfname,"%lu.replay",nr);
-
 
         saveReplay(rfname,&replay);
 
@@ -885,7 +944,7 @@ void keyDown(unsigned char key, int x, int y) {
     switch (key) {
     case ' ':   
         if (!gamePaused and !playReplay) 
-            field.init(); // restart game
+            newGame();
 
         break;
     case 'p':   // pause
@@ -929,25 +988,35 @@ void mouseClick(int button, int mState, int x, int y) {
 
             if (x>FIELD_X and x<FIELD_X+field.width*squareSize 
                 and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) {
-                
+
+                // field
+
                 if (mState==GLUT_DOWN) {
-                    
-                  //  cout << "mouse button at [" << squareX << ", " << squareY << "], state "
-                  // << state[squareX][squareY] << endl;
                 
                     field.click(x,y,button);
                 }
             }
 
             else if (x>originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 && x<originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 &&
-                     y>BORDER_WIDTH && y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH)
-                field.init();
+                y>BORDER_WIDTH && y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH) {
+
+                // new game button
+                if (mState==GLUT_DOWN) {
+        
+                    newGame();
+                }
+
+            }
 
             glutPostRedisplay();
         }
         else if (!(x>FIELD_X and x<FIELD_X+field.width*squareSize 
             and y>FIELD_Y and y<FIELD_Y+field.height*squareSize)) {
-            field.init();
+
+            // outside of field - new game
+
+            newGame();
+
         //    placeMines();
         }
     }
@@ -1083,8 +1152,8 @@ int main(int argc, char** argv) {
 
     char replayFileName[100];
     int playReplayPlace=-1;
-    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe
-    
+    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
+
     int difficulty=0;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
     int listFlagging=0;  // 0-both, 1-flagging, 2-nf
     int listFinished=1; //  0-both, 1-finished, 2-unfinished
@@ -1098,9 +1167,10 @@ int main(int argc, char** argv) {
 
     strcpy(playerName,"");
 
+    anyRank=false;
 
 
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:c:g:il:a")) != -1)
+    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:a")) != -1)
         switch (option_char) {  
             case 'd': {
                 difficulty=atoi(optarg);
@@ -1153,7 +1223,7 @@ int main(int argc, char** argv) {
                 listFinished=optarg[0]-'0';
              //   cout << "listFinished="<<listFinished<<endl;
                 break;
-            case 'c':   // output 3BV of replay file given as argument and exit
+            /*case 'c':   // output 3BV of replay file given as argument and exit
                         // TAKES THE FULL PATH TO THE FILE AS ARGUMENT
                // strcpy(replayFileName,highScoreDir);
                 strcpy(replayFileName,optarg);
@@ -1162,9 +1232,14 @@ int main(int argc, char** argv) {
                 }
                 cout << field.get3BV() << endl;
                 exit(0);
-                break;
+                break;*/
+            case 'c':
+                listScoresType=4;
+               /* if (optarg!=0) {
+                    cout << "optarg" << endl;
+                }*/
             case 'a':
-//                viewAllRanks=true;
+                anyRank=true;
                 break;
             case '?':
                 //cerr << "Unknown option: -" << optopt << endl;
@@ -1173,8 +1248,11 @@ int main(int argc, char** argv) {
         }
 
 
-    cout<<"Miny v"<<VERSION<<" (c) 2015-2017 spacecamper"<<endl;
-    cout << "See README for info and help."<<endl;
+    if (listScoresType!=4) {
+        cout<<"Miny v"<<VERSION<<" (c) 2015-2017 spacecamper"<<endl;
+        cout << "See README for info and help."<<endl;
+    }
+
 
     // high score directory
 
@@ -1200,12 +1278,12 @@ int main(int argc, char** argv) {
 
     if (playReplay) {
 
-        cout << replayFileName<<endl;
+       // cout << replayFileName<<endl;
         
         if (loadReplay(replayFileName,&replay)) {
             exit(1);
         }
-        cout<<"Replay loaded."<<endl;
+       // cout<<"Replay loaded."<<endl;
         field.init();
         cout << "Playing replay..." << endl;
         initGraphR();
@@ -1213,14 +1291,14 @@ int main(int argc, char** argv) {
 
         glutTimerFunc(1, updateR, 0);
     }
-    else {
+    else { 
 
-        if (difficulty==0 and listScoresType==0)    // play game (don't list scores) and difficulty is not specified
-            difficulty=2;
+        if (difficulty==0 and listScoresType==0)    // if play game (don't list scores) and difficulty is not specified
+            difficulty=2;   // intermediate
 
 
-        if (field.width!=0 and field.height!=0 and field.mineCount!=0)
-            difficulty=-1;
+        if (field.width!=0 and field.height!=0 and field.mineCount!=0)  // if some of these values were specified on the command line
+            difficulty=-1;      // prevent altering them in the switch
 
 
         switch(difficulty) {
@@ -1260,79 +1338,84 @@ int main(int argc, char** argv) {
             int count=loadScores(fullpath,&scores);
             
 
-            if (count==0) {
-                cout<<"No high scores yet."<<endl;
+            if (count==0) {      // no scores in score file
+                if (listScoresType!=4)
+                    cout<<"No high scores yet."<<endl;
             }
             else {
+                if (listScoresType!=4) {    // if not display as csv, then info about filter and sort
+                    cout << endl << "Displaying scores."<<endl;
+                    cout << setw(16)<<left<<"Sorted by: ";
+
+                    int (*compareFunc)(const void *,const void *)=NULL;
+                    switch(listScoresType) {
+                    case 1:
+                        cout << "time" << endl;
+                        compareFunc=compareByTime; break;
+                    case 2:
+                        cout << "3BV/s" << endl;
+                        compareFunc=compareBy3BVs; break;
+                    case 3:
+                        cout << "IOE" << endl;
+                        compareFunc=compareByIOE; break;
+                    }
+
+                    cout << setw(16)<<left<<"Flagging: ";
+                    switch (listFlagging) {
+                    case 0: cout << "all"<<endl; break;
+                    case 1: cout << "flagging only"<<endl; break;
+                    case 2: cout << "non-flagging only"<<endl; break;
+                    }
+
+                    cout << setw(16)<<left<<"Finished: ";
+                    switch (listFinished) {
+                    case 0: cout << "all"<<endl; break;
+                    case 1: cout << "finished only"<<endl; break;
+                    case 2: cout << "unfinished only"<<endl; break;
+                    }
+
+                    cout << setw(16)<<left<<"Difficulty: ";
+
+                    
+                    bool standardDifficulty=false;
+
+                    switch (difficulty) {
+                    case 0: cout << "beginner, intermediate, expert, beginner classic"<<endl; standardDifficulty=true; break;
+                    case 1: cout << "beginner only"<<endl; standardDifficulty=true; break;
+                    case 2: cout << "intermediate only"<<endl; standardDifficulty=true; break;
+                    case 3: cout << "expert only"<<endl; standardDifficulty=true; break;
+		            case 4: cout << "beginner classic only"<<endl; standardDifficulty=true; break;
+                    }
+
+                    if (!standardDifficulty) 
+                        cout << field.width << "x" << field.height << ", " << field.mineCount << " mines" << endl;
+                    
+
+
+                    cout << setw(16)<<left<<"Square size: ";
+                    if (squareSize!=0)
+                        cout <<squareSize<<endl;
+                    else
+                        cout << "all"<<endl;
+
+                    cout << setw(16)<<left<<"Player name: ";
+                    if (!strcmp(playerName,""))
+                        cout<<"all"<<endl;
+                    else
+                        cout<<playerName<<endl;
+
+                    cout << setw(16)<<left<<"Count: ";
+                    if (limit!=0)
+                        cout <<limit<<endl;
+                    else
+                        cout << "all"<<endl;
                 
-                cout << endl << "Displaying scores."<<endl;
-                cout << setw(16)<<left<<"Sorted by: ";
+                    cout<<endl;
 
-                int (*compareFunc)(const void *,const void *)=NULL;
-                switch(listScoresType) {
-                case 1:    //time
-                    cout << "time" << endl;
-                    compareFunc=compareByTime; break;
-                case 2:
-                    cout << "3BV/s" << endl;
-                    compareFunc=compareBy3BVs; break;
-                case 3:
-                    cout << "IOE" << endl;
-                    compareFunc=compareByIOE; break;
+                    qsort(scores,count,sizeof(Score),compareFunc);
                 }
-
-                cout << setw(16)<<left<<"Flagging: ";
-                switch (listFlagging) {
-                case 0: cout << "all"<<endl; break;
-                case 1: cout << "flagging only"<<endl; break;
-                case 2: cout << "non-flagging only"<<endl; break;
-                }
-
-                cout << setw(16)<<left<<"Finished: ";
-                switch (listFinished) {
-                case 0: cout << "all"<<endl; break;
-                case 1: cout << "finished only"<<endl; break;
-                case 2: cout << "unfinished only"<<endl; break;
-                }
-
-                cout << setw(16)<<left<<"Difficulty: ";
 
                 
-                bool standardDifficulty=false;
-
-                switch (difficulty) {
-                case 0: cout << "beginner, intermediate, expert, beginner classic"<<endl; standardDifficulty=true; break;
-                case 1: cout << "beginner only"<<endl; standardDifficulty=true; break;
-                case 2: cout << "intermediate only"<<endl; standardDifficulty=true; break;
-                case 3: cout << "expert only"<<endl; standardDifficulty=true; break;
-		        case 4: cout << "beginner classic only"<<endl; standardDifficulty=true; break;
-                }
-
-                if (!standardDifficulty) 
-                    cout << field.width << "x" << field.height << ", " << field.mineCount << " mines" << endl;
-                
-
-
-                cout << setw(16)<<left<<"Square size: ";
-                if (squareSize!=0)
-                    cout <<squareSize<<endl;
-                else
-                    cout << "all"<<endl;
-
-                cout << setw(16)<<left<<"Player name: ";
-                if (!strcmp(playerName,""))
-                    cout<<"all"<<endl;
-                else
-                    cout<<playerName<<endl;
-
-                cout << setw(16)<<left<<"Count: ";
-                if (limit!=0)
-                    cout <<limit<<endl;
-                else
-                    cout << "all"<<endl;
-
-
-                qsort(scores,count,sizeof(Score),compareFunc);
 
 
                 Score *filteredScores;
@@ -1341,12 +1424,11 @@ int main(int argc, char** argv) {
                 count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
                     field.width, field.height, field.mineCount, squareSize,playerName);
 
-                cout<<endl;
+                
 
-                displayScores(filteredScores,count,limit);
+                displayScores(filteredScores,count,limit,listScoresType==4);
 
                 cout<<endl;
-           //     cout << "here2"<<endl;
                 free(scores);
 
             }
@@ -1359,7 +1441,7 @@ int main(int argc, char** argv) {
             
 
             if (squareSize==0)
-                squareSize=25;
+                squareSize=35;
 
             if (squareSize<3) 
                 squareSize=3;
@@ -1395,11 +1477,11 @@ int main(int argc, char** argv) {
                  // - uncomment the getlogin line and program exits when not run from terminal
                 playerName=getlogin();*/
 
-                cout << "No name entered with the -n option. Using 'unnamed'." << endl;
+            //    cout << "No name entered with the -n option. Using 'unnamed'." << endl;
                 strcpy(playerName,"unnamed");
             }
 
-            cout << "Your name: "<<playerName<<endl;
+          //  cout << "Your name: "<<playerName<<endl;
 
             initGraph();
             field.init();

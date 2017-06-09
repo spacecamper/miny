@@ -158,163 +158,296 @@ unsigned int intLength(int n)
     return length;
 }
 
-void displayScores(Score *scores, int count,int limit) {
+void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
+
 
 
 
     if (count==0) {
-        cout << "No scores for this difficulty yet." << endl;
+        if (!csv) 
+            cout << "No scores for this game setup yet." << endl;
         return;
     }
 
 
-    int outputCount;
 
     
-    if (limit==0)
-        outputCount=count;
-    else
-        if (limit<count)
-            outputCount=limit;
-        else
+
+
+    if (!csv) {
+
+        int outputCount;
+
+    
+        if (limit==0)
             outputCount=count;
+        else
+            if (limit<count)
+                outputCount=limit;
+            else
+                outputCount=count;
 
 
-    int tw=terminalWidth();
+        int tw=terminalWidth();
 
 
-    unsigned int maxRankLen=intLength(outputCount);
-    unsigned int maxNameLen=0;
-    unsigned int maxTimeLen=0;
+        unsigned int maxRankLen=intLength(outputCount);
+        unsigned int maxNameLen=0;
+        unsigned int maxTimeLen=0;
 
 
-    // find max. name length and max. time length
+        // find max. name length and max. time length
 
-    for (int i=0;i<outputCount;i++) {
+        for (int i=0;i<outputCount;i++) {
 
-        if (strlen(scores[i].name)>maxNameLen)
-            maxNameLen=strlen(scores[i].name);
+            if (strlen(scores[i].name)>maxNameLen)
+                maxNameLen=strlen(scores[i].name);
 
-        int currentTimeLen=intLength(scores[i].time);
-        if (currentTimeLen>maxTimeLen) 
-            maxTimeLen=currentTimeLen;
+            int currentTimeLen=intLength(scores[i].time);
+            if (currentTimeLen>maxTimeLen) 
+                maxTimeLen=currentTimeLen;
 
-    }
+        }
 
-    if (maxNameLen<4) maxNameLen=4;
-    if (maxTimeLen<4) maxTimeLen=4;
+        if (maxNameLen<4) maxNameLen=4;
+        if (maxTimeLen<4) maxTimeLen=4;
+
+        
+
+        
+
+        ostringstream headerLine;
+
+        headerLine << setw(maxRankLen+6) << right << "Name"
+            <<setw(maxTimeLen+maxNameLen-2)<<right<< "Time"
+            <<"  "<<setw(6)<<right<< "3BV/s"
+            <<"  "<<setw(4)<<right<< "3BV"
+            <<"  "<<setw(6)<<right<< "IOE"
+            <<"  "<<setw(3)<<right<< "Fla"
+          //  <<"  "<<setw(3)<<right<< "Fin"
+            <<"  "<<setw(3)<<right<< "Dif"
+            <<"  "<<setw(19)<<left<< "Date"
+            <<"  "<<left<< "Rep";
+
+
+        // output table header
+
+            bool truncated=false;
+        if (outputLine(headerLine.str(),tw+1)) {  // it should be just tw, not tw+1, but that way it 
+                                                  // truncates this row to 1 char shorter, this fixes
+                                                  // it. for the other rows just tw works
+            truncated=true;
+        }
+
+        cout<<endl;
 
     
 
-    bool truncated=false;
 
-    ostringstream headerLine;
-
-    headerLine << setw(maxRankLen+6) << right << "Name"
-        <<setw(maxTimeLen+maxNameLen-2)<<right<< "Time"
-        <<"  "<<setw(6)<<right<< "3BV/s"
-        <<"  "<<setw(4)<<right<< "3BV"
-        <<"  "<<setw(6)<<right<< "IOE"
-        <<"  "<<setw(3)<<right<< "Fla"
-        <<"  "<<setw(3)<<right<< "Fin"
-        <<"  "<<setw(3)<<right<< "Dif"
-        <<"  "<<setw(19)<<left<< "Date"
-        <<"  "<<left<< "Rep";
+        // table rows
 
 
-    // output table header
+        for (int i=0;i<outputCount;i++) {        
+                    
+            ostringstream currentLine;
 
-    if (outputLine(headerLine.str(),tw+1)) {  // it should be just tw, not tw+1, but that way it 
-                                              // truncates this row to 1 char shorter, this fixes
-                                              // it. for the other rows just tw works
-        truncated=true;
-    }
+            string dateString;
+            if (scores[i].timeStamp==0) {
+                dateString=".";
+            
+            }
+            else {
+                struct tm *lt;
+                lt=localtime(&scores[i].timeStamp);
+                ostringstream stringStream;
+                stringStream <<setw(2)<< setfill('0')<<lt->tm_mday
+                    <<'-'
+                    <<setw(2)<< setfill('0')<<lt->tm_mon+1
+                    <<'-'
+                    <<setw(4)<< setfill(' ')<<right<< lt->tm_year+1900
+                    <<' '         
+                    <<setw(2)<< setfill('0')<<lt->tm_hour
+                    <<':'
+                    <<setw(2)<< setfill('0')<<lt->tm_min
+                    <<':'
+                    <<setw(2)<< setfill('0')<<lt->tm_sec;
 
-    cout<<endl;
+                dateString = stringStream.str();
+            }
+
+            
+            float val3BVs=scores[i].get3BVs();//(float)1000*scores[i].val3BV/scores[i].time;
+
+            
+            // name and time
+
+            currentLine << setw(maxRankLen) << setfill(' ') << right << i+1
+                << "  " << setw(maxNameLen+1) << left << scores[i].name
+                << setw(maxTimeLen+1) << right << scores[i].time;
+                 
+            currentLine <<fixed;
 
 
-    // table rows
+            // 3BV/s
 
-    for (int i=0;i<outputCount;i++) {        
-                
-        ostringstream currentLine;
+            if (val3BVs==0)
+                currentLine <<"   "<<setw(6)<< setprecision(4)<<right<<".";
+            else
+                currentLine <<"   "<<setw(6)<< setprecision(4)<<right<<val3BVs;
 
-        string dateString;
-        if (scores[i].timeStamp==0) {
-            dateString=".";
-        
+            // 3BV
+            if (scores[i].val3BV==0)
+                currentLine <<"  "<<setw(4)<<right<< setfill(' ')<< ".";
+            else
+                currentLine <<" "<<setw(4)<<right<< setfill(' ')<< scores[i].val3BV;
+            
+            // IOE
+            currentLine <<"  "<<setw(6)<<right<< setfill(' ')<< scores[i].getIOE();
+            
+            // flagging
+            currentLine <<"  "<<setw(3)<<right<< (scores[i].flagging?"yes":"no");
+          
+            // difficulty
+
+            if (scores[i].width==8 and scores[i].height==8 and scores[i].mines==10)
+                currentLine  <<"  "<< "beC";
+            else if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
+                currentLine  <<"  "<< "beg";
+            else if (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
+                currentLine  <<"  "<< "int";
+            else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
+                currentLine  <<"  "<< "exp";
+            else
+                currentLine  <<"  "<< "oth";
+
+            // date and time
+
+            currentLine  << "  " << setw(19) << left << dateString;
+
+            // replay number
+
+            if (scores[i].replayNumber!=0)
+                currentLine<< "  " << scores[i].replayNumber;
+            else
+                currentLine<< "  " << ".";
+
+            if (outputLine(currentLine.str(),tw))
+                truncated=true;
+
+
         }
-        else {
-            struct tm *lt;
-            lt=localtime(&scores[i].timeStamp);
-            ostringstream stringStream;
-            stringStream <<setw(2)<< setfill('0')<<lt->tm_mday
-                <<'-'
-                <<setw(2)<< setfill('0')<<lt->tm_mon+1
-                <<'-'
-                <<setw(4)<< setfill(' ')<<right<< lt->tm_year+1900
-                <<' '         
-                <<setw(2)<< setfill('0')<<lt->tm_hour
-                <<':'
-                <<setw(2)<< setfill('0')<<lt->tm_min
-                <<':'
-                <<setw(2)<< setfill('0')<<lt->tm_sec;
-
-            dateString = stringStream.str();
-        }
-
-        
-        float val3BVs=scores[i].get3BVs();//(float)1000*scores[i].val3BV/scores[i].time;
-
-        currentLine << setw(maxRankLen) << setfill(' ') << right << i+1
-            << "  " << setw(maxNameLen+1) << left << scores[i].name
-            << setw(maxTimeLen+1) << right << scores[i].time;
-             
-        currentLine <<fixed;
-
-        if (val3BVs==0)
-            currentLine <<"   "<<setw(6)<< setprecision(4)<<right<<".";
-        else
-            currentLine <<"   "<<setw(6)<< setprecision(4)<<right<<val3BVs;
 
 
-        if (scores[i].val3BV==0)
-            currentLine <<"  "<<setw(4)<<right<< setfill(' ')<< ".";
-        else
-            currentLine <<" "<<setw(4)<<right<< setfill(' ')<< scores[i].val3BV;
-        
-        currentLine <<"  "<<setw(6)<<right<< setfill(' ')<< scores[i].getIOE();
-        
-        currentLine <<"  "<<setw(3)<<right<< (scores[i].flagging?"yes":"no");
-        currentLine <<"  "<<setw(3)<<right<< (scores[i].gameWon?"yes":"no");
-
-        if (scores[i].width==8 and scores[i].height==8 and scores[i].mines==10)
-            currentLine  <<"  "<< "beC";
-        else if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
-            currentLine  <<"  "<< "beg";
-        else if (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
-            currentLine  <<"  "<< "int";
-        else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
-            currentLine  <<"  "<< "exp";
-        else
-            currentLine  <<"  "<< "oth";
-
-        currentLine  << "  " << setw(19) << left << dateString;
-
-        if (scores[i].replayNumber!=0)
-            currentLine<< "  " << scores[i].replayNumber;
-        else
-            currentLine<< "  " << ".";
-
-        if (outputLine(currentLine.str(),tw))
-            truncated=true;
-
+        if (truncated)
+            cout <<endl<< "Lines truncated. To see the full output resize this terminal."<<endl;
 
     }
+    else {
+        cout << "dateOfGame,timeOfGame,width,height,mines,difficulty,won,time,3BV/s,IOE,3BV,flagging,name,effectiveClicks,ineffectiveClicks,squareSize,replay"<<endl;
+
+        for (int i=0;i<count;i++) {        
+                    
+            ostringstream currentLine;
+
+            string dateString;
+            if (scores[i].timeStamp==0) {
+                dateString=".";
+            
+            }
+            else {
+                struct tm *lt;
+                lt=localtime(&scores[i].timeStamp);
+                ostringstream stringStream;
+                stringStream <<setw(4)<< setfill(' ')<<right<< lt->tm_year+1900
+                    <<'-'
+                    <<setw(2)<< setfill('0')<<lt->tm_mon+1
+                    <<'-'
+                    <<setw(2)<< setfill('0')<<lt->tm_mday
+                    <<','         
+                    <<setw(2)<< setfill('0')<<lt->tm_hour
+                    <<':'
+                    <<setw(2)<< setfill('0')<<lt->tm_min
+                    <<':'
+                    <<setw(2)<< setfill('0')<<lt->tm_sec;
+
+                dateString = stringStream.str();
+            }
+
+            
+            
+            float val3BVs=scores[i].get3BVs();//(float)1000*scores[i].val3BV/scores[i].time;
+
+            // date and time of game
+
+            cout << dateString << ',';
 
 
-    if (truncated)
-        cout <<endl<< "Lines truncated. To see the full output resize this terminal."<<endl;
+            // difficulty (in numbers and string)
+
+            cout << scores[i].width << ',' << scores[i].height << ',' << scores[i].mines << ',';
+
+            if (scores[i].width==8 and scores[i].height==8 and scores[i].mines==10)
+                cout << "beC";
+            else if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
+                cout << "beg";
+            else if (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
+                cout << "int";
+            else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
+                cout << "exp";
+            else
+                cout << "oth";
+
+            cout << ',';
+
+
+
+            // won game
+
+            cout << (scores[i].gameWon?"1":"0") << ',';
+ 
+            // time taken
+
+            cout << scores[i].time << ',';
+
+
+            // 3BV/s                 
+            if (val3BVs==0)
+                cout <<".,";
+            else
+                cout<<val3BVs<<',';
+
+
+            // IOE
+            cout<< scores[i].getIOE()<<',';
+
+            // 3BV
+            if (scores[i].val3BV==0)
+                cout<< ".,";
+            else
+                cout<< scores[i].val3BV<<',';
+            
+            
+            // flagging
+            cout<< (scores[i].flagging?"1":"0") << ',';
+
+
+            // name, effective, ineffective clicks, square size
+            cout << scores[i].name << ',' << scores[i].effectiveClicks << ',' << scores[i].ineffectiveClicks << ',' << scores[i].squareSize << ',';
+
+            // replay number
+
+            if (scores[i].replayNumber!=0)
+                cout << scores[i].replayNumber;
+            else
+                cout << ".";
+            
+            cout << endl;
+
+        }
+
+
+    }
+
 }
 
 
@@ -399,12 +532,12 @@ int loadScores(char *fname, Score **scores) {
 
 void appendScore(char *fname, Score score) {
 
-    cout << "Opening score file... "<<flush;
+ //   cout << "Opening score file... "<<flush;
     
     std::ifstream inFile(fname); 
 
     if (inFile.is_open()) {
-        cout << "Score file exists."<<endl;
+   //     cout << "Score file exists."<<endl;
         int version;
         inFile >> version;
         if (version!=SCORE_FILE_VERSION) {
@@ -414,18 +547,15 @@ void appendScore(char *fname, Score score) {
         }  
         inFile.close();
         std::ofstream outFile(fname,ios_base::app); 
-        cout << "Writing..."<<flush;
-    //    outFile.write((const char *) &score, sizeof(Score));
+  //      cout << "Writing..."<<flush;
         score.writeToFile(&outFile);
-        cout << "done."<<endl;
+  //      cout << "done."<<endl;
         outFile.close();
     }
     else {
-        cout << "Score file doesn't exist."<<endl;
+  //      cout << "Score file doesn't exist."<<endl;
         std::ofstream outFile(fname,ios_base::app); 
         int version=5;
-        //outFile.write((const char *) &version, 4);    
-        //outFile.write((const char *) &score, sizeof(Score));
         outFile << version <<endl;
         score.writeToFile(&outFile);
         outFile.close();
@@ -570,7 +700,7 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyR
     else {
         cout << "You didn't get a high score."<<endl;
     }
-    cout << endl;
+   // cout << endl;
 
    //   cout << "here3"<<endl;
     free(scoresFiltered);
