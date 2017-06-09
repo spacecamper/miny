@@ -107,7 +107,7 @@ EXAMPLES
 
  ./miny -w10 -h10 -m10      # start game with the specified parameters
 
- ./miny -t                  # list best times for beg, int and exp combined
+ ./miny -t                  # list best times for beg, int, exp and beC combined
 
  ./miny -d2 -t              # list best times for intermediate
 
@@ -119,7 +119,7 @@ EXAMPLES
  ./miny -w10 -h10 -m10 -t   # list best times for games with the specified 
                             # parameters
 
- ./miny -c > scores.csv     # export scores as CSV to scores.csv
+ ./miny -d2 -c > scores.csv # export intermediate scores as CSV to scores.csv
 
  ./miny -p last.replay      # play replay for the last game played
 
