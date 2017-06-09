@@ -11,6 +11,7 @@ FEATURES
  - timing in milliseconds
  - time, 3BV/s and IOE high scores, including non-flagging versions
  - recording and playing replays
+ - CSV export
  - to reveal squares around a numbered square with flagged adjacent mines you
    can click the square with any button
  - no "?" marks
@@ -20,15 +21,13 @@ FEATURES
 TO DO
 
  - set window class to use with some window managers
- - redisplay the field at the end of the game before writing replay (i.e.
-   remove the delay)
  - prevent buffer overflows
 
 
 COMPILING AND PLAYING
 
  To compile run 'make'. You'll need to have OpenGL libraries installed. On
- Ubuntu try the package freeglut3-dev.
+ Ubuntu you need the package freeglut3-dev.
 
  To play run './miny [options]'. For best results run from terminal.
 
@@ -55,9 +54,9 @@ OPTIONS
   Game setup:
 
  -n?  player name
- -d?  difficulty - 1, 2 or 3 (1 - Beginner, 2 - Intermediate, 3 - Expert,
-      4 - Beginner Classic) 
- -s?  square size in px (3 to 100, default=25)
+ -d?  difficulty - 1, 2, 3 or 4 (1 - Beginner, 2 - Intermediate (default), 3 - 
+      Expert, 4 - Beginner Classic) 
+ -s?  square size in px (3 to 100, default=35)
  -m?  number of mines
  -w?  field width (2 to 100)
  -h?  field height (2 to 100)
@@ -68,6 +67,10 @@ OPTIONS
  -t   list best times for the selected setup
  -3   list best 3BV/s for the selected setup
  -i   list best IOE-s for the selected setup
+ -c   list scores as CSV, e.g. for further analysis in Excel/Calc. Scores are
+      listed in the order they were achieved, i.e. ordered by date. The -l 
+      option does nothing in this case, all scores specified by other options
+      are displayed.
 
 
   Score filter:
@@ -76,14 +79,16 @@ OPTIONS
       2 - nf only)
  -g?  select scores by whether the game was won (0 - all, 1 - won only 
       (default), 2 - lost only) (using this option may produce buggy results)
- -l?  number of best scores to display (0 - all (default))
+ -l?  number of best scores to display (0 - all, default=20)
 
 
-  Replay:
+  Other:
 
- -p?  play replay file. Value is a file name. This is usually of the format 
-      x.replay where x is a number found in high score table in the Rep
+ -p?  play replay file. Value is a file name. This is by default of the format 
+      x.replay where x is the number found in high score table in the Rep
       column.
+ -a   After finishing a game, display how score ranks among the current 
+      difficulty scores even if it doesn't rank in the top 20.
 
 
 NOTES
@@ -97,8 +102,8 @@ NOTES
 
 EXAMPLES
 
- ./miny -d3 -njoe -s35      # start game on expert difficulty, player name joe,
-                            # square size 35
+ ./miny -d3 -njoe -s40      # start game on expert difficulty, player name joe,
+                            # square size 40
 
  ./miny -w10 -h10 -m10      # start game with the specified parameters
 
@@ -113,6 +118,8 @@ EXAMPLES
 
  ./miny -w10 -h10 -m10 -t   # list best times for games with the specified 
                             # parameters
+
+ ./miny -c > scores.csv     # export scores as CSV to scores.csv
 
  ./miny -p last.replay      # play replay for the last game played
 
