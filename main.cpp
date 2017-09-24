@@ -36,7 +36,8 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.7"
+#define VERSION "0.5.8"
+
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
 //   events
@@ -150,6 +151,16 @@ int loadReplay(char *fname, Replay *r) {
         cerr<<"Error opening replay file '"<<fname<<"'."<<endl;
         return 1;
     }
+
+    
+    string content((istreambuf_iterator<char>(ifile) ), (istreambuf_iterator<char>()    )) ;
+    if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_ \x0d\x0a-:")) {
+        cout << "Replay file contains invalid characters. Exiting."<<endl;
+        exit(1);
+    }
+
+    ifile.close();
+    ifile.open(fname);
 
     r->readFromFile(&ifile);
 
@@ -687,8 +698,11 @@ void endGameLost() {
 
     redisplay();
 
-    cout << endl<< "YOU HIT A MINE. You played for "<<timer.calculateElapsedTime()
-        <<" milliseconds." << endl << "3BV:  " << field.get3BV() << endl;
+    cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
+        timer.calculateElapsedTime()/1000.0 <<" seconds." << endl << "3BV:  " 
+        << setprecision(4) << fixed << field.get3BV() << endl;
+
+
     long timeTaken=timer.calculateElapsedTime();
     long ts=time(NULL);
     
@@ -866,10 +880,12 @@ void endGameWon() {
 
     cout << endl<<"YOU WIN!"<<endl;
     
-    if (!playReplay) 
-        cout << setw(8)<<left << "Time: "<<timeTaken<<" ms" << endl;
+    if (!playReplay) {
+        cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << timeTaken/1000.0
+            << " s" << endl;
+        cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
+    }
 
-    cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
     cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
     
     cout << setw(8)<<left << "3BV: " << field.get3BV()<<endl;
@@ -901,7 +917,7 @@ void endGameWon() {
 
         evalScore(newScore,scores, count,field.width,field.height,field.mineCount,anyRank);
 
-        free(scores);
+        free(scores); 
         
 
         // find the lowest unused replay file number
@@ -1256,7 +1272,6 @@ int main(int argc, char** argv) {
 
     // high score directory
 
-    
 
     //cout << "hsdir: " << highScoreDir<<endl;
 
@@ -1451,24 +1466,16 @@ int main(int argc, char** argv) {
             field.checkValues();
 
 
-            char *validChars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_";
-            char *c=playerName;
-
-            while(*c) {
-                if (!strchr(validChars,*c)) {
-                    cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
-                    <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
-                    exit(1);    
-                }
-                c++;
-            }
+            
 
 
-            if (strlen(playerName)>20) {
+            if (!isValidName(playerName)) {
                 cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
-                    <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
-                exit(1);
+                <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
+                exit(1);   
             }
+
+
 
 
             if (!strcmp(playerName,"")) {   

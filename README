@@ -35,6 +35,9 @@ COMPILING AND PLAYING
  While playing, you can see how many effective / ineffective clicks you have
  made.
 
+ After every game the replay is saved as last.replay. Replays for won games 
+ are also saved as [number].replay. See below for how to play them.
+
 
 MOUSE AND KEYBOARD CONTROLS
 

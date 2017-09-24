@@ -2,6 +2,31 @@
  
 using namespace std;
 
+bool isValidName(char *n) {
+
+    char *c=n;
+    char *validChars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_";
+            
+
+    while(*c) {
+        if (!strchr(validChars,*c)) {
+            return false;
+        }
+        c++;
+    }
+
+
+    if (strlen(n)>MAX_NAME_LENGTH) {
+        return false;
+    }
+
+    return true;
+    
+
+}
+
+
+
 void ordinalNumberSuffix(char *suffix, int n) {
 
     int rem100=n%100;

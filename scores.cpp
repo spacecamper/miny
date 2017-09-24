@@ -39,7 +39,11 @@ void Score::writeToFile(ofstream *f) {
 
 void Score::readFromFile(ifstream *f) {
 
+
     *f >> timeStamp >> name >> replayNumber >> width >> height >> mines >> time >> val3BV >> flagging >> effectiveClicks >> ineffectiveClicks >> squareSize >> gameWon;
+
+
+
 
 //     cout << name << " "<<time<<endl;
 
@@ -209,8 +213,10 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
         }
 
+        maxTimeLen++;   // for decimal point
+
         if (maxNameLen<4) maxNameLen=4;
-        if (maxTimeLen<4) maxTimeLen=4;
+        if (maxTimeLen<5) maxTimeLen=5;
 
         
 
@@ -283,7 +289,8 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
             currentLine << setw(maxRankLen) << setfill(' ') << right << i+1
                 << "  " << setw(maxNameLen+1) << left << scores[i].name
-                << setw(maxTimeLen+1) << right << scores[i].time;
+                << setw(maxTimeLen+1) << right << setprecision(3) << fixed 
+                << scores[i].time/1000.0;
                  
             currentLine <<fixed;
 
@@ -291,9 +298,9 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
             // 3BV/s
 
             if (val3BVs==0)
-                currentLine <<"   "<<setw(6)<< setprecision(4)<<right<<".";
+                currentLine <<"   "<<setw(6)<< setprecision(4)<<fixed<<right<<".";
             else
-                currentLine <<"   "<<setw(6)<< setprecision(4)<<right<<val3BVs;
+                currentLine <<"   "<<setw(6)<< setprecision(4)<<fixed<<right<<val3BVs;
 
             // 3BV
             if (scores[i].val3BV==0)
@@ -302,7 +309,8 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
                 currentLine <<" "<<setw(4)<<right<< setfill(' ')<< scores[i].val3BV;
             
             // IOE
-            currentLine <<"  "<<setw(6)<<right<< setfill(' ')<< scores[i].getIOE();
+            currentLine <<"  "<<setw(6)<<right<< setfill(' ')<< setprecision(4)<<fixed
+                << scores[i].getIOE();
             
             // flagging
             currentLine <<"  "<<setw(3)<<right<< (scores[i].flagging?"yes":"no");
@@ -456,7 +464,7 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 int loadScores(char *fname, Score **scores) {
 
 
-
+    *scores=NULL;
     std::ifstream inFile(fname); 
 
     if (!inFile.is_open())
@@ -475,7 +483,17 @@ int loadScores(char *fname, Score **scores) {
         
     switch(version) {
     case SCORE_FILE_VERSION:
+    {
+        string content((istreambuf_iterator<char>(inFile) ), (istreambuf_iterator<char>()    )) ;
+        if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_ \x0d\x0a")) {
+            cout << "Score file contains invalid characters. Exiting."<<endl;
+            exit(1);
+        }
         
+        inFile.close();
+        inFile.open(fname);
+            
+        inFile >> version;
         while (!inFile.eof()) {
             tmps.readFromFile(&inFile);
           //  inFile.read((char *) &tmphs, sizeof(Score));
@@ -483,7 +501,6 @@ int loadScores(char *fname, Score **scores) {
             count++; 
         }
         count--;
-
     //    cout << "Counted "<<count<<" scores in score file."<<endl;
 
         if (count==0)
@@ -491,7 +508,6 @@ int loadScores(char *fname, Score **scores) {
 
 
         inFile.close();
-
         inFile.open(fname);
 
         //inFile.read((char *) &version, 4);
@@ -512,10 +528,12 @@ int loadScores(char *fname, Score **scores) {
 
         }
       //  cout<< "Finished reading."<<endl;
-     
+        
         break;
+    }
     default:
         cerr << "Unsupported score file version. Try upgrading to the newest version of the program."<<endl;
+        exit(1);
         count=0;
         break;
     }

@@ -128,6 +128,9 @@ void Replay::writeToFile(ofstream *file) {
 void Replay::readFromFile(ifstream *ifile) {
 
 
+
+
+
     string firstString;
 
     *ifile >> firstString;

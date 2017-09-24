@@ -29,6 +29,7 @@ using namespace std;
 #define MAX_HS 20
 #define SCORE_FILE_VERSION 5
 
+#define MAX_NAME_LENGTH 20
 
 void ordinalNumberSuffix(char *, int);
 
@@ -36,6 +37,8 @@ void ordinalNumberSuffix(char *, int);
 unsigned int terminalWidth();
 
 bool outputLine(string,int);
+
+bool isValidName(char *);
 
 #endif
 
