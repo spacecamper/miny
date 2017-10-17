@@ -90,10 +90,10 @@ int compareByIOE(const void *a,const void *b) {
 }
 
 
-
 int filterScores(Score *scores, int count, Score **filteredScores, int fla, int fin, int w, int h, int m, int ss, char *pname) {
 
 
+//    filterScores(scoresAll, countAll,&scoresNF,2,1,0,0,0,0,&zero); 
 
     *filteredScores=new Score[count];    // just allocate array of the same size for the filtered scores
 
@@ -123,7 +123,7 @@ int filterScores(Score *scores, int count, Score **filteredScores, int fla, int 
             (
                 (scores[i].width==w and scores[i].height==h and scores[i].mines==m)
                 or
-                (w==0 and h==0 and m==0 and isStandard)
+                (w==0 and h==0 and m==0 and isStandard) // XXX BUG - for non-standard sizes scores can't be filtered for nf without specifying w,h,m
             )
 
 			and 
@@ -600,6 +600,7 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
             break;
     }
 
+    ordinalNumberSuffix(suffixAll,posAll+1);
 
 
 
@@ -608,11 +609,13 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
         char zero='\0';
 
         // only nf games
-        int countNF=filterScores(scoresAll, countAll,&scoresNF,2,1,0,0,0,0,&zero); 
+        int countNF=filterScores(scoresAll, countAll,&scoresNF,2,1,s.width,s.height,s.mines,0,&zero); 
 
 
       //  cout << "nf scores"<<endl;
-       // displayScores(scoresNF, countNF, MAX_HS);
+  
+//        displayScores(scoresNF, countNF, MAX_HS);
+
         for (posNF=0;posNF<countNF;posNF++) {
             if (compareFunc((const void*) &s,(const void*) &scoresNF[posNF])<0) {
                 break;
@@ -623,27 +626,42 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
     else 
         posNF=MAX_HS+1;
 
+    ordinalNumberSuffix(suffixNF,posNF+1);
 
+    if (anyRank) {
+        
+        if (!s.flagging) {
+            
+            *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll
+                                                 <<" ("<<posNF+1<<suffixNF<<" NF)"<<endl;
+        }
+        else {
+            
 
-    if (anyRank or (posAll<MAX_HS and posNF<MAX_HS)) {
-        ordinalNumberSuffix(suffixAll,posAll+1);
-        ordinalNumberSuffix(suffixNF,posNF+1);
+            *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll<<endl;
+        }
+        return true;
+    }
+    else if (posAll<MAX_HS and posNF<MAX_HS) {
         *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll
                                                  <<" ("<<posNF+1<<suffixNF<<" NF)"<<endl;
         
         return true;
     }
     else if (posAll<MAX_HS) {
-        ordinalNumberSuffix(suffixAll,posAll+1);
         *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll<<endl;
         return true;
     }
     else if (posNF<MAX_HS) {
-        ordinalNumberSuffix(suffixNF,posNF+1);
         *scoreString <<setw(8)<<left<< stringValueName<<posNF+1<<suffixNF<<" NF"<<endl;
         return true;
     }
     return false;
+
+
+
+
+
 
 }
 
@@ -691,7 +709,7 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyR
     if (scoreString.str().length()!=0) {
 
         if (anyRank)
-            cout << "Your score ranks as (out of "<<countFiltered<<" ";
+            cout << "Your score ranks as (out of "<<countFiltered+1<<" ";   // countFiltered+1 because current count + 1 new score
         else 
             cout << "High score reached (";
 
@@ -705,7 +723,7 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyR
             cout << "Beginner classic";
         else
             //cout << "\"width: " << w << ", height: " << h << ", mines: " << m << "\"";
-            cout << w << "x" << h << ", " << m << " mines";
+            cout << '\'' << w << "x" << h << ", " << m << " mines'";
 
 
         if (anyRank)

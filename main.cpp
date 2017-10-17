@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.8"
+#define VERSION "0.5.9"
 
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
@@ -1177,6 +1177,9 @@ int main(int argc, char** argv) {
 
     strcpy(highScoreDir,getenv("HOME"));
     strcat(highScoreDir,"/.miny/");
+
+    // TODO allow specifying different config directory
+
 
     playerName[0]='\0';
 
