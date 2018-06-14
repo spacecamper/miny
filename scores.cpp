@@ -194,13 +194,13 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
         int tw=terminalWidth();
 
-
         unsigned int maxRankLen=intLength(outputCount);
-        unsigned int maxNameLen=0;
-        unsigned int maxTimeLen=0;
+        unsigned int maxNameLen=4;
+        unsigned int maxTimeLen=4;
+        unsigned int max3BVLen=3;
 
 
-        // find max. name length and max. time length
+        // find max. lengths
 
         for (int i=0;i<outputCount;i++) {
 
@@ -211,23 +211,30 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
             if (currentTimeLen>maxTimeLen) 
                 maxTimeLen=currentTimeLen;
 
+            int current3BVLen=intLength(scores[i].val3BV);
+            if (current3BVLen>maxTimeLen) 
+                max3BVLen=current3BVLen;
+
         }
 
         maxTimeLen++;   // for decimal point
 
+/*
         if (maxNameLen<4) maxNameLen=4;
-        if (maxTimeLen<5) maxTimeLen=5;
+        if (maxTimeLen<4) maxTimeLen=4;
+        if (max3BVLen<3) max3BVLen=3;
 
-        
+        */
 
         
 
         ostringstream headerLine;
 
-        headerLine << setw(maxRankLen+6) << right << "Name"
-            <<setw(maxTimeLen+maxNameLen-2)<<right<< "Time"
+        headerLine << setw(maxRankLen) << right << ""
+            <<"  "<<setw(maxNameLen) << left << "Name"
+            <<"  "<<setw(maxTimeLen)<<right<< "Time"
             <<"  "<<setw(6)<<right<< "3BV/s"
-            <<"  "<<setw(4)<<right<< "3BV"
+            <<"  "<<setw(max3BVLen)<<right<< "3BV"
             <<"  "<<setw(6)<<right<< "IOE"
             <<"  "<<setw(3)<<right<< "Fla"
           //  <<"  "<<setw(3)<<right<< "Fin"
@@ -238,10 +245,8 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
         // output table header
 
-            bool truncated=false;
-        if (outputLine(headerLine.str(),tw+1)) {  // it should be just tw, not tw+1, but that way it 
-                                                  // truncates this row to 1 char shorter, this fixes
-                                                  // it. for the other rows just tw works
+        bool truncated=false;
+        if (outputLine(headerLine.str(),tw)) {
             truncated=true;
         }
 
@@ -288,25 +293,25 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
             // name and time
 
             currentLine << setw(maxRankLen) << setfill(' ') << right << i+1
-                << "  " << setw(maxNameLen+1) << left << scores[i].name
-                << setw(maxTimeLen+1) << right << setprecision(3) << fixed 
+                << "  " << setw(maxNameLen) << left << scores[i].name
+                << "  " << setw(maxTimeLen) << right << setprecision(3) << fixed 
                 << scores[i].time/1000.0;
                  
             currentLine <<fixed;
 
 
             // 3BV/s
-
+            // assume 3BV/s will always be of the format X.XXXX
             if (val3BVs==0)
-                currentLine <<"   "<<setw(6)<< setprecision(4)<<fixed<<right<<".";
+                currentLine <<"  "<<setw(5)<< setprecision(4)<<fixed<<right<<".";
             else
-                currentLine <<"   "<<setw(6)<< setprecision(4)<<fixed<<right<<val3BVs;
+                currentLine <<"  "<<setw(5)<< setprecision(4)<<fixed<<right<<val3BVs;
 
             // 3BV
             if (scores[i].val3BV==0)
-                currentLine <<"  "<<setw(4)<<right<< setfill(' ')<< ".";
+                currentLine <<"  "<<setw(max3BVLen)<<right<< setfill(' ')<< ".";
             else
-                currentLine <<" "<<setw(4)<<right<< setfill(' ')<< scores[i].val3BV;
+                currentLine <<"  "<<setw(max3BVLen)<<right<< setfill(' ')<< scores[i].val3BV;
             
             // IOE
             currentLine <<"  "<<setw(6)<<right<< setfill(' ')<< setprecision(4)<<fixed

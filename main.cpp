@@ -1,7 +1,7 @@
 /*
  * Miny
  * a minesweeper clone
- * (c) 2015-2017 spacecamper
+ * (c) 2015-2018 spacecamper
  */
 
 #include <stdlib.h>
@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.9"
+#define VERSION "0.5.10"
 
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
@@ -789,14 +789,8 @@ long findLowestUnusedReplayNumber() {
 
     while (lower<upper-1) {
 
-        long oldMiddle=middle;
         middle=(lower+upper)/2;
-        if (oldMiddle==middle) {
-            cout << "oldMiddle==middle";
-            break;
-        }
-
-
+        
         if (replayFileNumberExists(middle))
             lower=middle;
         else
@@ -1189,13 +1183,13 @@ int main(int argc, char** argv) {
     anyRank=false;
 
 
+    difficulty=2;
+
     while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:a")) != -1)
         switch (option_char) {  
-            case 'd': {
+            case 'd': 
                 difficulty=atoi(optarg);
-                
                 break;
-            }
             case 's': 
                 squareSize=atoi(optarg);
                 break;
@@ -1209,7 +1203,10 @@ int main(int argc, char** argv) {
                 field.height=atoi(optarg);
                 break;
             case 'n':
-                strncpy(playerName,optarg,20);
+                if (strlen(optarg)<20)
+                    strcpy(playerName,optarg);
+                else
+                    strncpy(playerName,optarg,20);
                 
                 break;
             case 'p':
@@ -1254,9 +1251,7 @@ int main(int argc, char** argv) {
                 break;*/
             case 'c':
                 listScoresType=4;
-               /* if (optarg!=0) {
-                    cout << "optarg" << endl;
-                }*/
+
             case 'a':
                 anyRank=true;
                 break;
@@ -1311,15 +1306,17 @@ int main(int argc, char** argv) {
     }
     else { 
 
-        if (difficulty==0 and listScoresType==0)    // if play game (don't list scores) and difficulty is not specified
-            difficulty=2;   // intermediate
 
-
-        if (field.width!=0 and field.height!=0 and field.mineCount!=0)  // if some of these values were specified on the command line
+        if (field.width!=0 and field.height!=0 and field.mineCount!=0)  // if these values were specified on the command line
             difficulty=-1;      // prevent altering them in the switch
 
 
         switch(difficulty) {
+            case 0:
+                field.height=0;
+                field.width=0;
+                field.mineCount=0;
+                break;
             case 1:
                 field.height=9;
                 field.width=9;
@@ -1472,7 +1469,7 @@ int main(int argc, char** argv) {
             
 
 
-            if (!isValidName(playerName)) {
+            if (strlen(playerName)!=0 && !isValidName(playerName)) {
                 cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
                 <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
                 exit(1);   
@@ -1480,18 +1477,16 @@ int main(int argc, char** argv) {
 
 
 
+            // set player name to username if not entered with -n
 
-            if (!strcmp(playerName,"")) {   
-              /*  cout << "Couldn't get player name. Using username as player name." << endl; 
-                // this should set player name when prog not run from terminal but it doesn't work 
-                 // - uncomment the getlogin line and program exits when not run from terminal
-                playerName=getlogin();*/
-
-            //    cout << "No name entered with the -n option. Using 'unnamed'." << endl;
-                strcpy(playerName,"unnamed");
+            if (strlen(playerName)==0) {   
+                if (strlen(getenv("USER"))>20) {
+                    strncpy(playerName,getenv("USER"),20);
+                    playerName[21]='\0';
+                }
+                else
+                    strcpy(playerName,getenv("USER"));
             }
-
-          //  cout << "Your name: "<<playerName<<endl;
 
             initGraph();
             field.init();

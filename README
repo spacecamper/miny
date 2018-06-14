@@ -7,6 +7,7 @@ FEATURES
 
  - Linux native
  - time, 3BV/s and IOE high scores, including non-flagging versions
+ - scores kept indefinitely for all played games
  - recording and playing replays
  - CSV export
  - timing in milliseconds
@@ -27,8 +28,8 @@ TO DO
 
 COMPILING AND PLAYING
 
- To compile run 'make'. You'll need to have OpenGL libraries installed. On
- Ubuntu you need the package freeglut3-dev.
+ To compile run 'make'. You'll need to have OpenGL libraries installed, on
+ Ubuntu those should be covered by the package freeglut3-dev.
 
  To play run './miny [options]'. For best results run from terminal.
 
@@ -43,8 +44,8 @@ MOUSE AND KEYBOARD CONTROLS
 
  Apart from intuitive minesweeper mouse controls, these work:
 
- To start a new game press Space or click the yellow square or, when game has 
- ended, click anywhere outside the mine field.
+ To start a new game press Space or click the yellow square or, after a game 
+ has ended, click anywhere outside the playfield.
 
  To pause/unpause while playing press P.
 
@@ -57,11 +58,13 @@ OPTIONS
 
   Game setup:
 
- -n?  player name
- -d?  difficulty - 1, 2, 3 or 4 (1 - Beginner, 2 - Intermediate (default), 3 - 
-      Expert, 4 - Beginner Classic) 
- -s?  square size in px (3 to 100, default=35)
- -m?  number of mines
+ -n?  player name. If this option is missing, system username is used.
+ -d?  difficulty - 0, 1, 2, 3 or 4 (1 - Beginner, 2 - Intermediate (default), 
+      3 - Expert, 4 - Beginner Classic, 0 - all of the preceding four. 0 can
+      be used when displaying scores) If -w, -h and -m are set, this option
+      is ignored.
+ -s?  square size in pixels (3 to 100, default=35)
+ -m?  number of mines (min==1, max depends on field dimensions)
  -w?  field width (2 to 100)
  -h?  field height (2 to 100)
 
@@ -70,17 +73,17 @@ OPTIONS
 
  -t   list best times for the selected setup
  -3   list best 3BV/s for the selected setup
- -i   list best IOE-s for the selected setup
+ -i   list best IOEs for the selected setup
  -c   list scores as CSV, e.g. for further analysis in Excel/Calc. Scores are
       listed in the order they were achieved, i.e. ordered by date. The -l 
-      option does nothing in this case, all scores specified by other options
+      option is ignored in this case, all scores specified by other options
       are displayed.
 
 
   Score filter:
 
  -f?  select scores by flagging (0 - all (default), 1 - flagging only, 
-      2 - nf only)
+      2 - non-flagging only)
  -g?  select scores by whether the game was won (0 - all, 1 - won only 
       (default), 2 - lost only) (using this option may produce buggy results)
  -l?  number of best scores to display (0 - all, default=20)
@@ -91,7 +94,7 @@ OPTIONS
  -p?  play replay file. Value is a file name. This is by default of the format 
       x.replay where x is the number found in high score table in the Rep
       column.
- -a   After finishing a game, display how score ranks among the current 
+ -a   After finishing a game, display how the score ranks among the current
       difficulty scores even if it doesn't rank in the top 20.
 
 
@@ -106,16 +109,19 @@ NOTES
 
 EXAMPLES
 
+ ./miny                     # start game on intermediate difficulty
+
  ./miny -d3 -njoe -s40      # start game on expert difficulty, player name joe,
                             # square size 40
 
  ./miny -w10 -h10 -m10      # start game with the specified parameters
 
- ./miny -t                  # list best times for beg, int, exp and beC combined
+ ./miny -t                  # list best times for intermediate
 
- ./miny -d2 -t              # list best times for intermediate
+ ./miny -d0 -3              # list best 3BV/s for beg, int, exp and beC
+                              combined
 
- ./miny -d2 -f2 -t          # list best times for intermediate, non-flagging 
+ ./miny -d3 -f2 -t          # list best times for expert, non-flagging 
                             # only
 
  ./miny -d1 -3              # list best 3BV/s for beginner
@@ -129,5 +135,3 @@ EXAMPLES
 
  ./miny -p 4.replay         # play the selected replay
 
-
-(c) 2015-2017 spacecamper
