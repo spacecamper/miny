@@ -36,7 +36,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.10"
+#define VERSION "0.5.11"
 
 
 // TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
@@ -1477,15 +1477,18 @@ int main(int argc, char** argv) {
 
 
 
-            // set player name to username if not entered with -n
+            // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
 
-            if (strlen(playerName)==0) {   
-                if (strlen(getenv("USER"))>20) {
-                    strncpy(playerName,getenv("USER"),20);
-                    playerName[21]='\0';
-                }
+            if (strlen(playerName)==0) {      
+                if (isValidName(getenv("USER")))       
+                    if (strlen(getenv("USER"))>20) {
+                        strncpy(playerName,getenv("USER"),20);
+                        playerName[21]='\0';
+                    }
+                    else
+                        strcpy(playerName,getenv("USER"));
                 else
-                    strcpy(playerName,getenv("USER"));
+                    strcpy(playerName,"unnamed");
             }
 
             initGraph();
