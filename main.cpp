@@ -61,24 +61,11 @@ bool gamePaused;
 bool playReplay;
 bool anyRank;
 
-
-//int difficulty;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
-//int gameWidth, gameHeight, gameMines;
-
 Timer timer;
 
 Replay replay;
 
 Field field;
-
-
-
-void endGameWon();
-
-
-
-
-
 
 void redisplay() {
 
@@ -117,7 +104,7 @@ void newGame() {
 
 
 // ---------------------- REPLAY ------------------//
-void saveReplay(char *fname, Replay *r) {
+void saveReplay(const char *fname, Replay *r) {
 
 
     ofstream ofile;
@@ -322,8 +309,6 @@ void drawDigit(int n, int x, int y, float zoom) {
 
 
 void drawScene() {
-
-
     glClearColor(.7, .7, .7, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -341,10 +326,6 @@ void drawScene() {
         glVertex2f(replay.cursorX,replay.cursorY+20);
         glVertex2f(replay.cursorX+11,replay.cursorY+17);
         glEnd();
-        
-
-
-
     }
 
 
@@ -933,12 +914,7 @@ void endGameWon() {
 
         saveReplay(rfname,&replay);
 
-
-   //     cout << "About to save replay."<<endl;
-
-
         saveReplay("last.replay",&replay);
-    //    cout << "Done saving replay."<<endl;
 
     }
 
@@ -1026,8 +1002,6 @@ void mouseClick(int button, int mState, int x, int y) {
             // outside of field - new game
 
             newGame();
-
-        //    placeMines();
         }
     }
 
@@ -1047,8 +1021,6 @@ void handleResize(int w, int h) {
 
 
 void update(int value) {
-
-   // cout << timer.calculateTimeSinceStart() << endl;
     glutPostRedisplay(); 
 	
     glutTimerFunc(50, update, 0);
@@ -1056,13 +1028,8 @@ void update(int value) {
 
 
 void updateR(int value) {
-
-    
-     
-	
     int delay=replay.playStep();
 
-   // cout << "delay=="<<delay<<endl;
     glutPostRedisplay();
 
     if (delay>=0) // if replay hasn't ended
@@ -1142,7 +1109,160 @@ void initGraphR() {
 
 }
 
+void displayReplay(char replayFileName[100]) {
+    if (loadReplay(replayFileName,&replay)) {
+        exit(1);
+    }
+    field.init();
+    cout << "Playing replay..." << endl;
+    initGraphR();   
 
+    glutTimerFunc(1, updateR, 0);
+}
+
+void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty) {
+    // TODO 'other' setups may produce too high 3BV/s etc and break layout
+
+    char fullpath[100];
+    strcpy(fullpath,highScoreDir);
+    strcat(fullpath,"scores.dat");
+
+
+    Score *scores;
+    int count=loadScores(fullpath,&scores);
+    
+
+    if (count==0) {      // no scores in score file
+        if (listScoresType!=4)
+            cout<<"No high scores yet."<<endl;
+    }
+    else {
+        if (listScoresType!=4) {    // if not display as csv, then info about filter and sort
+            cout << endl << "Displaying scores."<<endl;
+            cout << setw(16)<<left<<"Sorted by: ";
+
+            int (*compareFunc)(const void *,const void *)=NULL;
+            switch(listScoresType) {
+            case 1:
+                cout << "time" << endl;
+                compareFunc=compareByTime; break;
+            case 2:
+                cout << "3BV/s" << endl;
+                compareFunc=compareBy3BVs; break;
+            case 3:
+                cout << "IOE" << endl;
+                compareFunc=compareByIOE; break;
+            }
+
+            cout << setw(16)<<left<<"Flagging: ";
+            switch (listFlagging) {
+            case 0: cout << "all"<<endl; break;
+            case 1: cout << "flagging only"<<endl; break;
+            case 2: cout << "non-flagging only"<<endl; break;
+            }
+
+            cout << setw(16)<<left<<"Finished: ";
+            switch (listFinished) {
+            case 0: cout << "all"<<endl; break;
+            case 1: cout << "finished only"<<endl; break;
+            case 2: cout << "unfinished only"<<endl; break;
+            }
+
+            cout << setw(16)<<left<<"Difficulty: ";
+
+            
+            bool standardDifficulty=false;
+
+            switch (difficulty) {
+            case 0: cout << "beginner, intermediate, expert, beginner classic"<<endl; standardDifficulty=true; break;
+            case 1: cout << "beginner only"<<endl; standardDifficulty=true; break;
+            case 2: cout << "intermediate only"<<endl; standardDifficulty=true; break;
+            case 3: cout << "expert only"<<endl; standardDifficulty=true; break;
+            case 4: cout << "beginner classic only"<<endl; standardDifficulty=true; break;
+            }
+
+            if (!standardDifficulty) 
+                cout << field.width << "x" << field.height << ", " << field.mineCount << " mines" << endl;
+            
+
+
+            cout << setw(16)<<left<<"Square size: ";
+            if (squareSize!=0)
+                cout <<squareSize<<endl;
+            else
+                cout << "all"<<endl;
+
+            cout << setw(16)<<left<<"Player name: ";
+            if (!strcmp(playerName,""))
+                cout<<"all"<<endl;
+            else
+                cout<<playerName<<endl;
+
+            cout << setw(16)<<left<<"Count: ";
+            if (scoreListLength!=0)
+                cout <<scoreListLength<<endl;
+            else
+                cout << "all"<<endl;
+        
+            cout<<endl;
+
+            qsort(scores,count,sizeof(Score),compareFunc);
+        }
+
+        
+
+
+        Score *filteredScores;
+
+
+        count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
+            field.width, field.height, field.mineCount, squareSize,playerName);
+
+        
+
+        displayScores(filteredScores,count,scoreListLength,listScoresType==4);
+
+        cout<<endl;
+        free(scores);
+    }
+}
+
+void beginGame() {
+    if (squareSize==0)
+        squareSize=35;
+
+    if (squareSize<3) 
+        squareSize=3;
+    else if (squareSize>100) 
+        squareSize=100;
+    
+    field.checkValues();
+
+    if (strlen(playerName)!=0 && !isValidName(playerName)) {
+        cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
+        <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
+        exit(1);   
+    }
+
+    // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
+
+    if (strlen(playerName)==0) {      
+        if (isValidName(getenv("USER")))       
+            if (strlen(getenv("USER"))>20) {
+                strncpy(playerName,getenv("USER"),20);
+                playerName[21]='\0';
+            }
+            else
+                strcpy(playerName,getenv("USER"));
+        else
+            strcpy(playerName,"unnamed");
+    }
+
+    initGraph();
+    field.init();
+
+    glutTimerFunc(50, update, 0);
+}
 
 int main(int argc, char** argv) {
 
@@ -1161,13 +1281,12 @@ int main(int argc, char** argv) {
     gamePaused=false;
 
     char replayFileName[100];
-    int playReplayPlace=-1;
     int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
 
-    int difficulty=0;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
+    int difficulty=2;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
     int listFlagging=0;  // 0-both, 1-flagging, 2-nf
     int listFinished=1; //  0-both, 1-finished, 2-unfinished
-    int limit=MAX_HS;        // how many scores to display
+    int scoreListLength=MAX_HS;        // how many scores to display
 
     strcpy(highScoreDir,getenv("HOME"));
     strcat(highScoreDir,"/.miny/");
@@ -1181,9 +1300,6 @@ int main(int argc, char** argv) {
     strcpy(playerName,"");
 
     anyRank=false;
-
-
-    difficulty=2;
 
     while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:a")) != -1)
         switch (option_char) {  
@@ -1214,12 +1330,8 @@ int main(int argc, char** argv) {
                 strcat(replayFileName,optarg);
                 playReplay=true;
                 break;
-            case 'r':
-                playReplay=true;
-                playReplayPlace=atoi(optarg)-1;
-                break;
             case 'l':
-                limit=atoi(optarg);
+                scoreListLength=atoi(optarg);
                 break;
             case '3':
                 listScoresType=2;
@@ -1233,22 +1345,10 @@ int main(int argc, char** argv) {
 
             case 'f':
                 listFlagging=optarg[0]-'0';
-            //    cout << "listFlagging="<<listFlagging<<endl;
                 break;
             case 'g':
                 listFinished=optarg[0]-'0';
-             //   cout << "listFinished="<<listFinished<<endl;
                 break;
-            /*case 'c':   // output 3BV of replay file given as argument and exit
-                        // TAKES THE FULL PATH TO THE FILE AS ARGUMENT
-               // strcpy(replayFileName,highScoreDir);
-                strcpy(replayFileName,optarg);
-                if (loadReplay(replayFileName,&replay)) {
-                    exit(1);
-                }
-                cout << field.get3BV() << endl;
-                exit(0);
-                break;*/
             case 'c':
                 listScoresType=4;
 
@@ -1256,7 +1356,6 @@ int main(int argc, char** argv) {
                 anyRank=true;
                 break;
             case '?':
-                //cerr << "Unknown option: -" << optopt << endl;
                 exit(1);
 
         }
@@ -1270,46 +1369,20 @@ int main(int argc, char** argv) {
 
     // high score directory
 
-
-    //cout << "hsdir: " << highScoreDir<<endl;
-
     if (!directoryExists(highScoreDir)) {
         if (system("mkdir ~/.miny")) {
             cerr << "Error creating config directory. Exiting."<<endl;
             exit(1);
         }
-    /*    else {
-            cout << "Config directory created."<<endl;
-        }*/
-
     }
- /*   else {
-        cout<<"Config directory exists."<<endl;
-    }*/
-
-
 
     if (playReplay) {
-
-       // cout << replayFileName<<endl;
-        
-        if (loadReplay(replayFileName,&replay)) {
-            exit(1);
-        }
-       // cout<<"Replay loaded."<<endl;
-        field.init();
-        cout << "Playing replay..." << endl;
-        initGraphR();
-        
-
-        glutTimerFunc(1, updateR, 0);
+        displayReplay(replayFileName);
     }
     else { 
 
-
         if (field.width!=0 and field.height!=0 and field.mineCount!=0)  // if these values were specified on the command line
             difficulty=-1;      // prevent altering them in the switch
-
 
         switch(difficulty) {
             case 0:
@@ -1341,160 +1414,11 @@ int main(int argc, char** argv) {
         } 
         
         if (listScoresType!=0) { // list scores
-
-            // TODO 'other' setups may produce too high 3BV/s etc and break layout
-
-            char fullpath[100];
-            strcpy(fullpath,highScoreDir);
-            strcat(fullpath,"scores.dat");
-
-
-            Score *scores;
-            int count=loadScores(fullpath,&scores);
-            
-
-            if (count==0) {      // no scores in score file
-                if (listScoresType!=4)
-                    cout<<"No high scores yet."<<endl;
-            }
-            else {
-                if (listScoresType!=4) {    // if not display as csv, then info about filter and sort
-                    cout << endl << "Displaying scores."<<endl;
-                    cout << setw(16)<<left<<"Sorted by: ";
-
-                    int (*compareFunc)(const void *,const void *)=NULL;
-                    switch(listScoresType) {
-                    case 1:
-                        cout << "time" << endl;
-                        compareFunc=compareByTime; break;
-                    case 2:
-                        cout << "3BV/s" << endl;
-                        compareFunc=compareBy3BVs; break;
-                    case 3:
-                        cout << "IOE" << endl;
-                        compareFunc=compareByIOE; break;
-                    }
-
-                    cout << setw(16)<<left<<"Flagging: ";
-                    switch (listFlagging) {
-                    case 0: cout << "all"<<endl; break;
-                    case 1: cout << "flagging only"<<endl; break;
-                    case 2: cout << "non-flagging only"<<endl; break;
-                    }
-
-                    cout << setw(16)<<left<<"Finished: ";
-                    switch (listFinished) {
-                    case 0: cout << "all"<<endl; break;
-                    case 1: cout << "finished only"<<endl; break;
-                    case 2: cout << "unfinished only"<<endl; break;
-                    }
-
-                    cout << setw(16)<<left<<"Difficulty: ";
-
-                    
-                    bool standardDifficulty=false;
-
-                    switch (difficulty) {
-                    case 0: cout << "beginner, intermediate, expert, beginner classic"<<endl; standardDifficulty=true; break;
-                    case 1: cout << "beginner only"<<endl; standardDifficulty=true; break;
-                    case 2: cout << "intermediate only"<<endl; standardDifficulty=true; break;
-                    case 3: cout << "expert only"<<endl; standardDifficulty=true; break;
-		            case 4: cout << "beginner classic only"<<endl; standardDifficulty=true; break;
-                    }
-
-                    if (!standardDifficulty) 
-                        cout << field.width << "x" << field.height << ", " << field.mineCount << " mines" << endl;
-                    
-
-
-                    cout << setw(16)<<left<<"Square size: ";
-                    if (squareSize!=0)
-                        cout <<squareSize<<endl;
-                    else
-                        cout << "all"<<endl;
-
-                    cout << setw(16)<<left<<"Player name: ";
-                    if (!strcmp(playerName,""))
-                        cout<<"all"<<endl;
-                    else
-                        cout<<playerName<<endl;
-
-                    cout << setw(16)<<left<<"Count: ";
-                    if (limit!=0)
-                        cout <<limit<<endl;
-                    else
-                        cout << "all"<<endl;
-                
-                    cout<<endl;
-
-                    qsort(scores,count,sizeof(Score),compareFunc);
-                }
-
-                
-
-
-                Score *filteredScores;
-
-
-                count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
-                    field.width, field.height, field.mineCount, squareSize,playerName);
-
-                
-
-                displayScores(filteredScores,count,limit,listScoresType==4);
-
-                cout<<endl;
-                free(scores);
-
-            }
+            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty);
         }
         else {
-
             // play
-
-
-            
-
-            if (squareSize==0)
-                squareSize=35;
-
-            if (squareSize<3) 
-                squareSize=3;
-            else if (squareSize>100) 
-                squareSize=100;
-            
-            field.checkValues();
-
-
-            
-
-
-            if (strlen(playerName)!=0 && !isValidName(playerName)) {
-                cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
-                <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
-                exit(1);   
-            }
-
-
-
-            // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
-
-            if (strlen(playerName)==0) {      
-                if (isValidName(getenv("USER")))       
-                    if (strlen(getenv("USER"))>20) {
-                        strncpy(playerName,getenv("USER"),20);
-                        playerName[21]='\0';
-                    }
-                    else
-                        strcpy(playerName,getenv("USER"));
-                else
-                    strcpy(playerName,"unnamed");
-            }
-
-            initGraph();
-            field.init();
-
-            glutTimerFunc(50, update, 0);
+            beginGame();
         }
     }
 
