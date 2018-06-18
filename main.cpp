@@ -68,9 +68,7 @@ Replay replay;
 Field field;
 
 void redisplay() {
-
     glutPostRedisplay();
-    
 }
 
 
@@ -821,17 +819,11 @@ void endGameWon() {
 
     long timeTaken;
 
-
- //   if (playReplay)
-        timeTaken=timer.calculateElapsedTime();
-   // else
-     //   timeTaken=replay.getEndTime();
-
+    timeTaken=timer.calculateElapsedTime();
 
     long ts=time(NULL);
 
     Score newScore;
-
 
     newScore.timeStamp=ts;
     strcpy(newScore.name,playerName);
@@ -845,9 +837,6 @@ void endGameWon() {
 
     newScore.effectiveClicks=field.effectiveClicks;
     newScore.ineffectiveClicks=field.ineffectiveClicks;
-        
-
-
 
     newScore.squareSize=squareSize;
     newScore.gameWon=true;
@@ -1227,7 +1216,7 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
     }
 }
 
-void beginGame() {
+void beginGame(Field* field) {
     if (squareSize==0)
         squareSize=35;
 
@@ -1236,7 +1225,7 @@ void beginGame() {
     else if (squareSize>100) 
         squareSize=100;
     
-    field.checkValues();
+    (*field).checkValues();
 
     if (strlen(playerName)!=0 && !isValidName(playerName)) {
         cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
@@ -1252,16 +1241,51 @@ void beginGame() {
                 strncpy(playerName,getenv("USER"),20);
                 playerName[21]='\0';
             }
-            else
+            else {
                 strcpy(playerName,getenv("USER"));
-        else
+            }
+        else {
             strcpy(playerName,"unnamed");
+        }
     }
 
     initGraph();
-    field.init();
+    (*field).init();
 
     glutTimerFunc(50, update, 0);
+}
+
+void configureSize(int difficulty, Field* field) {
+    if ((*field).width!=0 and (*field).height!=0 and (*field).mineCount!=0) {  // if these values were specified on the command line
+        difficulty=-1;      // prevent altering them in the switch
+    }
+    switch(difficulty) {
+        case 0:
+            (*field).height=0;
+            (*field).width=0;
+            (*field).mineCount=0;
+            break;
+        case 1:
+            (*field).height=9;
+            (*field).width=9;
+            (*field).mineCount=10;
+            break;
+        case 2:
+            (*field).height=16;
+            (*field).width=16;
+            (*field).mineCount=40;
+            break;
+        case 3:
+            (*field).height=16;
+            (*field).width=30;
+            (*field).mineCount=99;
+            break;
+        case 4:
+            (*field).height=8;
+            (*field).width=8;
+            (*field).mineCount=10;
+            break;
+    } 
 }
 
 int main(int argc, char** argv) {
@@ -1301,7 +1325,7 @@ int main(int argc, char** argv) {
 
     anyRank=false;
 
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:a")) != -1)
+    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:a")) != -1) {
         switch (option_char) {  
             case 'd': 
                 difficulty=atoi(optarg);
@@ -1359,13 +1383,12 @@ int main(int argc, char** argv) {
                 exit(1);
 
         }
-
+    }
 
     if (listScoresType!=4) {
         cout<<"Miny v"<<VERSION<<" (c) 2015-2017 spacecamper"<<endl;
         cout << "See README for info and help."<<endl;
     }
-
 
     // high score directory
 
@@ -1381,48 +1404,18 @@ int main(int argc, char** argv) {
     }
     else { 
 
-        if (field.width!=0 and field.height!=0 and field.mineCount!=0)  // if these values were specified on the command line
-            difficulty=-1;      // prevent altering them in the switch
-
-        switch(difficulty) {
-            case 0:
-                field.height=0;
-                field.width=0;
-                field.mineCount=0;
-                break;
-            case 1:
-                field.height=9;
-                field.width=9;
-                field.mineCount=10;
-                break;
-            case 2:
-                field.height=16;
-                field.width=16;
-                field.mineCount=40;
-                break;
-            case 3:
-                field.height=16;
-                field.width=30;
-                field.mineCount=99;
-                break;
-            case 4:
-                field.height=8;
-                field.width=8;
-                field.mineCount=10;
-                break;
-            
-        } 
+        configureSize(difficulty, &field);
         
         if (listScoresType!=0) { // list scores
             listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty);
         }
         else {
             // play
-            beginGame();
+            beginGame(&field);
         }
     }
 
-    glutMainLoop();    
+    glutMainLoop(); 
     return 0;
 
 }
