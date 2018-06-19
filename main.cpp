@@ -25,6 +25,7 @@
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
+#include <GL/freeglut_ext.h>
 #endif
 
 
@@ -46,6 +47,17 @@
 
 
 using namespace std;
+
+struct Config {
+    short fieldWidth;
+    short fieldHeight;
+    short fieldMineCount;
+    int windowWidth;
+    int windowHeight;
+    int originalWidth;
+    int originalHeight;
+    int squareSize;
+};
 
 int windowWidth, windowHeight, originalWidth, originalHeight;
 int squareSize;
@@ -96,8 +108,6 @@ void newGame() {
 
     field.init();
     cout << "------------------------------------------------------------" << endl; 
-
-
 }
 
 
@@ -359,7 +369,6 @@ void drawScene() {
 
     long etime=timer.calculateElapsedTime()/1000;
 
-
     if (etime>999) etime=999;
 
     int dx=originalWidth-BORDER_WIDTH-16;
@@ -427,22 +436,6 @@ void drawScene() {
 
     }
     else {
-
-        // grid lines
-
-/*
-        float bg=.5;
-        float target=.7;
-
-        float c=1-.5*((1-target)-(1-bg))*squareSize;
-        
-cout << c << endl;
-        if (c>.7) c=.7; else if (c<0) c=0;
-
-
-
-        glColor3f(c,c,c);
-  */  
         glColor3f(.3,.3,.3);
       
 
@@ -472,30 +465,6 @@ cout << c << endl;
 
                 
                 if (field.state[x][y]>=0 and field.state[x][y]<=8) {    // revealed square
-                  
-                   /* glColor3f(.6,.6,.6);
-
-                    glBegin(GL_LINES);
-                    glVertex2f(x1,y1);
-                    glVertex2f(x2,y1);
-
-                    glVertex2f(x1,y1);
-                    glVertex2f(x1,y2);
-                    glEnd();
-  
-                    glColor3f(.8,.8,.8);
-
-                    glBegin(GL_LINES);
-                    glVertex2f(x2,y2);
-                    glVertex2f(x2,y1);
-
-                    glVertex2f(x2,y2);
-                    glVertex2f(x1,y2);
-                    glEnd();*/
-
-
-
-
 
                     switch(field.state[x][y]) {
                     case 0: glColor3f(.5,.5,.5); break;
@@ -538,26 +507,6 @@ cout << c << endl;
                     glEnd();
                 }
                 else {
-                    
-                   /* glColor3f(.8,.8,.8);
-
-                    glBegin(GL_LINES);
-                    glVertex2f(x1,y1);
-                    glVertex2f(x2,y1);
-
-                    glVertex2f(x1,y1);
-                    glVertex2f(x1,y2);
-                    glEnd();
-  
-                    glColor3f(.6,.6,.6);
-
-                    glBegin(GL_LINES);
-                    glVertex2f(x2,y2);
-                    glVertex2f(x2,y1);
-
-                    glVertex2f(x2,y2);
-                    glVertex2f(x1,y2);
-                    glEnd();*/
 
 
                     if (field.state[x][y]==9 
@@ -668,7 +617,7 @@ void unpauseGame() {
     gamePaused=false;
     timer.unpause();
     replay.resumeRecording();
-    cout << "Game unpaused."<<endl;// Elapsed time: "<<calculateElapsedTime()<<" ms"<<endl;
+    cout << "Game unpaused."<<endl;
 }
 
 
@@ -885,10 +834,7 @@ void endGameWon() {
         
 
         // find the lowest unused replay file number
-
-    //    cout << "Finding lowest unused replay number..."<<endl;
  
-
         nr=findLowestUnusedReplayNumber();    
    
         newScore.replayNumber=nr;
@@ -913,6 +859,14 @@ void endGameWon() {
 
 
 // -------------------------- GLUT ----------------------- //
+
+void handleResize(int w, int h) {
+    windowWidth=w;
+    windowHeight=h;
+    glViewport(0, 0, windowWidth, windowHeight);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+}
 
 void keyDown(unsigned char key, int x, int y) {
 
@@ -953,7 +907,6 @@ void keyDown(unsigned char key, int x, int y) {
 
 
 }
-
 
 void mouseClick(int button, int mState, int x, int y) {
 
@@ -996,17 +949,6 @@ void mouseClick(int button, int mState, int x, int y) {
 
 }
 
- 
-void handleResize(int w, int h) {
-
-    windowWidth=w;
-    windowHeight=h;
-    glViewport(0, 0, windowWidth, windowHeight);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-}
-
 
 
 void update(int value) {
@@ -1039,11 +981,12 @@ void mouseMove(int x, int y) {
 
 
 
-void initGraph() {
+void initGraph(short width, short height, void* data) {
+    Config* config = (struct Config*)data;
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    windowWidth=FIELD_X+field.width*squareSize+BORDER_WIDTH;
-    windowHeight=FIELD_Y+field.height*squareSize+BORDER_WIDTH;
+    windowWidth=FIELD_X+width*config->squareSize+BORDER_WIDTH;
+    windowHeight=FIELD_Y+height*config->squareSize+BORDER_WIDTH;
 
     originalWidth=windowWidth;
     originalHeight=windowHeight;
@@ -1059,8 +1002,9 @@ void initGraph() {
 
     glutCreateWindow(title);
            
-    glEnable(GL_DEPTH_TEST);     
-                                          
+    glEnable(GL_DEPTH_TEST);
+                            
+    glutSetWindowData(data);
     glutDisplayFunc(drawScene);
     glutKeyboardFunc(keyDown);
     glutReshapeFunc(handleResize);
@@ -1104,12 +1048,12 @@ void displayReplay(char replayFileName[100]) {
     }
     field.init();
     cout << "Playing replay..." << endl;
-    initGraphR();   
+    initGraphR();
 
     glutTimerFunc(1, updateR, 0);
 }
 
-void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty) {
+void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, int squareSize) {
     // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
     char fullpath[100];
@@ -1216,16 +1160,8 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
     }
 }
 
-void beginGame(Field* field) {
-    if (squareSize==0)
-        squareSize=35;
-
-    if (squareSize<3) 
-        squareSize=3;
-    else if (squareSize>100) 
-        squareSize=100;
-    
-    (*field).checkValues();
+void beginGame(Field* field, char playerName[], void* data) {
+    field->checkValues();
 
     if (strlen(playerName)!=0 && !isValidName(playerName)) {
         cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
@@ -1249,41 +1185,41 @@ void beginGame(Field* field) {
         }
     }
 
-    initGraph();
-    (*field).init();
+    initGraph(field->width, field->height, data);
+    field->init();
 
     glutTimerFunc(50, update, 0);
 }
 
 void configureSize(int difficulty, Field* field) {
-    if ((*field).width!=0 and (*field).height!=0 and (*field).mineCount!=0) {  // if these values were specified on the command line
+    if (field->width!=0 and field->height!=0 and field->mineCount!=0) {  // if these values were specified on the command line
         difficulty=-1;      // prevent altering them in the switch
     }
     switch(difficulty) {
         case 0:
-            (*field).height=0;
-            (*field).width=0;
-            (*field).mineCount=0;
+            field->height=0;
+            field->width=0;
+            field->mineCount=0;
             break;
         case 1:
-            (*field).height=9;
-            (*field).width=9;
-            (*field).mineCount=10;
+            field->height=9;
+            field->width=9;
+            field->mineCount=10;
             break;
         case 2:
-            (*field).height=16;
-            (*field).width=16;
-            (*field).mineCount=40;
+            field->height=16;
+            field->width=16;
+            field->mineCount=40;
             break;
         case 3:
-            (*field).height=16;
-            (*field).width=30;
-            (*field).mineCount=99;
+            field->height=16;
+            field->width=30;
+            field->mineCount=99;
             break;
         case 4:
-            (*field).height=8;
-            (*field).width=8;
-            (*field).mineCount=10;
+            field->height=8;
+            field->width=8;
+            field->mineCount=10;
             break;
     } 
 }
@@ -1295,12 +1231,12 @@ int main(int argc, char** argv) {
 
     glutInit(&argc, argv);
 
-
     field.height=0;
     field.width=0;
     field.mineCount=0;
 
     squareSize=0;
+
     gameState=GAME_INITIALIZED;
     gamePaused=false;
 
@@ -1399,6 +1335,25 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (squareSize==0) {
+        squareSize=35;
+    }
+
+    if (squareSize<3) {
+        squareSize=3;
+    }
+    else if (squareSize>100) {
+        squareSize=100;
+    }
+
+    Config data;
+
+    data.windowWidth=windowWidth;
+    data.windowHeight=windowHeight;
+    data.originalWidth=originalWidth;
+    data.originalHeight=originalHeight;
+    data.squareSize=squareSize;    
+    
     if (playReplay) {
         displayReplay(replayFileName);
     }
@@ -1407,11 +1362,11 @@ int main(int argc, char** argv) {
         configureSize(difficulty, &field);
         
         if (listScoresType!=0) { // list scores
-            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty);
+            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, data.squareSize);
         }
         else {
             // play
-            beginGame(&field);
+            beginGame(&field, playerName, &data);
         }
     }
 

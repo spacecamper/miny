@@ -113,17 +113,6 @@ int Field::calculate3BV() {
             if (mine[i][j]) 
                 tmpField[i][j]=2;
 
-/*
-    // debug output
-
-    for (int j=0;j<height;j++) {
-        for (int i=0;i<width;i++)
-            cout << tmpField[i][j] << " ";
-        cout << endl;
-    }*/
-
-    // count
-
     for (int i=0;i<width;i++) 
         for (int j=0;j<height;j++) 
             if (tmpField[i][j]==0) {
@@ -132,24 +121,11 @@ int Field::calculate3BV() {
 
                 floodFillMark(tmpField,i,j);
             }
-    /*
-    // debug output
-
-    for (int j=0;j<height;j++) {
-        for (int i=0;i<width;i++)
-            cout << tmpField[i][j] << " ";
-        cout << endl;
-    }*/
-
-    // count
 
     for (int i=0;i<width;i++) 
         for (int j=0;j<height;j++) 
             if (tmpField[i][j]==1)
                 tmp3BV++;
-    
-
-   // cout << "3bv==" << tmp3BV << endl;
 
     return tmp3BV;
 
@@ -228,12 +204,9 @@ void Field::placeMines(int firstClickX, int firstClickY) {
             mine[x][y]=true;
     }
 
-   // calculate3BV();
     val3BV=0;
 
     redisplay();
-
-  //  cout << "Mines placed." << endl;
 
 
 }
@@ -247,7 +220,6 @@ void Field::init() {
         }
     }
     gameState=GAME_INITIALIZED;
-    //glutPostRedisplay();
     isFlagging=false;
     timer.reset();
 
@@ -255,10 +227,6 @@ void Field::init() {
 
     effectiveClicks=0;
     ineffectiveClicks=0;
-
-
-
-//    cout << "Field initialized." << endl;
 }
 
 void Field::revealAround(int squareX, int squareY) {
@@ -291,7 +259,6 @@ void Field::revealSquare(int squareX, int squareY) {
 
     if (state[squareX][squareY]==9) {
         if (mine[squareX][squareY]) {
-            //timeFinished=time(NULL);
             hitMineX=squareX;
             hitMineY=squareY;
             timer.stop();
@@ -322,15 +289,12 @@ void Field::revealSquare(int squareX, int squareY) {
                 if (squareY<height-1) adjacentMines+=mine[squareX+1][squareY+1]?1:0;
             }
             
-          //  cout << "There are " << adjacentMines << " mines nearby." << endl;
-            
             state[squareX][squareY]=adjacentMines;
 
             if (adjacentMines==0) {
                 revealAround(squareX,squareY);
             }
 
-            // test if game finished
             if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
                 
                 bool notFinished=false;
@@ -341,7 +305,6 @@ void Field::revealSquare(int squareX, int squareY) {
                             notFinished=true;
 
                 if (!notFinished) {
-                   // redisplay();
                     endGameWon();
                 }    
             }
@@ -465,7 +428,6 @@ void Field::click(int x,int y,int button) {
                 cout<<"You are now playing with flagging."<<endl;
 
             isFlagging=true;
-   //         cout << "Remaining mines: " << calculateRemainingMines() << endl;
 
             effectiveClicks++;
             viewClicks();
@@ -474,7 +436,6 @@ void Field::click(int x,int y,int button) {
             effectiveClicks++;
             viewClicks();
             state[squareX][squareY]=9;
-   //         cout << "Remaining mines: " << calculateRemainingMines() << endl;
         }
         else {  // number
             if (state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY)) {
@@ -528,7 +489,6 @@ float Field::getGameProgress() {
 
     if (count==0) return 0;
 
-    //cout<<count<<endl;
     return (float)count/(width*height-mineCount);
 
 }
