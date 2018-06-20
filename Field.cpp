@@ -259,8 +259,9 @@ void Field::revealSquare(int squareX, int squareY) {
 
     if (state[squareX][squareY]==9) {
         if (mine[squareX][squareY]) {
-            hitMineX=squareX;
-            hitMineY=squareY;
+
+            state[squareX][squareY] = 11;            
+            
             timer.stop();
             replay.stopRecording();
             gameState=GAME_LOST;
