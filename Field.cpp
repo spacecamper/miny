@@ -27,8 +27,7 @@ extern int squareSize;
 extern void saveReplay(char *, Replay *);
  
 
-extern void endGameWon();
-extern void endGameLost();
+extern void endGame(bool);
 
 
 
@@ -262,11 +261,8 @@ void Field::revealSquare(int squareX, int squareY) {
 
             state[squareX][squareY] = 11;            
             
-            timer.stop();
-            replay.stopRecording();
-            gameState=GAME_LOST;
             if (!playReplay) {
-                endGameLost();
+                endGame(false);
             }
             
 
@@ -306,7 +302,7 @@ void Field::revealSquare(int squareX, int squareY) {
                             notFinished=true;
 
                 if (!notFinished) {
-                    endGameWon();
+                    endGame(true);
                 }    
             }
     

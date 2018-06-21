@@ -554,49 +554,7 @@ void unpauseGame() {
 
 
 
-void endGameLost() {
 
-    redisplay();
-
-    cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
-        timer.calculateElapsedTime()/1000.0 <<" seconds." << endl << "3BV:  " 
-        << setprecision(4) << fixed << field.get3BV() << endl;
-
-
-    long timeTaken=timer.calculateElapsedTime();
-    long ts=time(NULL);
-    
-    Score newScore;
-
-    newScore.timeStamp=ts;
-    strcpy(newScore.name,playerName);
-    newScore.width=field.width;
-    newScore.height=field.height;
-    newScore.mines=field.mineCount;
-
-    newScore.time=timeTaken;
-    newScore.val3BV=field.get3BV();
-    newScore.flagging=isFlagging;
-
-
-    newScore.effectiveClicks=field.effectiveClicks;
-    newScore.ineffectiveClicks=field.ineffectiveClicks;
-
-    newScore.squareSize=squareSize;
-    newScore.gameWon=false;
-    
-
-    char fullpath[100];
-    strcpy(fullpath,highScoreDir);
-    strcat(fullpath,"scores.dat");
-
-
-    newScore.replayNumber=0;
-    appendScore(fullpath,newScore);
-
-    saveReplay("last.replay",&replay);
-
-}
 
 
 bool replayFileNumberExists(long nr) {
@@ -687,23 +645,16 @@ long findLowestUnusedReplayNumber_old() {
     return nr;
 }
 
-
-
-void endGameWon() {
+void endGame(const bool won) {
+    timer.stop();
+    replay.stopRecording();
+    gameState=won ? GAME_WON : GAME_LOST;
 
     redisplay();
 
-    gameState=GAME_WON;
-    timer.stop();
-    replay.stopRecording();
-
-
-    long timeTaken;
-
-    timeTaken=timer.calculateElapsedTime();
-
-    long ts=time(NULL);
-
+    const long timeTaken=timer.calculateElapsedTime();
+    const long ts=time(NULL);
+    
     Score newScore;
 
     newScore.timeStamp=ts;
@@ -716,65 +667,70 @@ void endGameWon() {
     newScore.val3BV=field.get3BV();
     newScore.flagging=isFlagging;
 
+
     newScore.effectiveClicks=field.effectiveClicks;
     newScore.ineffectiveClicks=field.ineffectiveClicks;
 
     newScore.squareSize=squareSize;
-    newScore.gameWon=true;
+    newScore.gameWon=won;
 
-
-    cout << endl<<"YOU WIN!"<<endl;
-    
-    if (!playReplay) {
-        cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << timeTaken/1000.0
-            << " s" << endl;
-        cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
-    }
-
-    cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
-    
-    cout << setw(8)<<left << "3BV: " << field.get3BV()<<endl;
-
-    cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
-    cout << endl;
-
-
-
-    if (!playReplay) {
-        long nr=1;    
-
+    if(!playReplay) {
         char fullpath[100];
         strcpy(fullpath,highScoreDir);
         strcat(fullpath,"scores.dat");
+        if(won) {
+            cout << endl<<"YOU WIN!"<<endl;
 
-        Score *scores;
+            cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
+        
+            cout << setw(8)<<left << "3BV: " << field.get3BV()<<endl;
 
-        int count=loadScores(fullpath,&scores);
+            cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << timeTaken/1000.0
+                << " s" << endl;
+            cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
 
-        evalScore(newScore,scores, count,field.width,field.height,field.mineCount,anyRank);
+            cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
+            cout << endl;
 
-        free(scores); 
+            Score *scores;
 
-        // find the lowest unused replay file number
- 
-        nr=findLowestUnusedReplayNumber();    
-   
-        newScore.replayNumber=nr;
-        appendScore(fullpath,newScore);
+            int count=loadScores(fullpath,&scores);
 
-        char rfname[100];
+            evalScore(newScore,scores, count,field.width,field.height,field.mineCount,anyRank);
 
-        char tmp[100];
-        strcpy(tmp,highScoreDir);
-        sprintf(rfname,"%lu.replay",nr);
+            free(scores); 
 
-        saveReplay(rfname,&replay);
+            // find the lowest unused replay file number
+            
+            long nr=1;
 
-        saveReplay("last.replay",&replay);
+            nr=findLowestUnusedReplayNumber();
+       
+            newScore.replayNumber=nr;
+            appendScore(fullpath,newScore);
+
+            char rfname[100];
+
+            char tmp[100];
+            strcpy(tmp,highScoreDir);
+            sprintf(rfname,"%lu.replay",nr);
+
+            saveReplay(rfname,&replay);
+
+            saveReplay("last.replay",&replay);
+        } 
+        else {
+            cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
+                timer.calculateElapsedTime()/1000.0 <<" seconds." << endl << "3BV:  " 
+                << setprecision(4) << fixed << field.get3BV() << endl;
+
+            newScore.replayNumber=0;
+            appendScore(fullpath,newScore);
+
+            saveReplay("last.replay",&replay);
+        }
     }
 }
-
-
 
 // -------------------------- GLUT ----------------------- //
 
@@ -895,9 +851,6 @@ void updateR(int value) {
 void mouseMove(int x, int y) {
     replay.recordEvent(x,y,-1);
 }
-
-
-
 
 void initGraph(Config* config) {
 
