@@ -49,9 +49,7 @@
 using namespace std;
 
 struct Config {
-    short fieldWidth;
-    short fieldHeight;
-    short fieldMineCount;
+    Field* field;
     int windowWidth;
     int windowHeight;
     int originalWidth;
@@ -471,29 +469,8 @@ void drawField(Field field, int squareSize){
     }
 }
 
-void drawScene() {
-    glClearColor(.7, .7, .7, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glOrtho(0.0, windowWidth, windowHeight, 0.0, -1.0, 10.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
- 
-
-    if (playReplay) {
-        // draw cursor
-        glColor3f(1,1,0);
-        glBegin(GL_TRIANGLES);
-
-        glVertex2f(replay.cursorX,replay.cursorY);
-        glVertex2f(replay.cursorX,replay.cursorY+20);
-        glVertex2f(replay.cursorX+11,replay.cursorY+17);
-        glEnd();
-    }
-
-    // number of remaining mines
+void displayRemainingMines(int rem) {
     glColor3f(1,0,0);
-    int rem=field.calculateRemainingMines();
 
 
     if (rem>999) rem=999;
@@ -505,12 +482,10 @@ void drawScene() {
         rem/=10;
         drawDigit(digit,32-16*i+dxy,dxy,2);
     }
+}
 
-    // elapsed time
-
+void displayElapsedTime(long etime) {
     glColor3f(1,0,0);
-
-    long etime=timer.calculateElapsedTime()/1000;
 
     if (etime>999) etime=999;
 
@@ -522,6 +497,33 @@ void drawScene() {
         etime/=10;
         drawDigit(digit,-16*i+dx,dy,2);
     }
+}
+
+void drawCursor(int x, int y) {
+    glColor3f(1,1,0);
+    glBegin(GL_TRIANGLES);
+
+    glVertex2f(x,y);
+    glVertex2f(x,y+20);
+    glVertex2f(x+11,y+17);
+    glEnd();
+}
+
+void drawScene() {
+    glClearColor(.7, .7, .7, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glOrtho(0.0, windowWidth, windowHeight, 0.0, -1.0, 10.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    if (playReplay) {
+        drawCursor(replay.cursorX, replay.cursorY);
+    }
+    
+    displayRemainingMines(field.calculateRemainingMines());
+
+    displayElapsedTime(timer.calculateElapsedTime()/1000);
 
     if (gamePaused) {    // hide field when game is paused
 
@@ -739,16 +741,7 @@ void endGameWon() {
 
 
     if (!playReplay) {
-        
-        
-
-        long nr=1;
-
-       
-        
-
-        
-        
+        long nr=1;    
 
         char fullpath[100];
         strcpy(fullpath,highScoreDir);
@@ -761,7 +754,6 @@ void endGameWon() {
         evalScore(newScore,scores, count,field.width,field.height,field.mineCount,anyRank);
 
         free(scores); 
-        
 
         // find the lowest unused replay file number
  
@@ -769,7 +761,6 @@ void endGameWon() {
    
         newScore.replayNumber=nr;
         appendScore(fullpath,newScore);
-
 
         char rfname[100];
 
@@ -780,10 +771,7 @@ void endGameWon() {
         saveReplay(rfname,&replay);
 
         saveReplay("last.replay",&replay);
-
     }
-
-
 }
 
 
@@ -911,12 +899,11 @@ void mouseMove(int x, int y) {
 
 
 
-void initGraph(short width, short height, void* data) {
-    Config* config = (struct Config*)data;
+void initGraph(Config* config) {
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    windowWidth=FIELD_X+width*config->squareSize+BORDER_WIDTH;
-    windowHeight=FIELD_Y+height*config->squareSize+BORDER_WIDTH;
+    windowWidth=FIELD_X+config->field->width*config->squareSize+BORDER_WIDTH;
+    windowHeight=FIELD_Y+config->field->height*config->squareSize+BORDER_WIDTH;
 
     originalWidth=windowWidth;
     originalHeight=windowHeight;
@@ -934,7 +921,7 @@ void initGraph(short width, short height, void* data) {
            
     glEnable(GL_DEPTH_TEST);
                             
-    glutSetWindowData(data);
+    glutSetWindowData((void*)config);
     glutDisplayFunc(drawScene);
     glutKeyboardFunc(keyDown);
     glutReshapeFunc(handleResize);
@@ -983,7 +970,7 @@ void displayReplay(char replayFileName[100]) {
     glutTimerFunc(1, updateR, 0);
 }
 
-void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, int squareSize) {
+void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, int squareSize, char playerName[]) {
     // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
     char fullpath[100];
@@ -1090,33 +1077,12 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
     }
 }
 
-void beginGame(Field* field, char playerName[], void* data) {
-    field->checkValues();
+void beginGame(char playerName[], Config* config) {
+    
+    config->field->checkValues();    
 
-    if (strlen(playerName)!=0 && !isValidName(playerName)) {
-        cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
-        <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
-        exit(1);   
-    }
-
-    // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
-
-    if (strlen(playerName)==0) {      
-        if (isValidName(getenv("USER")))       
-            if (strlen(getenv("USER"))>20) {
-                strncpy(playerName,getenv("USER"),20);
-                playerName[21]='\0';
-            }
-            else {
-                strcpy(playerName,getenv("USER"));
-            }
-        else {
-            strcpy(playerName,"unnamed");
-        }
-    }
-
-    initGraph(field->width, field->height, data);
-    field->init();
+    initGraph(config);
+    config->field->init();
 
     glutTimerFunc(50, update, 0);
 }
@@ -1251,6 +1217,28 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (strlen(playerName)!=0 && !isValidName(playerName)) {
+        cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
+        <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
+        exit(1);   
+    }
+
+    // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
+
+    if (strlen(playerName)==0) {      
+        if (isValidName(getenv("USER")))       
+            if (strlen(getenv("USER"))>20) {
+                strncpy(playerName,getenv("USER"),20);
+                playerName[21]='\0';
+            }
+            else {
+                strcpy(playerName,getenv("USER"));
+            }
+        else {
+            strcpy(playerName,"unnamed");
+        }
+    }
+
     if (listScoresType!=4) {
         cout<<"Miny v"<<VERSION<<" (c) 2015-2017 spacecamper"<<endl;
         cout << "See README for info and help."<<endl;
@@ -1283,6 +1271,7 @@ int main(int argc, char** argv) {
     data.originalWidth=originalWidth;
     data.originalHeight=originalHeight;
     data.squareSize=squareSize;    
+    data.field=&field;
     
     if (playReplay) {
         displayReplay(replayFileName);
@@ -1292,11 +1281,11 @@ int main(int argc, char** argv) {
         configureSize(difficulty, &field);
         
         if (listScoresType!=0) { // list scores
-            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, data.squareSize);
+            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, data.squareSize, playerName);
         }
         else {
             // play
-            beginGame(&field, playerName, &data);
+            beginGame(playerName, &data);
         }
     }
 
