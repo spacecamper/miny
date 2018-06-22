@@ -44,7 +44,6 @@ public:
 
     bool isRecording();
 
-
     void startRecording();
 
     void pauseRecording();
@@ -53,17 +52,13 @@ public:
 
     void stopRecording();
 
-
-
     void deleteData();
 
     void recordEvent(int, int, int);
 
+    void writeToFile(ofstream*, void*);
 
-    void writeToFile(ofstream*);
-
-
-    void readFromFile(ifstream*);
+    void readFromFile(ifstream*, void*);
 
     void dump();
     

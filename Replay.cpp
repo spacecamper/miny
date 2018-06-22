@@ -5,14 +5,10 @@
 #include <GL/glut.h>
 #endif
 
-
-
 #include "common.h"
 #include "Timer.h"
 #include "Replay.h"
 #include "Field.h"
-
-
 
 extern bool playReplay;
 extern int gameState;
@@ -20,7 +16,6 @@ extern Timer timer;
 extern char playerName[21];
 extern int squareSize;
 extern Field field;
-
 
 ReplayPoint::ReplayPoint() {}
 
@@ -35,13 +30,7 @@ void ReplayPoint::dump() {
     cout <<setw(7)<<timeSinceStart<<setw(7) <<x<<setw(7)<<y<<setw(7)<<button<< endl;
 }
 
-
-
 void mouseClick(int,int,int,int);
-
-
-
-
 
 Replay::Replay() {
     recording=false;
@@ -96,18 +85,20 @@ void Replay::recordEvent(int x, int y, int button) {
 
 }
 
+void Replay::writeToFile(ofstream *file, void* fieldPtr) {
 
-void Replay::writeToFile(ofstream *file) {
+    Field* field = (Field*)fieldPtr;    
+    
    // cout << "width=" << field.width << endl;
     *file << "miny-replay-file-version: 1" << endl;
 
     *file << playerName << endl << squareSize << endl; 
 
-    *file << field.width << " " << field.height << endl;
+    *file << field->width << " " << field->height << endl;
 
-    for (int j=0;j<field.height;j++) {
-        for (int i=0;i<field.width;i++) 
-            *file << field.isMine(i,j) << " ";
+    for (int j=0;j<field->height;j++) {
+        for (int i=0;i<field->width;i++) 
+            *file << field->isMine(i,j) << " ";
         *file << endl;
     }
 
@@ -119,23 +110,17 @@ void Replay::writeToFile(ofstream *file) {
 
     for (iter=data.begin(); iter!=data.end(); iter++) {
         *file << (*iter).timeSinceStart << " " << (*iter).x << " " << (*iter).y << " " << (*iter).button << endl;
-
     }
-
 }
 
 
-void Replay::readFromFile(ifstream *ifile) {
+void Replay::readFromFile(ifstream *ifile, void* fieldPtr) {
 
-
-
-
+    Field* field = (Field*)fieldPtr;
 
     string firstString;
 
     *ifile >> firstString;
-
-    
 
     int fileVersion;
 
@@ -143,9 +128,7 @@ void Replay::readFromFile(ifstream *ifile) {
         *ifile >> fileVersion;
     }
     else {
-        
         fileVersion=-1;
-
     }
 
     switch(fileVersion) {
@@ -160,24 +143,24 @@ void Replay::readFromFile(ifstream *ifile) {
         
         *ifile >> squareSize;
         
-        *ifile >> field.width >> field.height;
+        *ifile >> field->width >> field->height;
 
       //  cout << "Reading mines."<<endl;
 
         
         int mineCount=0;
         bool tmpmine;
-        for (int j=0;j<field.height;j++) 
-            for (int i=0;i<field.width;i++) {
+        for (int j=0;j<field->height;j++) 
+            for (int i=0;i<field->width;i++) {
                 
                 *ifile >> tmpmine;
                 if (tmpmine) {
-                    field.setMine(i,j);
+                    field->setMine(i,j);
                     mineCount++;    
                 }
             }
 
-        field.mineCount=mineCount;
+        field->mineCount=mineCount;
 
         int count;
         *ifile>>count;

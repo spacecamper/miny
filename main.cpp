@@ -74,8 +74,6 @@ Timer timer;
 
 Replay replay;
 
-Field field;
-
 void redisplay() {
     glutPostRedisplay();
 }
@@ -99,17 +97,8 @@ bool directoryExists( const char* pzPath )
     return bExists;
 }
 
-
-
-void newGame() {
-
-    field.init();
-    cout << "------------------------------------------------------------" << endl; 
-}
-
-
 // ---------------------- REPLAY ------------------//
-void saveReplay(const char *fname, Replay *r) {
+void saveReplay(const char *fname, Replay *r, Field* field) {
 
 
     ofstream ofile;
@@ -126,7 +115,7 @@ void saveReplay(const char *fname, Replay *r) {
         return;
     }
 
-    r->writeToFile(&ofile);
+    r->writeToFile(&ofile, field);
 
     ofile.close();
 
@@ -135,7 +124,7 @@ void saveReplay(const char *fname, Replay *r) {
 
 }
 
-int loadReplay(char *fname, Replay *r) {
+int loadReplay(char *fname, Replay *r, Field* field) {
     ifstream ifile;
 
     ifile.open(fname);
@@ -154,7 +143,7 @@ int loadReplay(char *fname, Replay *r) {
     ifile.close();
     ifile.open(fname);
 
-    r->readFromFile(&ifile);
+    r->readFromFile(&ifile, field);
 
 
     ifile.close();
@@ -322,7 +311,7 @@ void drawFlag(int squareSize, int x, int y) {
     glEnd();
 }
 
-void drawBackground() {
+void drawBackground(int fieldWidth, int fieldHeight) {
 
     // highlight boxes for in game statistics    
 
@@ -354,14 +343,14 @@ void drawBackground() {
 
     glBegin(GL_LINES); 
 
-    for (int i=0;i<field.height+1;i++) {
+    for (int i=0;i<fieldHeight+1;i++) {
         glVertex2f(FIELD_X,FIELD_Y+i*squareSize);
-        glVertex2f(FIELD_X+field.width*squareSize,FIELD_Y+i*squareSize);
+        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+i*squareSize);
     }
 
-    for (int i=0;i<field.width+1;i++) {
+    for (int i=0;i<fieldWidth+1;i++) {
         glVertex2f(FIELD_X+i*squareSize,FIELD_Y);
-        glVertex2f(FIELD_X+i*squareSize,FIELD_Y+field.height*squareSize);
+        glVertex2f(FIELD_X+i*squareSize,FIELD_Y+fieldHeight*squareSize);
     }
 
     glEnd();
@@ -517,11 +506,17 @@ void drawScene() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    Config* config = (Config*)glutGetWindowData();
+
+    if(!config) { // if the field hasn't yet been configured
+        return;
+    }
+
     if (playReplay) {
         drawCursor(replay.cursorX, replay.cursorY);
     }
     
-    displayRemainingMines(field.calculateRemainingMines());
+    displayRemainingMines(config->field->calculateRemainingMines());
 
     displayElapsedTime(timer.calculateElapsedTime()/1000);
 
@@ -529,14 +524,14 @@ void drawScene() {
 
         glColor3f(.5,.5,.5);
         
-        drawRect(FIELD_X + .5, FIELD_Y + .5, field.width*squareSize - 1, field.height*squareSize - 1);
+        drawRect(FIELD_X + .5, FIELD_Y + .5, config->field->width*squareSize - 1, config->field->height*squareSize - 1);
 
     }
     else {
-        drawField(field, squareSize);
+        drawField(*(config->field), squareSize);
     }
 
-    drawBackground();    
+    drawBackground(config->field->height, config->field->width);    
 
     glutSwapBuffers();
 
@@ -645,93 +640,6 @@ long findLowestUnusedReplayNumber_old() {
     return nr;
 }
 
-void endGame(const bool won) {
-    timer.stop();
-    replay.stopRecording();
-    gameState=won ? GAME_WON : GAME_LOST;
-
-    redisplay();
-
-    const long timeTaken=timer.calculateElapsedTime();
-    const long ts=time(NULL);
-    
-    Score newScore;
-
-    newScore.timeStamp=ts;
-    strcpy(newScore.name,playerName);
-    newScore.width=field.width;
-    newScore.height=field.height;
-    newScore.mines=field.mineCount;
-
-    newScore.time=timeTaken;
-    newScore.val3BV=field.get3BV();
-    newScore.flagging=isFlagging;
-
-
-    newScore.effectiveClicks=field.effectiveClicks;
-    newScore.ineffectiveClicks=field.ineffectiveClicks;
-
-    newScore.squareSize=squareSize;
-    newScore.gameWon=won;
-
-    if(!playReplay) {
-        char fullpath[100];
-        strcpy(fullpath,highScoreDir);
-        strcat(fullpath,"scores.dat");
-        if(won) {
-            cout << endl<<"YOU WIN!"<<endl;
-
-            cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
-        
-            cout << setw(8)<<left << "3BV: " << field.get3BV()<<endl;
-
-            cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << timeTaken/1000.0
-                << " s" << endl;
-            cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
-
-            cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
-            cout << endl;
-
-            Score *scores;
-
-            int count=loadScores(fullpath,&scores);
-
-            evalScore(newScore,scores, count,field.width,field.height,field.mineCount,anyRank);
-
-            free(scores); 
-
-            // find the lowest unused replay file number
-            
-            long nr=1;
-
-            nr=findLowestUnusedReplayNumber();
-       
-            newScore.replayNumber=nr;
-            appendScore(fullpath,newScore);
-
-            char rfname[100];
-
-            char tmp[100];
-            strcpy(tmp,highScoreDir);
-            sprintf(rfname,"%lu.replay",nr);
-
-            saveReplay(rfname,&replay);
-
-            saveReplay("last.replay",&replay);
-        } 
-        else {
-            cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
-                timer.calculateElapsedTime()/1000.0 <<" seconds." << endl << "3BV:  " 
-                << setprecision(4) << fixed << field.get3BV() << endl;
-
-            newScore.replayNumber=0;
-            appendScore(fullpath,newScore);
-
-            saveReplay("last.replay",&replay);
-        }
-    }
-}
-
 // -------------------------- GLUT ----------------------- //
 
 void handleResize(int w, int h) {
@@ -743,11 +651,13 @@ void handleResize(int w, int h) {
 }
 
 void keyDown(unsigned char key, int x, int y) {
+    
+    Config* config = (Config*)glutGetWindowData();
 
     switch (key) {
     case ' ':   
         if (!gamePaused and !playReplay) 
-            newGame();
+            config->field->newGame();
 
         break;
     case 'p':   // pause
@@ -786,16 +696,17 @@ void mouseClick(int button, int mState, int x, int y) {
 
 
     if (!gamePaused) {
+        Config* config = (Config*)glutGetWindowData();
         if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
 
-            if (x>FIELD_X and x<FIELD_X+field.width*squareSize 
-                and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) {
+            if (x>FIELD_X and x<FIELD_X+config->field->width*squareSize 
+                and y>FIELD_Y and y<FIELD_Y+config->field->height*squareSize) {
 
                 // field
 
                 if (mState==GLUT_DOWN) {
                 
-                    field.click(x,y,button);
+                    config->field->click(x,y,button);
                 }
             }
 
@@ -805,19 +716,19 @@ void mouseClick(int button, int mState, int x, int y) {
                 // new game button
                 if (mState==GLUT_DOWN) {
         
-                    newGame();
+                    config->field->newGame();
                 }
 
             }
 
             glutPostRedisplay();
         }
-        else if (!(x>FIELD_X and x<FIELD_X+field.width*squareSize 
-            and y>FIELD_Y and y<FIELD_Y+field.height*squareSize)) {
+        else if (!(x>FIELD_X and x<FIELD_X+config->field->width*squareSize 
+            and y>FIELD_Y and y<FIELD_Y+config->field->height*squareSize)) {
 
             // outside of field - new game
 
-            newGame();
+            config->field->newGame();
         }
     }
 
@@ -884,11 +795,11 @@ void initGraph(Config* config) {
     
 }
 
-void initGraphR() {
+void initGraphR(Config* config) {
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    windowWidth=FIELD_X+field.width*squareSize+BORDER_WIDTH;
-    windowHeight=FIELD_Y+field.height*squareSize+BORDER_WIDTH;
+    windowWidth=FIELD_X+config->field->width*squareSize+BORDER_WIDTH;
+    windowHeight=FIELD_Y+config->field->height*squareSize+BORDER_WIDTH;
 
     originalWidth=windowWidth;
     originalHeight=windowHeight;
@@ -906,24 +817,25 @@ void initGraphR() {
            
     glEnable(GL_DEPTH_TEST);     
                                           
+    glutSetWindowData((void*)config);
     glutDisplayFunc(drawScene);
     glutKeyboardFunc(keyDown);
     glutReshapeFunc(handleResize);
 
 }
 
-void displayReplay(char replayFileName[100]) {
-    if (loadReplay(replayFileName,&replay)) {
+void displayReplay(char replayFileName[100], Config* config) {
+    if (loadReplay(replayFileName,&replay, config->field)) {
         exit(1);
     }
-    field.init();
+    config->field->init();
     cout << "Playing replay..." << endl;
-    initGraphR();
+    initGraphR(config);
 
     glutTimerFunc(1, updateR, 0);
 }
 
-void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, int squareSize, char playerName[]) {
+void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, char playerName[], Config* config) {
     // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
     char fullpath[100];
@@ -985,7 +897,7 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
             }
 
             if (!standardDifficulty) 
-                cout << field.width << "x" << field.height << ", " << field.mineCount << " mines" << endl;
+                cout << config->field->width << "x" << config->field->height << ", " << config->field->mineCount << " mines" << endl;
             
 
 
@@ -1019,7 +931,7 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
 
 
         count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
-            field.width, field.height, field.mineCount, squareSize,playerName);
+            config->field->width, config->field->height, config->field->mineCount, squareSize,playerName);
 
         
 
@@ -1079,6 +991,8 @@ int main(int argc, char** argv) {
     srand (time(NULL));
 
     glutInit(&argc, argv);
+
+    Field field;
 
     field.height=0;
     field.width=0;
@@ -1217,32 +1131,35 @@ int main(int argc, char** argv) {
         squareSize=100;
     }
 
-    Config data;
+    Config config;
 
-    data.windowWidth=windowWidth;
-    data.windowHeight=windowHeight;
-    data.originalWidth=originalWidth;
-    data.originalHeight=originalHeight;
-    data.squareSize=squareSize;    
-    data.field=&field;
+    config.windowWidth=windowWidth;
+    config.windowHeight=windowHeight;
+    config.originalWidth=originalWidth;
+    config.originalHeight=originalHeight;
+    config.squareSize=squareSize;    
+    config.field=&field;
     
     if (playReplay) {
-        displayReplay(replayFileName);
+        displayReplay(replayFileName, &config);
     }
     else { 
 
         configureSize(difficulty, &field);
         
         if (listScoresType!=0) { // list scores
-            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, data.squareSize, playerName);
+            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, playerName, &config);
         }
         else {
             // play
-            beginGame(playerName, &data);
+            beginGame(playerName, &config);
         }
     }
 
-    glutMainLoop(); 
+    if(listScoresType==0){
+        glutMainLoop();
+    }
+
     return 0;
 
 }

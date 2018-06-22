@@ -26,6 +26,8 @@ public:
 
     void init();
 
+    void newGame();
+
     void revealAround(int squareX, int squareY);
 
     void revealSquare(int squareX, int squareY);
@@ -45,4 +47,10 @@ public:
     void viewClicks();
     
     float getGameProgress();
+
+
+private:
+
+    void endGame(const bool won);
+
 };

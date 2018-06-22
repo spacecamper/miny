@@ -10,6 +10,7 @@
 #include "Field.h"
 #include "Timer.h"
 #include "Replay.h"
+#include "scores.h"
 
 using namespace std;
 
@@ -20,16 +21,15 @@ extern int gameState;
 extern bool isFlagging;
 extern Timer timer;
 extern bool gamePaused;
+extern bool anyRank;
 extern Replay replay;
 extern unsigned short hitMineX, hitMineY;
 extern int squareSize;
+extern char playerName[21];
+extern char highScoreDir[100];
 
-extern void saveReplay(char *, Replay *);
- 
-
-extern void endGame(bool);
-
-
+extern void saveReplay(const char*, Replay*, Field*);
+extern long findLowestUnusedReplayNumber();
 
 void Field::ffmProc(int tmpField[MAX_WIDTH][MAX_HEIGHT],int i,int j) {
 
@@ -226,6 +226,98 @@ void Field::init() {
 
     effectiveClicks=0;
     ineffectiveClicks=0;
+}
+
+void Field::newGame() {
+    init();
+    cout << "------------------------------------------------------------" << endl; 
+}
+
+void Field::endGame(const bool won) {
+    timer.stop();
+    replay.stopRecording();
+    gameState=won ? GAME_WON : GAME_LOST;
+
+    redisplay();
+
+    const long timeTaken=timer.calculateElapsedTime();
+    const long ts=time(NULL);
+    
+    Score newScore;
+
+    newScore.timeStamp=ts;
+    strcpy(newScore.name,playerName);
+    newScore.width=width;
+    newScore.height=height;
+    newScore.mines=mineCount;
+
+    newScore.time=timeTaken;
+    newScore.val3BV=get3BV();
+    newScore.flagging=isFlagging;
+
+
+    newScore.effectiveClicks=effectiveClicks;
+    newScore.ineffectiveClicks=ineffectiveClicks;
+
+    newScore.squareSize=squareSize;
+    newScore.gameWon=won;
+
+    if(!playReplay) {
+        char fullpath[100];
+        strcpy(fullpath,highScoreDir);
+        strcat(fullpath,"scores.dat");
+        if(won) {
+            cout << endl<<"YOU WIN!"<<endl;
+
+            cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
+        
+            cout << setw(8)<<left << "3BV: " << get3BV()<<endl;
+
+            cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << timeTaken/1000.0
+                << " s" << endl;
+            cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
+
+            cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
+            cout << endl;
+
+            Score *scores;
+
+            int count=loadScores(fullpath,&scores);
+
+            evalScore(newScore,scores, count, width, height, mineCount,anyRank);
+
+            free(scores); 
+
+            // find the lowest unused replay file number
+            
+            long nr=1;
+
+            nr=findLowestUnusedReplayNumber();
+       
+            newScore.replayNumber=nr;
+            appendScore(fullpath,newScore);
+
+            char rfname[100];
+
+            char tmp[100];
+            strcpy(tmp,highScoreDir);
+            sprintf(rfname,"%lu.replay",nr);
+
+            saveReplay(rfname,&replay, this);
+
+            saveReplay("last.replay",&replay, this);
+        } 
+        else {
+            cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
+                timer.calculateElapsedTime()/1000.0 <<" seconds." << endl << "3BV:  " 
+                << setprecision(4) << fixed << get3BV() << endl;
+
+            newScore.replayNumber=0;
+            appendScore(fullpath,newScore);
+
+            saveReplay("last.replay",&replay, this);
+        }
+    }
 }
 
 void Field::revealAround(int squareX, int squareY) {
