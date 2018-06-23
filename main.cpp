@@ -789,39 +789,12 @@ void initGraph(Config* config) {
     glutDisplayFunc(drawScene);
     glutKeyboardFunc(keyDown);
     glutReshapeFunc(handleResize);
-    glutMouseFunc(mouseClick);
-    glutPassiveMotionFunc(mouseMove);
-    glutMotionFunc(mouseMove);
-    
-}
 
-void initGraphR(Config* config) {
-
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    windowWidth=FIELD_X+config->field->width*squareSize+BORDER_WIDTH;
-    windowHeight=FIELD_Y+config->field->height*squareSize+BORDER_WIDTH;
-
-    originalWidth=windowWidth;
-    originalHeight=windowHeight;
-
-    glutInitWindowSize(windowWidth, windowHeight);
-        
-    char title[100];
-
-    strcpy(title,"Miny v");
-    strcpy(title+6,VERSION);
-    strcpy(title+6+strlen(VERSION),". Player: ");
-    strcpy(title+16+strlen(VERSION),playerName);
-
-    glutCreateWindow(title);
-           
-    glEnable(GL_DEPTH_TEST);     
-                                          
-    glutSetWindowData((void*)config);
-    glutDisplayFunc(drawScene);
-    glutKeyboardFunc(keyDown);
-    glutReshapeFunc(handleResize);
-
+    if(!playReplay) {
+        glutMouseFunc(mouseClick);
+        glutPassiveMotionFunc(mouseMove);
+        glutMotionFunc(mouseMove);
+    }
 }
 
 void displayReplay(char replayFileName[100], Config* config) {
@@ -830,7 +803,7 @@ void displayReplay(char replayFileName[100], Config* config) {
     }
     config->field->init();
     cout << "Playing replay..." << endl;
-    initGraphR(config);
+    initGraph(config);
 
     glutTimerFunc(1, updateR, 0);
 }
