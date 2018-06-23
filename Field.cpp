@@ -353,11 +353,7 @@ void Field::revealSquare(int squareX, int squareY) {
 
             state[squareX][squareY] = 11;            
             
-            if (!playReplay) {
-                endGame(false);
-            }
-            
-
+            endGame(false);
         }
         else {
 
