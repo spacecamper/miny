@@ -447,118 +447,59 @@ void Field::viewClicks() {
     cout << "Est.:   "<<(int)(effectiveClicks/progress)<<" / "<<(int)(ineffectiveClicks/progress)<< " Time: " << (int)(timer.calculateElapsedTime()/progress)<<"  "<<(int)(progress*100)<<"%"<<endl;
 }
 
+void Field::startGame(int squareX, int squareY) {
+    if (!playReplay)
+        placeMines(squareX,squareY);
+
+    timer.start();
+    gameState=GAME_PLAYING;
+}
 
 void Field::click(int x,int y,int button) {
 
     int squareX=(x-FIELD_X)/squareSize;
     int squareY=(y-FIELD_Y)/squareSize;
-    
-    if (button==GLUT_LEFT_BUTTON) {
-        
-        if (state[squareX][squareY]==9) {   // unrevealed
-            if (gameState==GAME_INITIALIZED) {
-                if (!playReplay)
-                    placeMines(squareX,squareY);
 
-               
-
-                timer.start();
-                gameState=GAME_PLAYING;
-                
-
-                if (!replay.isRecording()) {
-                    replay.deleteData();
-                    replay.startRecording();
-                }                                
-            }
-            effectiveClicks++;
-            viewClicks();
-            replay.recordEvent(x,y,GLUT_LEFT_BUTTON);
-            revealSquare(squareX,squareY);
-            
-        }
-        else if (state[squareX][squareY]<=8) {  // number
-            replay.recordEvent(x,y,GLUT_LEFT_BUTTON);
-        
-            if (state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY)) {
-                effectiveClicks++;
-                viewClicks();
-                revealAround(squareX,squareY);
-                
-            }
-            else {
-                ineffectiveClicks++;
-                viewClicks();
-            }
-        }
-        else {  // flag?
-            replay.recordEvent(x,y,GLUT_LEFT_BUTTON);
-            ineffectiveClicks++; 
-            viewClicks();
-        }
-        
+    if (!replay.isRecording()) {
+        replay.deleteData();
+        replay.startRecording();
     }
-    else if (button==GLUT_RIGHT_BUTTON) {
 
-        if (!replay.isRecording()) {
-            replay.deleteData();
-            replay.startRecording();
+    if(gameState==GAME_INITIALIZED and button==GLUT_LEFT_BUTTON) {
+        startGame(squareX, squareY);
+    }
+    
+    if(state[squareX][squareY]==9 and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON)) { // unrevealed
+        if(button==GLUT_LEFT_BUTTON) {
+            revealSquare(squareX, squareY);
+            effectiveClicks++;
         }
-
-        replay.recordEvent(x,y,GLUT_RIGHT_BUTTON);
-        // toggle flag or check and reveal surrounding squares
-        if (state[squareX][squareY]==9) {   // unrevealed
+        else if(button==GLUT_RIGHT_BUTTON) {
             state[squareX][squareY]=10;
-            if (!isFlagging and !playReplay)
+            if (!isFlagging and !playReplay) {
                 cout<<"You are now playing with flagging."<<endl;
-
-            isFlagging=true;
-
+                isFlagging=true;
+            }
             effectiveClicks++;
-            viewClicks();
-        }
-        else if (state[squareX][squareY]==10) { // flag
-            effectiveClicks++;
-            viewClicks();
-            state[squareX][squareY]=9;
-        }
-        else {  // number
-            if (state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY)) {
-                effectiveClicks++;
-                viewClicks();
-                revealAround(squareX,squareY);
-                
-            }
-            else {
-                ineffectiveClicks++;
-                viewClicks();
-            }
-        }
-            
-        
-    }
-    else if (button==GLUT_MIDDLE_BUTTON) {
-        if (state[squareX][squareY]<=8) {  // number      
-            replay.recordEvent(x,y,GLUT_MIDDLE_BUTTON);
-            
-            if (state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY)) {
-                effectiveClicks++;
-                revealAround(squareX,squareY);
-            }
-            else {
-                ineffectiveClicks++;
-            }
-            viewClicks();   
-        }
-        else {
-            ineffectiveClicks++;
-            viewClicks();   
-
         }
     }
 
+    else if(state[squareX][squareY]==10 and button==GLUT_RIGHT_BUTTON){ // flag
+        state[squareX][squareY]=9;
+        effectiveClicks++;
+    }
     
+    else if (state[squareX][squareY]<=8 and state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY) and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON or button==GLUT_MIDDLE_BUTTON)) {
+        effectiveClicks++;
+        revealAround(squareX,squareY);
+    }
+    else {
+        ineffectiveClicks++;
+    }
 
+    viewClicks();
+    
+    replay.recordEvent(x, y, button);
 }
 
 

@@ -51,6 +51,7 @@ public:
 
 private:
 
-    void endGame(const bool won);
+    void endGame(const bool);
+    void startGame(int, int);
 
 };
