@@ -19,7 +19,6 @@ public:
     Action(int, int, int, long);
 
     void dump();
-
 };
 
 
@@ -30,39 +29,45 @@ void mouseClick(int,int,int,int);
 class Replay {
 public:
 
-    std::list<Action> data;
-    std::list<Action>::iterator nextPlayed;
+    std::list<Action> data; //both
+    std::list<Action>::iterator nextPlayed; //both
 
     bool recording;
-    bool endOfReplay;
 
 
-    int cursorX,cursorY;
+    int cursorX,cursorY; //player
 
 
     Replay();
 
-    bool isRecording();
+    bool isRecording(); //recorder
 
-    void startRecording();
+    void startRecording(); //recorder
 
-    void pauseRecording();
+    void pauseRecording(); //recorder
 
-    void resumeRecording();
+    void resumeRecording(); //recorder
 
-    void stopRecording();
+    void stopRecording(); //recorder
 
-    void deleteData();
+    void deleteData(); //recorder
 
-    void recordEvent(int, int, int);
+    void recordEvent(int, int, int); //recorder
 
-    void writeToFile(ofstream*, void*);
+    void writeToFile(ofstream*, void*); //recorder
 
-    void readFromFile(ifstream*, void*);
+    void readFromFile(ifstream*, void*); //player
 
-    void dump();
+    void dump(); // player
     
-    unsigned int playStep();
+    unsigned int playStep(); //player
 
 };
-
+/*
+class Player {
+public:
+    std::list<Action> data;
+    std::list<Action>::iterator nextPlayed;
+    
+}
+*/

@@ -34,7 +34,6 @@ void mouseClick(int,int,int,int);
 
 Replay::Replay() {
     recording=false;
-    endOfReplay=false;
 }
 
 bool Replay::isRecording() {
