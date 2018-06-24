@@ -1,7 +1,7 @@
+#ifndef FIELD_H
+#define FIELD_H
+
 class Field {
-
-    
-
 public:
 
 
@@ -55,3 +55,5 @@ private:
     void startGame(int, int);
 
 };
+
+#endif

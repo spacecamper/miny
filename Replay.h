@@ -4,38 +4,16 @@
 #include <iostream>
 #include <iomanip>
 
+#include "Action.h"
 
 using namespace std;
-
-class Action {
-public:
-    
-    int x, y;
-    int button;
-    long timeSinceStart;
-
-    Action();
-
-    Action(int, int, int, long);
-
-    void dump();
-};
-
-
-void mouseClick(int,int,int,int);
-
-
 
 class Replay {
 public:
 
-    std::list<Action> data; //both
-    std::list<Action>::iterator nextPlayed; //both
+    std::list<Action> data;
 
     bool recording;
-
-
-    int cursorX,cursorY; //player
 
 
     Replay();
@@ -55,19 +33,6 @@ public:
     void recordEvent(int, int, int); //recorder
 
     void writeToFile(ofstream*, void*); //recorder
-
-    void readFromFile(ifstream*, void*); //player
-
-    void dump(); // player
     
-    unsigned int playStep(); //player
-
+    void dump();
 };
-/*
-class Player {
-public:
-    std::list<Action> data;
-    std::list<Action>::iterator nextPlayed;
-    
-}
-*/
