@@ -17,16 +17,16 @@ extern char playerName[21];
 extern int squareSize;
 extern Field field;
 
-ReplayPoint::ReplayPoint() {}
+Action::Action() {}
 
-ReplayPoint::ReplayPoint(int px, int py, int pb, long pp) {
+Action::Action(int px, int py, int pb, long pp) {
     x=px;
     y=py;
     button=pb;
     timeSinceStart=pp;
 }
 
-void ReplayPoint::dump() {
+void Action::dump() {
     cout <<setw(7)<<timeSinceStart<<setw(7) <<x<<setw(7)<<y<<setw(7)<<button<< endl;
 }
 
@@ -79,7 +79,7 @@ void Replay::recordEvent(int x, int y, int button) {
     if (recording) {
      //   cout << "Recording event " << x << " " << y << " " << button << "." << endl;
       //  data.push_back(*(new ReplayPoint(x,y,button,(gameState==GAME_INITIALIZED ? 0 : timer.calculateTimeSinceStart()))));
-        data.push_back(*(new ReplayPoint(x,y,button,(gameState==GAME_INITIALIZED ? 0 : timer.calculateElapsedTime()))));
+        data.push_back(*(new Action(x,y,button,(gameState==GAME_INITIALIZED ? 0 : timer.calculateElapsedTime()))));
 
     }
 
@@ -106,7 +106,7 @@ void Replay::writeToFile(ofstream *file, void* fieldPtr) {
 
     *file << data.size() << endl;
 
-    std::list<ReplayPoint>::iterator iter;
+    std::list<Action>::iterator iter;
 
     for (iter=data.begin(); iter!=data.end(); iter++) {
         *file << (*iter).timeSinceStart << " " << (*iter).x << " " << (*iter).y << " " << (*iter).button << endl;
@@ -165,10 +165,10 @@ void Replay::readFromFile(ifstream *ifile, void* fieldPtr) {
         int count;
         *ifile>>count;
     //    cout << "Reading " << count << " events." << endl;
-        ReplayPoint *rp;
+        Action *rp;
 
         for (int i=0;i<count;i++) {
-            rp=new ReplayPoint();
+            rp=new Action();
 
             *ifile >> rp->timeSinceStart >> rp->x >> rp->y >> rp->button;
             data.push_back(*rp);
@@ -206,7 +206,7 @@ void Replay::dump() {
   //  std::for_each(  data.begin(), data.end(), std::mem_fun(&ReplayPoint::dump));
 
     
-    std::list<ReplayPoint>::iterator iter;
+    std::list<Action>::iterator iter;
 
     for (iter=data.begin(); iter!=data.end(); iter++) {
         (*iter).dump();
@@ -227,7 +227,7 @@ unsigned int Replay::playStep() {
 
     }
 
-    std::list<ReplayPoint>::iterator next;
+    std::list<Action>::iterator next;
 
     next=nextPlayed;
 

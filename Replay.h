@@ -7,16 +7,16 @@
 
 using namespace std;
 
-class ReplayPoint {
+class Action {
 public:
     
     int x, y;
     int button;
     long timeSinceStart;
 
-    ReplayPoint();
+    Action();
 
-    ReplayPoint(int, int, int, long);
+    Action(int, int, int, long);
 
     void dump();
 
@@ -30,8 +30,8 @@ void mouseClick(int,int,int,int);
 class Replay {
 public:
 
-    std::list<ReplayPoint> data;
-    std::list<ReplayPoint>::iterator nextPlayed;
+    std::list<Action> data;
+    std::list<Action>::iterator nextPlayed;
 
     bool recording;
     bool endOfReplay;
