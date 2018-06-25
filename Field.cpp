@@ -5,7 +5,7 @@
 #include <GL/glut.h>
 #endif
 
-
+#include <sys/stat.h>
 #include "common.h"
 #include "Field.h"
 #include "Timer.h"
@@ -26,8 +26,76 @@ extern int squareSize;
 extern char playerName[21];
 extern char highScoreDir[100];
 
-extern void saveReplay(const char*, Replay*, Field*);
-extern long findLowestUnusedReplayNumber();
+bool Field::replayFileNumberExists(long nr) {
+    struct stat buffer;  
+    char rfname[100];
+        
+    char tmp[100];
+    strcpy(tmp,highScoreDir);
+    sprintf(rfname,"%lu.replay",nr);
+
+    strcat(tmp,rfname);
+    
+    if (stat(tmp, &buffer) != 0) {
+        return false;
+    }
+
+    return true;
+}
+
+long Field::findLowestUnusedReplayNumber() {
+    long lower=1;
+    long upper=1;
+    
+    while (true) {
+        if (!replayFileNumberExists(upper)) break;
+
+        lower=upper;
+        upper*=2;
+    }
+
+    long middle=0;
+
+    // binary search
+    while (lower<upper-1) {
+        middle=(lower+upper)/2;
+        
+        if (replayFileNumberExists(middle)) {
+            lower=middle;
+        }
+        else {
+            upper=middle;
+        }
+    }
+
+    return upper;
+}
+
+void Field::unpauseGame() {
+    gamePaused=false;
+    timer.unpause();
+    replay.resumeRecording();
+    cout << "Game unpaused."<<endl;
+}
+
+void Field::saveReplay(const char *fname) {
+    ofstream ofile;
+    
+    char fullpath[100];
+    strcpy(fullpath,highScoreDir);
+    strcat(fullpath,fname);
+
+    ofile.open (fullpath);
+
+    if (!ofile.is_open()) {
+        cerr<<"Error opening file " << fullpath << " for writing replay."<<endl;
+        return;
+    }
+
+    replay.writeToFile(&ofile, this);
+
+    ofile.close();
+}
 
 void Field::ffmProc(int tmpField[MAX_WIDTH][MAX_HEIGHT],int i,int j) {
 
@@ -301,9 +369,9 @@ void Field::endGame(const bool won) {
             strcpy(tmp,highScoreDir);
             sprintf(rfname,"%lu.replay",nr);
 
-            saveReplay(rfname,&replay, this);
+            saveReplay(rfname);
 
-            saveReplay("last.replay",&replay, this);
+            saveReplay("last.replay");
         } 
         else {
             cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
@@ -313,7 +381,7 @@ void Field::endGame(const bool won) {
             newScore.replayNumber=0;
             appendScore(fullpath,newScore);
 
-            saveReplay("last.replay",&replay, this);
+            saveReplay("last.replay");
         }
     }
 }

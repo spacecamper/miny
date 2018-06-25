@@ -16,9 +16,32 @@ extern int squareSize;
 
 void mouseClick(int,int,int,int);
 
-void Player::readFromFile(ifstream *ifile, void* fieldPtr) {
+int Player::loadReplay(const char *fname) {
+    ifstream ifile;
 
-    Field* field = (Field*)fieldPtr;
+    ifile.open(fname);
+    if (!ifile.is_open()) {
+        cerr<<"Error opening replay file '"<<fname<<"'."<<endl;
+        return 1;
+    }
+
+    string content((istreambuf_iterator<char>(ifile) ), (istreambuf_iterator<char>()    )) ;
+    if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_ \x0d\x0a-:")) {
+        cout << "Replay file contains invalid characters. Exiting."<<endl;
+        exit(1);
+    }
+
+    ifile.close();
+    ifile.open(fname);
+
+    readFromFile(&ifile);
+
+    ifile.close();
+
+    return 0;
+}
+
+void Player::readFromFile(ifstream *ifile) {
 
     string firstString;
 
@@ -45,21 +68,21 @@ void Player::readFromFile(ifstream *ifile, void* fieldPtr) {
         
         *ifile >> squareSize;
         
-        *ifile >> field->width >> field->height;
+        *ifile >> field.width >> field.height;
         
         int mineCount=0;
         bool tmpmine;
-        for (int j=0;j<field->height;j++) 
-            for (int i=0;i<field->width;i++) {
+        for (int j=0;j<field.height;j++) 
+            for (int i=0;i<field.width;i++) {
                 
                 *ifile >> tmpmine;
                 if (tmpmine) {
-                    field->setMine(i,j);
+                    field.setMine(i,j);
                     mineCount++;    
                 }
             }
 
-        field->mineCount=mineCount;
+        field.mineCount=mineCount;
 
         int count;
         *ifile>>count;

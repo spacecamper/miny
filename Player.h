@@ -17,9 +17,10 @@ public:
     
     int cursorX,cursorY; //player
 
-    void readFromFile(ifstream*, void*); //player
+    void readFromFile(ifstream*); //player
 
     void dump(); // player
     
     unsigned int playStep(); //player
+    int loadReplay(const char* fname);
 };

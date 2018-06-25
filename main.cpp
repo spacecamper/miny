@@ -93,86 +93,9 @@ bool directoryExists( const char* pzPath )
     return bExists;
 }
 
-// ---------------------- REPLAY ------------------//
-void saveReplay(const char *fname, Replay *r, Field* field) {
-
-
-    ofstream ofile;
-    
-    char fullpath[100];
-    strcpy(fullpath,highScoreDir);
-    strcat(fullpath,fname);
-  //  cout << "Writing replay file " << fullpath <<"..."<<flush;
-
-    ofile.open (fullpath);
-
-    if (!ofile.is_open()) {
-        cerr<<"Error opening file " << fullpath << " for writing replay."<<endl;
-        return;
-    }
-
-    r->writeToFile(&ofile, field);
-
-    ofile.close();
-
- //   cout << "Done."<<endl;
-    
-
-}
-
-int loadReplay(char *fname, Player* player, Field* field) {
-    ifstream ifile;
-
-    ifile.open(fname);
-    if (!ifile.is_open()) {
-        cerr<<"Error opening replay file '"<<fname<<"'."<<endl;
-        return 1;
-    }
-
-    
-    string content((istreambuf_iterator<char>(ifile) ), (istreambuf_iterator<char>()    )) ;
-    if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_ \x0d\x0a-:")) {
-        cout << "Replay file contains invalid characters. Exiting."<<endl;
-        exit(1);
-    }
-
-    ifile.close();
-    ifile.open(fname);
-
-    player->readFromFile(&ifile, field);
-
-
-    ifile.close();
-
-    return 0;
-
-}
-
-
-
-
-
 // ----------------------- GRAPHICS -------------------- //
 
-
-float mySin(float v) {
-    return sin(v/ 180 * 3.141592654f);
-}
-
-
-float myCos(float v) {
-    return cos(v/ 180 * 3.141592654f);
-}
-
-float myTan(float v) {
-    return tan(v/ 180 * 3.141592654f);
-}
-
-
- 
-
 void drawRect(float x, float y, float w, float h) {
-
     glBegin(GL_TRIANGLES);
 
     glVertex2f(x,y);
@@ -187,12 +110,8 @@ void drawRect(float x, float y, float w, float h) {
 }
 
 void drawDigitRect(int i, int x, int y, float zoom=1) {
-    // draws a rectangle that's part of a digit
-
-    float u;
-
-    u=2*zoom; 
-
+    // Draws a segment of a number
+    float u=2*zoom; 
     
     switch(i) {
     case 0: drawRect(x,y,3*u,u); break;
@@ -204,16 +123,11 @@ void drawDigitRect(int i, int x, int y, float zoom=1) {
     case 6: drawRect(x,y+4*u,3*u,u); break;
     case 7: drawRect(x+u,y,u,3*u); break;
     case 8: drawRect(x+u,y+2*u,u,3*u); break;
-    
     }
-
-
 }
-
 
 void drawDigit(int n, int x, int y, float zoom) {
     // draw a digit 10 px high, 6 px wide (if zoom==1)
-
     switch(n) {
     case 0:
         drawDigitRect(0,x,y,zoom);
@@ -227,7 +141,6 @@ void drawDigit(int n, int x, int y, float zoom) {
         drawDigitRect(7,x,y,zoom);
         drawDigitRect(8,x,y,zoom);
         break;
-    
     case 2:
         drawDigitRect(0,x,y,zoom);
         drawDigitRect(2,x,y,zoom);
@@ -268,7 +181,6 @@ void drawDigit(int n, int x, int y, float zoom) {
         drawDigitRect(2,x,y,zoom);
         drawDigitRect(5,x,y,zoom);
         break;
-
     case 8:
         drawDigitRect(0,x,y,zoom);
         drawDigitRect(1,x,y,zoom);
@@ -288,9 +200,7 @@ void drawDigit(int n, int x, int y, float zoom) {
         break;
     default:
         drawDigitRect(3,x,y,zoom);
-        
     }
-
 }
 
 void drawFlag(int squareSize, int x, int y) {
@@ -308,50 +218,35 @@ void drawFlag(int squareSize, int x, int y) {
 }
 
 void drawBackground(int fieldWidth, int fieldHeight) {
-
     // highlight boxes for in game statistics    
-
     glColor3f(0,0,0);
     drawRect(BORDER_WIDTH,
             BORDER_WIDTH,
             48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
-
-    
-
     glColor3f(0,0,0);
     drawRect(originalWidth-(BORDER_WIDTH+DISPLAY_BORDER_WIDTH+48),
             BORDER_WIDTH,
             48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
-
     // new game button
-
     glColor3f(1,1,0);
     drawRect(originalWidth/2-12-DISPLAY_BORDER_WIDTH/2,
             BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
-
     // grid lines
-
     glColor3f(.3,.3,.3);
-
     glBegin(GL_LINES); 
-
     for (int i=0;i<fieldHeight+1;i++) {
         glVertex2f(FIELD_X,FIELD_Y+i*squareSize);
         glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+i*squareSize);
     }
-
     for (int i=0;i<fieldWidth+1;i++) {
         glVertex2f(FIELD_X+i*squareSize,FIELD_Y);
         glVertex2f(FIELD_X+i*squareSize,FIELD_Y+fieldHeight*squareSize);
     }
-
     glEnd();
-
-    
 }
 
 void drawField(Field field, int squareSize){
@@ -379,8 +274,6 @@ void drawField(Field field, int squareSize){
 
                     default: glColor3f(0,0,0);
                 }
-
-
                 if (field.state[x][y]!=0) {
                     // number
                     drawDigit(field.state[x][y],x1+.5*squareSize-3.0*zoom,
@@ -424,14 +317,11 @@ void drawField(Field field, int squareSize){
                 glEnd();
             }
             if(field.state[x][y]==11) { // Hit mine
-
                 glColor3f(1,0,0);
-
                 drawRect(x1, y1, squareSize-1, squareSize-1);
             }
             if (field.state[x][y]==10) {  // flag
                 // cross out flag where there is no mine
-
                 if (gameState==GAME_LOST and !field.isMine(x,y)) {
                     const short crossGap=.1*squareSize;
                     
@@ -447,7 +337,6 @@ void drawField(Field field, int squareSize){
 
                     glEnd();
                 }
-                
                 drawFlag(squareSize, x1, y1);
             }
         }
@@ -456,7 +345,6 @@ void drawField(Field field, int squareSize){
 
 void displayRemainingMines(int rem) {
     glColor3f(1,0,0);
-
 
     if (rem>999) rem=999;
 
@@ -532,99 +420,6 @@ void drawScene() {
     glutSwapBuffers();
 }
 
-
-// ------------------------- GAME ---------------------- //
-
-void unpauseGame() {
-    Config* config = (Config*)glutGetWindowData();
-    gamePaused=false;
-    config->player->field.timer.unpause();
-    config->player->field.replay.resumeRecording();
-    cout << "Game unpaused."<<endl;
-}
-
-bool replayFileNumberExists(long nr) {
-    struct stat buffer;  
-    char rfname[100];
-        
-    char tmp[100];
-    strcpy(tmp,highScoreDir);
-    sprintf(rfname,"%lu.replay",nr);
-
-    strcat(tmp,rfname);
-    
-    if (stat(tmp, &buffer) != 0) {
-        return false;
-    }
-
-    return true;
-}
-
-
-
-long findLowestUnusedReplayNumber() {
-
-
-    long lower=1;
-    
-    long upper=1;
-    
-    while (true) {
-
-        if (!replayFileNumberExists(upper)) break;
-
-        lower=upper;
-        upper*=2;
-
-
-    }
-
-    long middle=0;
-
-
-
-    // binary search
-
-    while (lower<upper-1) {
-
-        middle=(lower+upper)/2;
-        
-        if (replayFileNumberExists(middle))
-            lower=middle;
-        else
-            upper=middle;
-    }
-
-
-    return upper;
-
-
-
-}
-
-
-
-long findLowestUnusedReplayNumber_old() {
-
-
-    // linear search
-
-    long nr=1;
-
-
-    while (true) {
-
-        if (!replayFileNumberExists(nr))
-            break;
-
-        nr++;
-
-    }
-
-
-    return nr;
-}
-
 // -------------------------- GLUT ----------------------- //
 
 void handleResize(int w, int h) {
@@ -656,7 +451,7 @@ void keyDown(unsigned char key, int x, int y) {
                     <<config->player->field.timer.calculateElapsedTime()<<" ms"<<endl;
             }
             else
-                unpauseGame();
+                config->player->field.unpauseGame();
             
         }
         break;
@@ -678,8 +473,6 @@ void keyDown(unsigned char key, int x, int y) {
 }
 
 void mouseClick(int button, int mState, int x, int y) {
-
-
     if (!gamePaused) {
         Config* config = (Config*)glutGetWindowData();
         if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
@@ -716,17 +509,13 @@ void mouseClick(int button, int mState, int x, int y) {
             config->player->field.newGame();
         }
     }
-
 }
-
-
 
 void update(int value) {
     glutPostRedisplay(); 
 	
     glutTimerFunc(50, update, 0);
 }
-
 
 void updateR(int value) {
     int delay=((Config*)glutGetWindowData())->player->playStep();
@@ -739,6 +528,7 @@ void updateR(int value) {
         glutTimerFunc(delay, update, 0);    // call the update function without replay functionality
     }
 }
+
 void mouseMove(int x, int y) {
     Config* const config = (Config*)glutGetWindowData();
     config->player->field.replay.recordEvent(x,y,-1, config->player->field.timer.calculateElapsedTime());
@@ -779,7 +569,7 @@ void initGraph(Config* config) {
 }
 
 void displayReplay(char replayFileName[100], Config* config) {
-    if (loadReplay(replayFileName,config->player, &(config->player->field))) {
+    if (config->player->loadReplay(replayFileName)) {
         exit(1);
     }
     config->player->field.init();

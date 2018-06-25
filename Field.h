@@ -36,10 +36,13 @@ public:
     int get3BV();
     void viewClicks();
     float getGameProgress();
+    void unpauseGame();
 private:
     void endGame(const bool);
     void startGame(int, int);
-
+    void saveReplay(const char*);
+    long findLowestUnusedReplayNumber();
+    bool replayFileNumberExists(long);
 };
 
 #endif
