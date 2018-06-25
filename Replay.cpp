@@ -55,15 +55,15 @@ void Replay::stopRecording() {
 }
 
 void Replay::deleteData() {
-
-    if (!playReplay) data.clear();
+    if (!playReplay) {
+        data.clear();
+    }
 }
 
-void Replay::recordEvent(int x, int y, int button) {
+void Replay::recordEvent(int x, int y, int button, long elapsedTime) {
     if (recording) {
-        data.push_back(*(new Action(x,y,button,(gameState==GAME_INITIALIZED ? 0 : timer.calculateElapsedTime()))));
+        data.push_back(*(new Action(x,y,button,(gameState==GAME_INITIALIZED ? 0 : elapsedTime))));
     }
-
 }
 
 void Replay::writeToFile(ofstream *file, void* fieldPtr) {

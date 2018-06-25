@@ -68,7 +68,7 @@ bool gamePaused;
 bool playReplay;
 bool anyRank;
 
-Timer timer;
+//Timer timer;
 
 void redisplay() {
     glutPostRedisplay();
@@ -514,7 +514,7 @@ void drawScene() {
     
     displayRemainingMines(config->player->field.calculateRemainingMines());
 
-    displayElapsedTime(timer.calculateElapsedTime()/1000);
+    displayElapsedTime(config->player->field.timer.calculateElapsedTime()/1000);
 
     if (gamePaused) {    // hide field when game is paused
 
@@ -536,9 +536,10 @@ void drawScene() {
 // ------------------------- GAME ---------------------- //
 
 void unpauseGame() {
+    Config* config = (Config*)glutGetWindowData();
     gamePaused=false;
-    timer.unpause();
-    ((Config*)glutGetWindowData())->player->field.replay.resumeRecording();
+    config->player->field.timer.unpause();
+    config->player->field.replay.resumeRecording();
     cout << "Game unpaused."<<endl;
 }
 
@@ -649,10 +650,10 @@ void keyDown(unsigned char key, int x, int y) {
             if (!gamePaused) {
 
                 gamePaused=true;
-                timer.pause(); 
+                config->player->field.timer.pause(); 
                 config->player->field.replay.pauseRecording();
                 cout << "Game paused. Press P to continue. Elapsed time: "
-                    <<timer.calculateElapsedTime()<<" ms"<<endl;
+                    <<config->player->field.timer.calculateElapsedTime()<<" ms"<<endl;
             }
             else
                 unpauseGame();
@@ -739,7 +740,8 @@ void updateR(int value) {
     }
 }
 void mouseMove(int x, int y) {
-    ((Config*)glutGetWindowData())->player->field.replay.recordEvent(x,y,-1);
+    Config* const config = (Config*)glutGetWindowData();
+    config->player->field.replay.recordEvent(x,y,-1, config->player->field.timer.calculateElapsedTime());
 }
 
 void initGraph(Config* config) {

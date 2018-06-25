@@ -19,7 +19,6 @@ extern void redisplay();
 extern bool playReplay;
 extern int gameState;
 extern bool isFlagging;
-extern Timer timer;
 extern bool gamePaused;
 extern bool anyRank;
 extern unsigned short hitMineX, hitMineY;
@@ -456,7 +455,7 @@ void Field::startGame(int squareX, int squareY) {
 
 void Field::click(int x,int y,int button) {
     viewClicks();
-    replay.recordEvent(x, y, button);
+    replay.recordEvent(x, y, button, timer.calculateElapsedTime());
 
     int squareX=(x-FIELD_X)/squareSize;
     int squareY=(y-FIELD_Y)/squareSize;

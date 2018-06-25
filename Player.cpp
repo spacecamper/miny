@@ -13,7 +13,6 @@
 
 extern char playerName[21];
 extern int squareSize;
-extern Timer timer;
 
 void mouseClick(int,int,int,int);
 
@@ -120,7 +119,7 @@ unsigned int Player::playStep() {
     }
     else {
 
-        int ret=(*(next)).timeSinceStart-timer.calculateTimeSinceStart();
+        int ret=(*(next)).timeSinceStart-field.timer.calculateTimeSinceStart();
         
         if (ret<0) ret=0;
 

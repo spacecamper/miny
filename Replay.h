@@ -27,7 +27,7 @@ public:
     void resumeRecording(); //recorder
     void stopRecording(); //recorder
     void deleteData(); //recorder
-    void recordEvent(int, int, int); //recorder
+    void recordEvent(int, int, int, long); //recorder
     void writeToFile(ofstream*, void*); //recorder 
     void dump();
 };

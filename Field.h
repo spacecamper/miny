@@ -2,6 +2,7 @@
 #define FIELD_H
 
 #include "Replay.h"
+#include "Timer.h"
 
 class Field {
 public:
@@ -9,6 +10,7 @@ public:
     short mineCount;
 
     Replay replay;
+    Timer timer;
 
     bool mine[MAX_WIDTH][MAX_HEIGHT];
     int state[MAX_WIDTH][MAX_HEIGHT];  // 0-8 - adjacent mine count for revealed field, 9 - not revealed, 10 - flag
