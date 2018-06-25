@@ -455,7 +455,6 @@ void Field::startGame(int squareX, int squareY) {
 
 void Field::click(int x,int y,int button) {
     viewClicks();
-    replay.recordEvent(x, y, button, timer.calculateElapsedTime());
 
     int squareX=(x-FIELD_X)/squareSize;
     int squareY=(y-FIELD_Y)/squareSize;
@@ -469,6 +468,8 @@ void Field::click(int x,int y,int button) {
         startGame(squareX, squareY);
     }
     
+    replay.recordEvent(x, y, button, timer.calculateElapsedTime());    
+
     if(state[squareX][squareY]==9 and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON)) { // unrevealed
         if(button==GLUT_LEFT_BUTTON) {
             revealSquare(squareX, squareY);
