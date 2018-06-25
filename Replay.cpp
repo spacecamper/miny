@@ -60,12 +60,8 @@ void Replay::deleteData() {
 }
 
 void Replay::recordEvent(int x, int y, int button) {
-
     if (recording) {
-     //   cout << "Recording event " << x << " " << y << " " << button << "." << endl;
-      //  data.push_back(*(new ReplayPoint(x,y,button,(gameState==GAME_INITIALIZED ? 0 : timer.calculateTimeSinceStart()))));
         data.push_back(*(new Action(x,y,button,(gameState==GAME_INITIALIZED ? 0 : timer.calculateElapsedTime()))));
-
     }
 
 }

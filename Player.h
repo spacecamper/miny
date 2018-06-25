@@ -13,6 +13,7 @@ public:
     std::list<Action>::iterator nextPlayed;
     
     Field field;
+    bool playbackOn;
     
     int cursorX,cursorY; //player
 

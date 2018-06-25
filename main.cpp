@@ -70,8 +70,6 @@ bool anyRank;
 
 Timer timer;
 
-Replay replay;
-
 void redisplay() {
     glutPostRedisplay();
 }
@@ -540,20 +538,13 @@ void drawScene() {
 void unpauseGame() {
     gamePaused=false;
     timer.unpause();
-    replay.resumeRecording();
+    ((Config*)glutGetWindowData())->player->field.replay.resumeRecording();
     cout << "Game unpaused."<<endl;
 }
 
-
-
-
-
-
 bool replayFileNumberExists(long nr) {
-
-
-        struct stat buffer;  
-char rfname[100];
+    struct stat buffer;  
+    char rfname[100];
         
     char tmp[100];
     strcpy(tmp,highScoreDir);
@@ -561,15 +552,11 @@ char rfname[100];
 
     strcat(tmp,rfname);
     
-    if (stat(tmp, &buffer) != 0)
+    if (stat(tmp, &buffer) != 0) {
         return false;
-
+    }
 
     return true;
-
-
-    
-
 }
 
 
@@ -663,7 +650,7 @@ void keyDown(unsigned char key, int x, int y) {
 
                 gamePaused=true;
                 timer.pause(); 
-                replay.pauseRecording();
+                config->player->field.replay.pauseRecording();
                 cout << "Game paused. Press P to continue. Elapsed time: "
                     <<timer.calculateElapsedTime()<<" ms"<<endl;
             }
@@ -673,7 +660,7 @@ void keyDown(unsigned char key, int x, int y) {
         }
         break;
     case 'r':
-        replay.dump();
+        config->player->field.replay.dump();
         break;
     case 'd':
         cout << sizeof(Score)<<endl;
@@ -742,7 +729,6 @@ void update(int value) {
 
 void updateR(int value) {
     int delay=((Config*)glutGetWindowData())->player->playStep();
-
     glutPostRedisplay();
 
     if (delay>=0) // if replay hasn't ended
@@ -751,13 +737,9 @@ void updateR(int value) {
         cout << "End of replay."<<endl;
         glutTimerFunc(delay, update, 0);    // call the update function without replay functionality
     }
-
 }
-
-
-
 void mouseMove(int x, int y) {
-    replay.recordEvent(x,y,-1);
+    ((Config*)glutGetWindowData())->player->field.replay.recordEvent(x,y,-1);
 }
 
 void initGraph(Config* config) {
