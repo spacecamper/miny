@@ -409,7 +409,7 @@ void drawScene() {
         drawField(config->player->field, squareSize);
     }
 
-    drawBackground(config->player->field.height, config->player->field.width);    
+    drawBackground(config->player->field.width, config->player->field.height);    
 
     glutSwapBuffers();
 }

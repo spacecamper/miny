@@ -64,7 +64,7 @@ void Player::readFromFile(ifstream *ifile) {
 
         string tmpname;
         
-        *ifile >> playerName; 
+        *ifile >> field.playerName; 
         
         *ifile >> squareSize;
         
