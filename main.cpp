@@ -518,14 +518,14 @@ void update(int value) {
 }
 
 void updateR(int value) {
-    int delay=((Config*)glutGetWindowData())->player->playStep();
+    bool moreSteps = ((Config*)glutGetWindowData())->player->playStep(false);
     glutPostRedisplay();
 
-    if (delay>=0) // if replay hasn't ended
-        glutTimerFunc(delay, updateR, 0);
+    if (moreSteps) // if replay hasn't ended
+        glutTimerFunc(0, updateR, 0);
     else {
         cout << "End of replay."<<endl;
-        glutTimerFunc(delay, update, 0);    // call the update function without replay functionality
+        glutTimerFunc(0, update, 0);    // call the update function without replay functionality
     }
 }
 
@@ -576,6 +576,7 @@ void displayReplay(char replayFileName[100], Config* config) {
     cout << "Playing replay..." << endl;
     initGraph(config);
 
+    config->player->playStep(true);
     glutTimerFunc(1, updateR, 0);
 }
 
@@ -586,11 +587,9 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
     strcpy(fullpath,highScoreDir);
     strcat(fullpath,"scores.dat");
 
-
     Score *scores;
     int count=loadScores(fullpath,&scores);
     
-
     if (count==0) {      // no scores in score file
         if (listScoresType!=4)
             cout<<"No high scores yet."<<endl;

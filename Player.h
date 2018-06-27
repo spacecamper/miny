@@ -21,6 +21,6 @@ public:
 
     void dump(); // player
     
-    unsigned int playStep(); //player
+    bool playStep(bool); //player
     int loadReplay(const char* fname);
 };

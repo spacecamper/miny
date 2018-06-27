@@ -120,34 +120,28 @@ void Player::dump() {
     }
 }
 
-unsigned int Player::playStep() {
-
-    cursorX=(*nextPlayed).x;
-    cursorY=(*nextPlayed).y;
-
-    if ((*nextPlayed).button!=-1) {
-        
-        mouseClick((*nextPlayed).button,GLUT_DOWN,(*nextPlayed).x,(*nextPlayed).y);
-
-    }
-
+bool Player::playStep(bool firstClick) {
     std::list<Action>::iterator next;
-
     next=nextPlayed;
-
     next++;
 
-    if (next==data.end()) {
-        return -1;
+    if (next->timeSinceStart >= field.timer.calculateTimeSinceStart() and !firstClick and next!=data.end()) {
+        cout<<next->timeSinceStart-field.timer.calculateTimeSinceStart()<< endl;
+        return true;
+    }
+    if ((*nextPlayed).button!=-1) {
+        mouseClick((*nextPlayed).button,GLUT_DOWN,(*nextPlayed).x,(*nextPlayed).y);
     }
     else {
+        cursorX=(*nextPlayed).x;
+        cursorY=(*nextPlayed).y;
+    }
 
-        int ret=(*(next)).timeSinceStart-field.timer.calculateTimeSinceStart();
-        
-        if (ret<0) ret=0;
-
+    if (next==data.end()) {
+        return false;
+    }
+    else {
         nextPlayed=next;
-        
-        return ret;
+        return true;
     }
 }
