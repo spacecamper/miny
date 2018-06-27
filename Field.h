@@ -3,11 +3,13 @@
 
 #include "Replay.h"
 #include "Timer.h"
+#include "common.h"
 
 class Field {
 public:
     short width, height;
     short mineCount;
+    char playerName[21];
 
     Replay replay;
     Timer timer;

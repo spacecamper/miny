@@ -28,18 +28,16 @@
 #include <GL/freeglut_ext.h>
 #endif
 
-#include "Timer.h"
 #include "Replay.h"
+#include "Player.h"
+#include "Timer.h"
 #include "common.h"
 #include "scores.h"
-#include "Player.h"
 
 
 #define VERSION "0.5.11"
 
 
-// TODO elapsed time isn't being redrawn while playing replay when there's a long pause between two 
-//   events
 // TODO prevent buffer overflows (strcpy and strcat)
 // TODO free allocated memory (after using scores from loadScores and filterScores is finished)
 
@@ -60,15 +58,11 @@ int squareSize;
 
 int gameState; // -1 - initialized, 0 - playing, 1 - lost, 2 - won
 char option_char;
-
-char playerName[21];
 char highScoreDir[100];
 bool isFlagging;
 bool gamePaused;
 bool playReplay;
 bool anyRank;
-
-//Timer timer;
 
 void redisplay() {
     glutPostRedisplay();
@@ -550,7 +544,7 @@ void initGraph(Config* config) {
     strcpy(title,"Miny v");
     strcpy(title+6,VERSION);
     strcpy(title+6+strlen(VERSION),". Player: ");
-    strcpy(title+16+strlen(VERSION),playerName);
+    strcpy(title+16+strlen(VERSION),config->player->field.playerName);
 
     glutCreateWindow(title);
            
@@ -580,7 +574,7 @@ void displayReplay(char replayFileName[100], Config* config) {
     glutTimerFunc(1, updateR, 0);
 }
 
-void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, char playerName[], Config* config) {
+void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, Config* config) {
     // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
     char fullpath[100];
@@ -651,10 +645,10 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
                 cout << "all"<<endl;
 
             cout << setw(16)<<left<<"Player name: ";
-            if (!strcmp(playerName,""))
+            if (!strcmp(config->player->field.playerName,""))
                 cout<<"all"<<endl;
             else
-                cout<<playerName<<endl;
+                cout<<config->player->field.playerName<<endl;
 
             cout << setw(16)<<left<<"Count: ";
             if (scoreListLength!=0)
@@ -674,7 +668,7 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
 
 
         count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
-            config->player->field.width, config->player->field.height, config->player->field.mineCount, squareSize,playerName);
+            config->player->field.width, config->player->field.height, config->player->field.mineCount, squareSize,config->player->field.playerName);
 
         
 
@@ -685,7 +679,7 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
     }
 }
 
-void beginGame(char playerName[], Config* config) {
+void beginGame(Config* config) {
     
     config->player->field.checkValues();    
 
@@ -729,19 +723,15 @@ void configureSize(int difficulty, Field* field) {
 }
 
 int main(int argc, char** argv) {
-
-    
     srand (time(NULL));
 
     glutInit(&argc, argv);
 
-    Field field;
-
     Player player;
 
-    field.height=0;
-    field.width=0;
-    field.mineCount=0;
+    player.field.height=0;
+    player.field.width=0;
+    player.field.mineCount=0;
 
     squareSize=0;
 
@@ -761,11 +751,9 @@ int main(int argc, char** argv) {
 
     // TODO allow specifying different config directory
 
+    player.field.playerName[0]='\0';
 
-    playerName[0]='\0';
-
-
-    strcpy(playerName,"");
+    strcpy(player.field.playerName,"");
 
     anyRank=false;
 
@@ -778,19 +766,19 @@ int main(int argc, char** argv) {
                 squareSize=atoi(optarg);
                 break;
             case 'm': 
-                field.mineCount=atoi(optarg);
+                player.field.mineCount=atoi(optarg);
                 break;
             case 'w': 
-                field.width=atoi(optarg);
+                player.field.width=atoi(optarg);
                 break;
             case 'h': 
-                field.height=atoi(optarg);
+                player.field.height=atoi(optarg);
                 break;
             case 'n':
                 if (strlen(optarg)<20)
-                    strcpy(playerName,optarg);
+                    strcpy(player.field.playerName,optarg);
                 else
-                    strncpy(playerName,optarg,20);
+                    strncpy(player.field.playerName,optarg,20);
                 
                 break;
             case 'p':
@@ -829,7 +817,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    if (strlen(playerName)!=0 && !isValidName(playerName)) {
+    if (strlen(player.field.playerName)!=0 && !isValidName(player.field.playerName)) {
         cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
         <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
         exit(1);   
@@ -837,17 +825,17 @@ int main(int argc, char** argv) {
 
     // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
 
-    if (strlen(playerName)==0) {      
+    if (strlen(player.field.playerName)==0) {      
         if (isValidName(getenv("USER")))       
             if (strlen(getenv("USER"))>20) {
-                strncpy(playerName,getenv("USER"),20);
-                playerName[21]='\0';
+                strncpy(player.field.playerName,getenv("USER"),20);
+                player.field.playerName[21]='\0';
             }
             else {
-                strcpy(playerName,getenv("USER"));
+                strcpy(player.field.playerName,getenv("USER"));
             }
         else {
-            strcpy(playerName,"unnamed");
+            strcpy(player.field.playerName,"unnamed");
         }
     }
 
@@ -893,11 +881,11 @@ int main(int argc, char** argv) {
         configureSize(difficulty, &(player.field));
         
         if (listScoresType!=0) { // list scores
-            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, playerName, &config);
+            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, &config);
         }
         else {
             // play
-            beginGame(playerName, &config);
+            beginGame(&config);
         }
     }
 

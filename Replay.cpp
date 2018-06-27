@@ -8,15 +8,13 @@
 #include "common.h"
 #include "Timer.h"
 #include "Replay.h"
-#include "Field.h"
 #include "Action.h"
+#include "Field.h"
 
 extern bool playReplay;
 extern int gameState;
 extern Timer timer;
-extern char playerName[21];
 extern int squareSize;
-extern Field field;
 
 Replay::Replay() {
     recording=false;
@@ -67,13 +65,11 @@ void Replay::recordEvent(int x, int y, int button, long elapsedTime) {
 }
 
 void Replay::writeToFile(ofstream *file, void* fieldPtr) {
+    Field* field = (Field*)fieldPtr;
 
-    Field* field = (Field*)fieldPtr;    
-    
-   // cout << "width=" << field.width << endl;
     *file << "miny-replay-file-version: 1" << endl;
 
-    *file << playerName << endl << squareSize << endl; 
+    *file << field->playerName << endl << squareSize << endl; 
 
     *file << field->width << " " << field->height << endl;
 

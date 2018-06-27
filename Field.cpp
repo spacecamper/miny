@@ -23,7 +23,7 @@ extern bool gamePaused;
 extern bool anyRank;
 extern unsigned short hitMineX, hitMineY;
 extern int squareSize;
-extern char playerName[21];
+//extern char playerName[21];
 extern char highScoreDir[100];
 
 bool Field::replayFileNumberExists(long nr) {

@@ -116,7 +116,6 @@ void Player::dump() {
 
     for (iter=data.begin(); iter!=data.end(); iter++) {
         (*iter).dump();
-
     }
 }
 
