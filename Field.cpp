@@ -74,7 +74,7 @@ long Field::findLowestUnusedReplayNumber() {
 void Field::unpauseGame() {
     gamePaused=false;
     timer.unpause();
-    replay.resumeRecording();
+    replay.startRecording();
     cout << "Game unpaused."<<endl;
 }
 
@@ -527,7 +527,7 @@ void Field::click(int x,int y,int button) {
     int squareX=(x-FIELD_X)/squareSize;
     int squareY=(y-FIELD_Y)/squareSize;
 
-    if (!replay.isRecording()) {
+    if (!replay.isRecording() and !playReplay) {
         replay.deleteData();
         replay.startRecording();
     }

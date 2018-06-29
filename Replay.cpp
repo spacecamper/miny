@@ -11,7 +11,6 @@
 #include "Action.h"
 #include "Field.h"
 
-extern bool playReplay;
 extern int gameState;
 extern Timer timer;
 extern int squareSize;
@@ -24,38 +23,16 @@ bool Replay::isRecording() {
     return recording;
 }
 
-
 void Replay::startRecording() {
-
-    if (!playReplay) recording=true;
-
+    recording=true;
 }
-
-
-void Replay::pauseRecording() {
-
-    if (!playReplay) recording=false;
-
-}
-
-void Replay::resumeRecording() {
-
-    if (!playReplay) recording=true;
-
-}
-
-
 
 void Replay::stopRecording() {
-
-    if (!playReplay) recording=false;
-
+    recording=false;
 }
 
 void Replay::deleteData() {
-    if (!playReplay) {
-        data.clear();
-    }
+    data.clear();
 }
 
 void Replay::recordEvent(int x, int y, int button, long elapsedTime) {

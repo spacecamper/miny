@@ -440,13 +440,13 @@ void keyDown(unsigned char key, int x, int y) {
 
                 gamePaused=true;
                 config->player->field.timer.pause(); 
-                config->player->field.replay.pauseRecording();
+                config->player->field.replay.stopRecording();
                 cout << "Game paused. Press P to continue. Elapsed time: "
                     <<config->player->field.timer.calculateElapsedTime()<<" ms"<<endl;
             }
-            else
+            else {
                 config->player->field.unpauseGame();
-            
+            }
         }
         break;
     case 'r':

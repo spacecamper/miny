@@ -23,8 +23,6 @@ public:
 
     bool isRecording(); //recorder
     void startRecording(); //recorder
-    void pauseRecording(); //recorder
-    void resumeRecording(); //recorder
     void stopRecording(); //recorder
     void deleteData(); //recorder
     void recordEvent(int, int, int, long); //recorder
