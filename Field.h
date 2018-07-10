@@ -20,10 +20,7 @@ public:
     unsigned int effectiveClicks;
     unsigned int ineffectiveClicks;
 
-    int calculate3BV();
-    void floodFillMark(int [MAX_WIDTH][MAX_HEIGHT],int,int);
-    void ffmProc(int [MAX_WIDTH][MAX_HEIGHT],int,int);
-    bool isMine(int x, int y);
+    bool isMine(int x, int y); // Tests for mine at (x,y)
     void setMine(int x, int y);
     void placeMines(int firstClickX, int firstClickY);
     void init();
@@ -45,6 +42,9 @@ private:
     void saveReplay(const char*);
     long findLowestUnusedReplayNumber();
     bool replayFileNumberExists(long);
+    void floodFillMark(int [MAX_WIDTH][MAX_HEIGHT],int,int);
+    void ffmProc(int [MAX_WIDTH][MAX_HEIGHT],int,int);
+    int calculate3BV(); //Calculates minimum number of clicks to solve the board
 };
 
 #endif

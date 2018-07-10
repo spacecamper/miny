@@ -93,22 +93,18 @@ void Field::saveReplay(const char *fname) {
     }
 
     replay.writeToFile(&ofile, this);
-
     ofile.close();
 }
 
 void Field::ffmProc(int tmpField[MAX_WIDTH][MAX_HEIGHT],int i,int j) {
-
-   // cout << "ffmproc(" << i << ", " << j << ")" << endl;
-
     if (tmpField[i][j]!=3) { 
         bool isZero=(tmpField[i][j]==0);
 
         tmpField[i][j]=3;
 
-        if (isZero) 
+        if (isZero) {
             floodFillMark(tmpField,i,j);
-        
+        }
     }
 
 }
