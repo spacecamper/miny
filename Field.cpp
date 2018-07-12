@@ -487,7 +487,6 @@ bool Field::adjacentMinesFlagged(int squareX,int squareY) {
 }
 
 int Field::calculateRemainingMines() {
-
     int remaining=mineCount;
     
     for (int i=0;i<width;i++) 
@@ -500,13 +499,6 @@ int Field::calculateRemainingMines() {
 
 void Field::viewClicks() {
     cout << "Clicks: "<<effectiveClicks<<" / "<<ineffectiveClicks<<endl;
-
-    return;
-
-    float progress=getGameProgress();
-    
-    if (progress==0) return;
-    cout << "Est.:   "<<(int)(effectiveClicks/progress)<<" / "<<(int)(ineffectiveClicks/progress)<< " Time: " << (int)(timer.calculateElapsedTime()/progress)<<"  "<<(int)(progress*100)<<"%"<<endl;
 }
 
 void Field::startGame(int squareX, int squareY) {
@@ -523,7 +515,7 @@ void Field::click(int x,int y,int button) {
     int squareX=(x-FIELD_X)/squareSize;
     int squareY=(y-FIELD_Y)/squareSize;
 
-    if (!replay.isRecording() and !playReplay) {
+    if (!replay.recording and !playReplay) {
         replay.deleteData();
         replay.startRecording();
     }
@@ -561,21 +553,4 @@ void Field::click(int x,int y,int button) {
     else {
         ineffectiveClicks++;
     }
-}
-
-
-
-float Field::getGameProgress() {
-
-    int count=0;
-
-    for (int x=0;x<width;x++)
-        for (int y=0;y<height;y++)
-            if (state[x][y]<=8)
-                count++;
-
-    if (count==0) return 0;
-
-    return (float)count/(width*height-mineCount);
-
 }

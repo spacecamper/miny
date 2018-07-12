@@ -14,9 +14,6 @@ public:
 
     long calculateTimeSinceStart();
 
-
-    long calculateTimePaused();
-
     long calculateElapsedTime();
 
     void start();
@@ -28,6 +25,8 @@ public:
     void pause();
 
     void unpause();
-
+    
+private:
+    long calculateTimePaused();
 };
 #endif

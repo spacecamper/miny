@@ -33,7 +33,6 @@ using namespace std;
 
 void ordinalNumberSuffix(char *, int);
 
-
 unsigned int terminalWidth();
 
 bool outputLine(string,int);

@@ -19,9 +19,9 @@ Replay::Replay() {
     recording=false;
 }
 
-bool Replay::isRecording() {
+/*bool Replay::isRecording() {
     return recording;
-}
+}*/
 
 void Replay::startRecording() {
     recording=true;
@@ -57,7 +57,6 @@ void Replay::writeToFile(ofstream *file, void* fieldPtr) {
     }
 
     *file << endl;
-
     *file << data.size() << endl;
 
     std::list<Action>::iterator iter;

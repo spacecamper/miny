@@ -92,9 +92,6 @@ int compareByIOE(const void *a,const void *b) {
 
 int filterScores(Score *scores, int count, Score **filteredScores, int fla, int fin, int w, int h, int m, int ss, char *pname) {
 
-
-//    filterScores(scoresAll, countAll,&scoresNF,2,1,0,0,0,0,&zero); 
-
     *filteredScores=new Score[count];    // just allocate array of the same size for the filtered scores
 
 
@@ -163,20 +160,11 @@ unsigned int intLength(int n)
 }
 
 void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
-
-
-
-
     if (count==0) {
         if (!csv) 
             cout << "No scores for this game setup yet." << endl;
         return;
     }
-
-
-
-    
-
 
     if (!csv) {
 
@@ -481,8 +469,6 @@ int loadScores(char *fname, Score **scores) {
 
     inFile >> version;
 
-  //  cout << "Detected score file version: " << version<<endl;
-
     Score tmps;
     int count=0;
         
@@ -524,15 +510,9 @@ int loadScores(char *fname, Score **scores) {
         
 
         for (int i=0;i<count;i++) {
-       //     cout << "Reading high score "<<i+1<<endl;
             (*scores)[i].readFromFile(&inFile);
-       //     inFile >> (*scores)[i].name >> (*scores)[i].time;
-       //     (*scores[i]).readFromFile(&inFile);
-       //     inFile.read((char *) &(*scores)[i], sizeof(Score)); // maybe this pointer is wrong
-      //      cout << "Time=="<<(*scores)[i].time<<endl;
 
         }
-      //  cout<< "Finished reading."<<endl;
         
         break;
     }
@@ -545,10 +525,8 @@ int loadScores(char *fname, Score **scores) {
 
     inFile.close();
 
-
     
     return count;
-
 
 }
 
@@ -593,7 +571,6 @@ void appendScore(char *fname, Score score) {
 bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int anyRank=0) {
 
     qsort(scoresAll,countAll,sizeof(Score),compareFunc);
- //   displayScores(scoresFiltered, countFiltered, MAX_HS);
 
     
 
@@ -613,13 +590,7 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
         Score *scoresNF;
         char zero='\0';
 
-        // only nf games
         int countNF=filterScores(scoresAll, countAll,&scoresNF,2,1,s.width,s.height,s.mines,0,&zero); 
-
-
-      //  cout << "nf scores"<<endl;
-  
-//        displayScores(scoresNF, countNF, MAX_HS);
 
         for (posNF=0;posNF<countNF;posNF++) {
             if (compareFunc((const void*) &s,(const void*) &scoresNF[posNF])<0) {

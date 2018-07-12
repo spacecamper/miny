@@ -16,11 +16,10 @@ public:
     bool playbackOn;
     
     int cursorX,cursorY; //player
-
-    void readFromFile(ifstream*); //player
-
-    void dump(); // player
     
     bool playStep(bool); //player
     int loadReplay(const char* fname);
+    
+private:
+    void readFromFile(ifstream*); //player
 };

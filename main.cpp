@@ -462,8 +462,6 @@ void keyDown(unsigned char key, int x, int y) {
     
 
     }
-
-
 }
 
 void mouseClick(int button, int mState, int x, int y) {

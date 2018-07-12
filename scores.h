@@ -42,9 +42,9 @@ public:
 
     float get3BVs();
 
-    void writeToFile(ofstream *f);
-
     void readFromFile(ifstream *f);
+    
+    void writeToFile(ofstream *f);
 };
 
 

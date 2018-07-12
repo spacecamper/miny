@@ -20,27 +20,25 @@ public:
     unsigned int effectiveClicks;
     unsigned int ineffectiveClicks;
 
-    bool isMine(int x, int y); // Tests for mine at (x,y)
+    bool isMine(int x, int y);
     void setMine(int x, int y);
-    void placeMines(int firstClickX, int firstClickY);
     void init();
     void newGame();
-    void revealAround(int squareX, int squareY);
-    void revealSquare(int squareX, int squareY);
-    void squareClicked(int squareX, int squareY);
-    bool adjacentMinesFlagged(int squareX,int squareY);
     int calculateRemainingMines();
     void checkValues();
     void click(int, int, int);
-    int get3BV();
-    void viewClicks();
-    float getGameProgress();
     void unpauseGame();
 private:
     void endGame(const bool);
+    void viewClicks();
+    int get3BV();
     void startGame(int, int);
+    void placeMines(int firstClickX, int firstClickY);
     void saveReplay(const char*);
     long findLowestUnusedReplayNumber();
+    void revealAround(int squareX, int squareY);
+    bool adjacentMinesFlagged(int squareX,int squareY);
+    void revealSquare(int squareX, int squareY);
     bool replayFileNumberExists(long);
     void floodFillMark(int [MAX_WIDTH][MAX_HEIGHT],int,int);
     void ffmProc(int [MAX_WIDTH][MAX_HEIGHT],int,int);

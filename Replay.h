@@ -14,19 +14,18 @@ using namespace std;
 class Replay {
 public:
 
-    std::list<Action> data;
-
     bool recording;
-
+    
+    std::list<Action> data;
 
     Replay();
 
-    bool isRecording(); //recorder
+    //bool isRecording(); //recorder
     void startRecording(); //recorder
     void stopRecording(); //recorder
     void deleteData(); //recorder
     void recordEvent(int, int, int, long); //recorder
-    void writeToFile(ofstream*, void*); //recorder 
+    void writeToFile(ofstream*, void*); //recorder
     void dump();
 };
 

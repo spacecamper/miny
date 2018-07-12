@@ -5,7 +5,6 @@
 #include <GL/glut.h>
 #endif
 
-#include "common.h"
 #include "Timer.h"
 #include "Player.h"
 #include "Field.h"
@@ -24,7 +23,6 @@ int Player::loadReplay(const char *fname) {
         cerr<<"Error opening replay file '"<<fname<<"'."<<endl;
         return 1;
     }
-
     string content((istreambuf_iterator<char>(ifile) ), (istreambuf_iterator<char>()    )) ;
     if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_ \x0d\x0a-:")) {
         cout << "Replay file contains invalid characters. Exiting."<<endl;
@@ -105,18 +103,6 @@ void Player::readFromFile(ifstream *ifile) {
 
 
 
-}
-
-
-void Player::dump() {
-    cout << "Dumping replay data."<<endl;
-
-    
-    std::list<Action>::iterator iter;
-
-    for (iter=data.begin(); iter!=data.end(); iter++) {
-        (*iter).dump();
-    }
 }
 
 bool Player::playStep(bool firstClick) {
