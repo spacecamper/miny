@@ -111,7 +111,6 @@ bool Player::playStep(bool firstClick) {
     next++;
 
     if (next->timeSinceStart >= field.timer.calculateTimeSinceStart() and !firstClick and next!=data.end()) {
-        cout<<next->timeSinceStart-field.timer.calculateTimeSinceStart()<< endl;
         return true;
     }
     if ((*nextPlayed).button!=-1) {

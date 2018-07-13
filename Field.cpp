@@ -74,7 +74,7 @@ long Field::findLowestUnusedReplayNumber() {
 void Field::unpauseGame() {
     gamePaused=false;
     timer.unpause();
-    replay.startRecording();
+    replay.recording = true;
     cout << "Game unpaused."<<endl;
 }
 
@@ -297,7 +297,7 @@ void Field::newGame() {
 
 void Field::endGame(const bool won) {
     timer.stop();
-    replay.stopRecording();
+    replay.recording = false;
     gameState=won ? GAME_WON : GAME_LOST;
 
     redisplay();
@@ -517,7 +517,7 @@ void Field::click(int x,int y,int button) {
 
     if (!replay.recording and !playReplay) {
         replay.deleteData();
-        replay.startRecording();
+        replay.recording = true;
     }
 
     if(gameState==GAME_INITIALIZED and button==GLUT_LEFT_BUTTON) {
@@ -546,7 +546,9 @@ void Field::click(int x,int y,int button) {
         effectiveClicks++;
     }
     
-    else if (state[squareX][squareY]<=8 and state[squareX][squareY]!=0 and adjacentMinesFlagged(squareX,squareY) and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON or button==GLUT_MIDDLE_BUTTON)) {
+    else if (state[squareX][squareY]<=8 and state[squareX][squareY]!=0 and
+             adjacentMinesFlagged(squareX,squareY) and
+             (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON or button==GLUT_MIDDLE_BUTTON)) {
         effectiveClicks++;
         revealAround(squareX,squareY);
     }

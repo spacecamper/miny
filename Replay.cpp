@@ -19,18 +19,6 @@ Replay::Replay() {
     recording=false;
 }
 
-/*bool Replay::isRecording() {
-    return recording;
-}*/
-
-void Replay::startRecording() {
-    recording=true;
-}
-
-void Replay::stopRecording() {
-    recording=false;
-}
-
 void Replay::deleteData() {
     data.clear();
 }

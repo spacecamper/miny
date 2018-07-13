@@ -20,9 +20,6 @@ public:
 
     Replay();
 
-    //bool isRecording(); //recorder
-    void startRecording(); //recorder
-    void stopRecording(); //recorder
     void deleteData(); //recorder
     void recordEvent(int, int, int, long); //recorder
     void writeToFile(ofstream*, void*); //recorder
