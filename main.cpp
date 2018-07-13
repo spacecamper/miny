@@ -243,6 +243,31 @@ void drawBackground(int fieldWidth, int fieldHeight) {
     glEnd();
 }
 
+void drawMine(int x, int y, int squareSize) {
+    glColor3f(0,0,0);
+    glBegin(GL_TRIANGLES);
+    glVertex2f((FIELD_X+x*squareSize)+.5*squareSize,(FIELD_Y+y*squareSize)+.1*squareSize);
+    glVertex2f((FIELD_X+x*squareSize)+.1*squareSize,(FIELD_Y+y*squareSize)+.5*squareSize);
+    glVertex2f((FIELD_X+x*squareSize)+.5*squareSize,(FIELD_Y+(y+1)*squareSize-1)-.1*squareSize);
+
+    glVertex2f((FIELD_X+x*squareSize)+.5*squareSize,(FIELD_Y+y*squareSize)+.1*squareSize);
+    glVertex2f((FIELD_X+(x+1)*squareSize-1)-.1*squareSize,(FIELD_Y+y*squareSize)+.5*squareSize);
+    glVertex2f((FIELD_X+x*squareSize)+.5*squareSize,(FIELD_Y+(y+1)*squareSize-1)-.1*squareSize);
+
+    const float gap=.25*squareSize;
+
+    glBegin(GL_TRIANGLES);
+    glVertex2f((FIELD_X+x*squareSize)+gap,(FIELD_Y+y*squareSize)+gap);
+    glVertex2f((FIELD_X+(x+1)*squareSize-1)-gap,(FIELD_Y+y*squareSize)+gap);
+    glVertex2f((FIELD_X+(x+1)*squareSize-1)-gap,(FIELD_Y+(y+1)*squareSize-1)-gap);
+
+    glVertex2f((FIELD_X+x*squareSize)+gap,(FIELD_Y+y*squareSize)+gap);
+    glVertex2f((FIELD_X+x*squareSize)+gap,(FIELD_Y+(y+1)*squareSize-1)-gap);
+    glVertex2f((FIELD_X+(x+1)*squareSize-1)-gap,(FIELD_Y+(y+1)*squareSize-1)-gap);
+
+    glEnd();
+}
+
 void drawField(Field field, int squareSize){
     for (int x=0;x<field.width;x++) {
         for (int y=0;y<field.height;y++) {
@@ -285,30 +310,8 @@ void drawField(Field field, int squareSize){
                  and field.isMine(x,y)
                 ) { // unflagged mine after game
                                 
-                glColor3f(0,0,0);
-                glBegin(GL_TRIANGLES);
-                glVertex2f(x1+.5*squareSize,y1+.1*squareSize);
-                glVertex2f(x1+.1*squareSize,y1+.5*squareSize);
-                glVertex2f(x1+.5*squareSize,y2-.1*squareSize);
-
-                glVertex2f(x1+.5*squareSize,y1+.1*squareSize);
-                glVertex2f(x2-.1*squareSize,y1+.5*squareSize);
-                glVertex2f(x1+.5*squareSize,y2-.1*squareSize);
+                drawMine(x, y, squareSize);
                 
-                glEnd();
-
-                const float gap=.25*squareSize;
-
-                glBegin(GL_TRIANGLES);
-                glVertex2f(x1+gap,y1+gap);
-                glVertex2f(x2-gap,y1+gap);
-                glVertex2f(x2-gap,y2-gap);
-
-                glVertex2f(x1+gap,y1+gap);
-                glVertex2f(x1+gap,y2-gap);
-                glVertex2f(x2-gap,y2-gap);
-        
-                glEnd();
             }
             if(field.state[x][y]==11) { // Hit mine
                 glColor3f(1,0,0);
@@ -440,7 +443,7 @@ void keyDown(unsigned char key, int x, int y) {
 
                 gamePaused=true;
                 config->player->field.timer.pause(); 
-                config->player->field.replay.stopRecording();
+                config->player->field.replay.recording = false;
                 cout << "Game paused. Press P to continue. Elapsed time: "
                     <<config->player->field.timer.calculateElapsedTime()<<" ms"<<endl;
             }
