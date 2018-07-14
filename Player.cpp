@@ -122,6 +122,7 @@ bool Player::playStep(bool firstClick) {
     }
 
     if (next==data.end()) {
+        cout<<"End of Replay."<<endl;
         return false;
     }
     else {

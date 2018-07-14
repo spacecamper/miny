@@ -432,7 +432,7 @@ void keyDown(unsigned char key, int x, int y) {
     Config* config = (Config*)glutGetWindowData();
 
     switch (key) {
-    case ' ':   
+    case ' ':
         if (!gamePaused and !playReplay) 
             config->player->field.newGame();
 
@@ -507,21 +507,15 @@ void mouseClick(int button, int mState, int x, int y) {
 }
 
 void update(int value) {
-    glutPostRedisplay(); 
-	
-    glutTimerFunc(50, update, 0);
-}
-
-void updateR(int value) {
-    bool moreSteps = ((Config*)glutGetWindowData())->player->playStep(false);
     glutPostRedisplay();
-
-    if (moreSteps) // if replay hasn't ended
-        glutTimerFunc(0, updateR, 0);
-    else {
-        cout << "End of replay."<<endl;
-        glutTimerFunc(0, update, 0);    // call the update function without replay functionality
+    
+    Player* player = ((Config*)glutGetWindowData())->player;
+    
+    if(playReplay and !(player->playStep(false))){
+        playReplay=false;
     }
+	
+    glutTimerFunc(0, update, 0);
 }
 
 void mouseMove(int x, int y) {
@@ -572,7 +566,7 @@ void displayReplay(char replayFileName[100], Config* config) {
     initGraph(config);
 
     config->player->playStep(true);
-    glutTimerFunc(1, updateR, 0);
+    glutTimerFunc(1, update, 0);
 }
 
 void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, Config* config) {
