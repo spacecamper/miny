@@ -433,9 +433,9 @@ void keyDown(unsigned char key, int x, int y) {
 
     switch (key) {
     case ' ':
-        if (!gamePaused and !playReplay) 
+        if (!gamePaused and !playReplay) {
             config->player->field.newGame();
-
+        }
         break;
     case 'p':   // pause
         if (gameState==GAME_PLAYING and !playReplay) {
@@ -458,49 +458,32 @@ void keyDown(unsigned char key, int x, int y) {
     case 'd':
         cout << sizeof(Score)<<endl;
         break;
-
     case 'q':
+        exit(0);
     case 27:    // escape
         exit(0);
-    
-
     }
 }
 
 void mouseClick(int button, int mState, int x, int y) {
-    if (!gamePaused) {
+    if (!gamePaused and mState==GLUT_DOWN) {
         Config* config = (Config*)glutGetWindowData();
         if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
 
             if (x>FIELD_X and x<FIELD_X+config->player->field.width*squareSize 
-                and y>FIELD_Y and y<FIELD_Y+config->player->field.height*squareSize) {
-
-                // field
-
-                if (mState==GLUT_DOWN) {
-                
-                    config->player->field.click(x,y,button);
-                }
+                and y>FIELD_Y and y<FIELD_Y+config->player->field.height*squareSize) { // field
+                config->player->field.click(x,y,button);
             }
 
             else if (x>originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 && x<originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 &&
                 y>BORDER_WIDTH && y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH) {
-
-                // new game button
-                if (mState==GLUT_DOWN) {
-        
-                    config->player->field.newGame();
-                }
-
+                config->player->field.newGame();
             }
 
             glutPostRedisplay();
         }
         else if (!(x>FIELD_X and x<FIELD_X+config->player->field.width*squareSize 
-            and y>FIELD_Y and y<FIELD_Y+config->player->field.height*squareSize)) {
-
-            // outside of field - new game
-
+            and y>FIELD_Y and y<FIELD_Y+config->player->field.height*squareSize)) { // outside of field - new game
             config->player->field.newGame();
         }
     }
@@ -511,7 +494,7 @@ void update(int value) {
     
     Player* player = ((Config*)glutGetWindowData())->player;
     
-    if(playReplay and !(player->playStep(false))){
+    if(!(player->playStep(false))){
         playReplay=false;
     }
 	
@@ -566,7 +549,7 @@ void displayReplay(char replayFileName[100], Config* config) {
     initGraph(config);
 
     config->player->playStep(true);
-    glutTimerFunc(1, update, 0);
+    glutTimerFunc(0, update, 0);
 }
 
 void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, Config* config) {
