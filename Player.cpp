@@ -9,11 +9,15 @@
 #include "Player.h"
 #include "Field.h"
 #include "Action.h"
+#include "scores.h"
 
 extern char playerName[21];
 extern int squareSize;
-
-void mouseClick(int,int,int,int);
+extern int gameState;
+extern int originalWidth;
+extern int originalHeight;
+extern bool playReplay;
+extern bool gamePaused;
 
 int Player::loadReplay(const char *fname) {
     ifstream ifile;
@@ -37,6 +41,16 @@ int Player::loadReplay(const char *fname) {
     ifile.close();
 
     return 0;
+}
+
+Player::Player() {
+    refreshQueue();
+    nextPlayed = data.begin();
+}
+
+void Player::refreshQueue() {
+    Action* action = new Action(0, 0, -1, 0);
+    data.push_back(*action);
 }
 
 void Player::readFromFile(ifstream *ifile) {
@@ -93,7 +107,6 @@ void Player::readFromFile(ifstream *ifile) {
             data.push_back(*rp);
         }
 
-        nextPlayed=data.begin();
         break;
         }
     default:
@@ -109,24 +122,95 @@ bool Player::playStep(bool firstClick) {
     std::list<Action>::iterator next;
     next=nextPlayed;
     next++;
-
-    if (next->timeSinceStart >= field.timer.calculateTimeSinceStart() and !firstClick and next!=data.end()) {
+    
+    if (nextPlayed->timeSinceStart > field.timer.calculateElapsedTime() and !firstClick and nextPlayed!=data.end()) {
         return true;
     }
-    if ((*nextPlayed).button!=-1) {
-        mouseClick((*nextPlayed).button,GLUT_DOWN,(*nextPlayed).x,(*nextPlayed).y);
+    if ((*nextPlayed).button>=-1) {
+        takeAction(nextPlayed->button, nextPlayed->x, nextPlayed->y);
     }
     else {
-        cursorX=(*nextPlayed).x;
-        cursorY=(*nextPlayed).y;
+        takeAction((unsigned char)(-nextPlayed->button), nextPlayed->x, nextPlayed->y);
     }
 
     if (next==data.end()) {
-        cout<<"End of Replay."<<endl;
-        return false;
+        if (playReplay) {
+            cout<<"End of Replay."<<endl;
+            return false;
+        }
     }
     else {
         nextPlayed=next;
-        return true;
     }
+    return true;
+}
+
+void Player::takeAction(int button, int x, int y) {
+    if (button!=-1) {
+        if ((gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) and button!=1) {
+            if (x>FIELD_X and x<FIELD_X+field.width*squareSize 
+                and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) { // field
+                field.click(x,y,button);
+            }
+
+            else if (x>originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 and 
+                     x<originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 and
+                     y>BORDER_WIDTH and 
+                     y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH) {
+                field.newGame();
+            }
+
+            glutPostRedisplay();
+        }
+        else if (!(x>FIELD_X and x<FIELD_X+field.width*squareSize 
+                 and y>FIELD_Y and y<FIELD_Y+field.height*squareSize)) { // outside of field - new game
+            field.newGame();
+        }
+    }
+    cursorX=x;
+    cursorY=y;
+}
+
+void Player::takeAction(unsigned char button, int x, int y) {
+    switch (button) {
+    case ' ':
+        if (!gamePaused and !playReplay) {
+            field.newGame();
+        }
+        break;
+    case 'p':   // pause
+        if (gameState==GAME_PLAYING and !playReplay) {
+            if (!gamePaused) {
+
+                gamePaused=true;
+                field.timer.pause(); 
+                field.replay.recording = false;
+                cout << "Game paused. Press P to continue. Elapsed time: "
+                    <<field.timer.calculateElapsedTime()<<" ms"<<endl;
+            }
+            else {
+                field.unpauseGame();
+            }
+        }
+        break;
+    case 'r':
+        field.replay.dump();
+        break;
+    case 'd':
+        cout << sizeof(Score)<<endl;
+        break;
+
+    case 'q':
+        exit(0);
+    case 27:    // escape
+        exit(0);
+    default:
+        cout<<button<<endl;
+        break;
+    }
+}
+
+void Player::handleInput(int button, int x, int y) {
+    Action* input = new Action(x, y, button, field.timer.calculateElapsedTime());
+    data.push_back(*input);
 }

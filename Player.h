@@ -1,3 +1,6 @@
+#ifndef PLAYER_H
+#define PLAYER_H
+
 #include <list>
 #include <fstream>
 
@@ -17,9 +20,17 @@ public:
     
     int cursorX,cursorY; //player
     
+    Player();
+    
+    void handleInput(int, int, int);
     bool playStep(bool); //player
     int loadReplay(const char* fname);
+    void refreshQueue();
     
 private:
     void readFromFile(ifstream*); //player
+    void takeAction(unsigned char, int, int);
+    void takeAction(int, int, int);
 };
+
+#endif
