@@ -273,13 +273,13 @@ void drawField(Field field, int squareSize){
         for (int y=0;y<field.height;y++) {
             const int x1=FIELD_X+x*squareSize;
             const int x2=FIELD_X+(x+1)*squareSize-1;
-            const int y1=FIELD_Y+y*squareSize;
+            const int y1=FIELD_Y+1+y*squareSize;
             const int y2=FIELD_Y+(y+1)*squareSize-1;
 
             const float zoom=1.5*squareSize/25;
 
             if (field.state[x][y]>=0 and field.state[x][y]<=8) {    // revealed square
-
+                
                 switch(field.state[x][y]) {
                     case 0: glColor3f(.5,.5,.5); break;
                     case 1: glColor3f(0,0,1); break;
@@ -298,7 +298,6 @@ void drawField(Field field, int squareSize){
                     drawDigit(field.state[x][y],x1+.5*squareSize-3.0*zoom,
                                 y1+.5*squareSize-5.0*zoom,zoom);
                 }
-
                 //square background
 
                 glColor3f(.5,.5,.5);
