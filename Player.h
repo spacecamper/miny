@@ -12,9 +12,6 @@
 
 class Player {
 public:
-    std::list<Action> data;
-    std::list<Action>::iterator nextPlayed;
-    
     Field field;
     bool playbackOn;
     
@@ -25,12 +22,15 @@ public:
     void handleInput(int, int, int);
     bool playStep(bool); //player
     int loadReplay(const char* fname);
-    void refreshQueue();
     
 private:
+    std::list<Action> data;
+    std::list<Action>::iterator nextPlayed;
+    
     void readFromFile(ifstream*); //player
     void takeAction(unsigned char, int, int);
     void takeAction(int, int, int);
+    void refreshQueue();
 };
 
 #endif

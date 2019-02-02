@@ -26,7 +26,7 @@ public:
     void newGame();
     int calculateRemainingMines();
     void checkValues();
-    void click(int, int, int);
+    void click(int x, int y, int button);
     void unpauseGame();
 private:
     void endGame(const bool);

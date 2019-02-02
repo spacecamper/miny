@@ -123,14 +123,18 @@ bool Player::playStep(bool firstClick) {
     next=nextPlayed;
     next++;
     
-    if (nextPlayed->timeSinceStart > field.timer.calculateElapsedTime() and !firstClick and nextPlayed!=data.end()) {
-        return true;
-    }
-    if ((*nextPlayed).button>=-1) {
-        takeAction(nextPlayed->button, nextPlayed->x, nextPlayed->y);
-    }
-    else {
-        takeAction((unsigned char)(-nextPlayed->button), nextPlayed->x, nextPlayed->y);
+    if (nextPlayed->timeSinceStart!=-1){
+        if (nextPlayed->timeSinceStart > field.timer.calculateElapsedTime()) {
+            return true;
+        }
+        
+        if ((*nextPlayed).button>=-1) {
+            takeAction(nextPlayed->button, nextPlayed->x, nextPlayed->y);
+        }
+        else {
+            takeAction((unsigned char)(-nextPlayed->button), nextPlayed->x, nextPlayed->y);
+        }
+        nextPlayed->timeSinceStart=-1;
     }
 
     if (next==data.end()) {
@@ -146,26 +150,28 @@ bool Player::playStep(bool firstClick) {
 }
 
 void Player::takeAction(int button, int x, int y) {
-    if (button!=-1) {
-        if ((gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) and button!=1) {
-            if (x>FIELD_X and x<FIELD_X+field.width*squareSize 
-                and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) { // field
-                field.click(x,y,button);
-            }
-
-            else if (x>originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 and 
-                     x<originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 and
-                     y>BORDER_WIDTH and 
-                     y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH) {
-                field.newGame();
-            }
-
-            glutPostRedisplay();
+    if ((gameState==GAME_INITIALIZED or gameState==GAME_PLAYING)) {
+        if (x>FIELD_X and x<FIELD_X+field.width*squareSize 
+            and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) { // field
+            field.click(x, y, button);
         }
-        else if (!(x>FIELD_X and x<FIELD_X+field.width*squareSize 
-                 and y>FIELD_Y and y<FIELD_Y+field.height*squareSize)) { // outside of field - new game
+
+        else if (x>originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 and 
+                x<originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 and
+                y>BORDER_WIDTH and 
+                y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH and
+                button!=-1) {
             field.newGame();
         }
+        glutPostRedisplay();
+    }
+    else if (!(x>FIELD_X and 
+            x<FIELD_X+field.width*squareSize and 
+            y>FIELD_Y and 
+            y<FIELD_Y+field.height*squareSize) and
+            button!=-1) { // outside of field - new game
+        cout<<button<<endl;
+        field.newGame();
     }
     cursorX=x;
     cursorY=y;
@@ -211,6 +217,6 @@ void Player::takeAction(unsigned char button, int x, int y) {
 }
 
 void Player::handleInput(int button, int x, int y) {
-    Action* input = new Action(x, y, button, field.timer.calculateElapsedTime());
+    Action* input = new Action(x, y, button, 0);
     data.push_back(*input);
 }

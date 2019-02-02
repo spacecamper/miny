@@ -355,7 +355,6 @@ void Field::endGame(const bool won) {
             long nr=1;
 
             nr=findLowestUnusedReplayNumber();
-       
             newScore.replayNumber=nr;
             appendScore(fullpath,newScore);
 
@@ -510,7 +509,6 @@ void Field::startGame(int squareX, int squareY) {
 }
 
 void Field::click(int x,int y,int button) {
-    viewClicks();
 
     int squareX=(x-FIELD_X)/squareSize;
     int squareY=(y-FIELD_Y)/squareSize;
@@ -524,35 +522,39 @@ void Field::click(int x,int y,int button) {
         startGame(squareX, squareY);
     }
     
-    replay.recordEvent(x, y, button, timer.calculateElapsedTime());    
-
-    if(state[squareX][squareY]==9 and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON)) { // unrevealed
-        if(button==GLUT_LEFT_BUTTON) {
-            revealSquare(squareX, squareY);
-            effectiveClicks++;
-        }
-        else if(button==GLUT_RIGHT_BUTTON) {
-            state[squareX][squareY]=10;
-            if (!isFlagging and !playReplay) {
-                cout<<"You are now playing with flagging."<<endl;
-                isFlagging=true;
-            }
-            effectiveClicks++;
-        }
-    }
-
-    else if(state[squareX][squareY]==10 and button==GLUT_RIGHT_BUTTON){ // flag
-        state[squareX][squareY]=9;
-        effectiveClicks++;
-    }
+    replay.recordEvent(x, y, button, timer.calculateElapsedTime());   
     
-    else if (state[squareX][squareY]<=8 and state[squareX][squareY]!=0 and
-             adjacentMinesFlagged(squareX,squareY) and
-             (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON or button==GLUT_MIDDLE_BUTTON)) {
-        effectiveClicks++;
-        revealAround(squareX,squareY);
-    }
-    else {
-        ineffectiveClicks++;
+    if (button!=-1) {
+        viewClicks();
+
+        if(state[squareX][squareY]==9 and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON)) { // unrevealed
+            if(button==GLUT_LEFT_BUTTON) {
+                revealSquare(squareX, squareY);
+                effectiveClicks++;
+            }
+            else if(button==GLUT_RIGHT_BUTTON) {
+                state[squareX][squareY]=10;
+                if (!isFlagging and !playReplay) {
+                    cout<<"You are now playing with flagging."<<endl;
+                    isFlagging=true;
+                }
+                effectiveClicks++;
+            }
+        }
+
+        else if(state[squareX][squareY]==10 and button==GLUT_RIGHT_BUTTON){ // flag
+            state[squareX][squareY]=9;
+            effectiveClicks++;
+        }
+        
+        else if (state[squareX][squareY]<=8 and state[squareX][squareY]!=0 and
+                adjacentMinesFlagged(squareX,squareY) and
+                (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON or button==GLUT_MIDDLE_BUTTON)) {
+            effectiveClicks++;
+            revealAround(squareX,squareY);
+        }
+        else {
+            ineffectiveClicks++;
+        }
     }
 }

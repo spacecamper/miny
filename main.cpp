@@ -430,63 +430,21 @@ void keyDown(unsigned char key, int x, int y) {
     
     Config* config = (Config*)glutGetWindowData();
 
-    switch (key) {
-    case ' ':
-        if (!gamePaused and !playReplay) {
-            config->player->field.newGame();
-        }
-        break;
-    case 'p':   // pause
-        if (gameState==GAME_PLAYING and !playReplay) {
-            if (!gamePaused) {
-
-                gamePaused=true;
-                config->player->field.timer.pause(); 
-                config->player->field.replay.recording = false;
-                cout << "Game paused. Press P to continue. Elapsed time: "
-                    <<config->player->field.timer.calculateElapsedTime()<<" ms"<<endl;
-            }
-            else {
-                config->player->field.unpauseGame();
-            }
-        }
-        break;
-    case 'r':
-        config->player->field.replay.dump();
-        break;
-    case 'd':
-        cout << sizeof(Score)<<endl;
-        break;
-    case 'q':
-        exit(0);
-    case 27:    // escape
-        exit(0);
-    }
+    config->player->handleInput(-((int)key), 0, 0);
 }
 
 void mouseClick(int button, int mState, int x, int y) {
     if (!gamePaused and mState==GLUT_DOWN) {
         Config* config = (Config*)glutGetWindowData();
-        if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
-
-            if (x>FIELD_X and x<FIELD_X+config->player->field.width*squareSize 
-                and y>FIELD_Y and y<FIELD_Y+config->player->field.height*squareSize) { // field
-                config->player->field.click(x,y,button);
-            }
-
-            else if (x>originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 && x<originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 &&
-                y>BORDER_WIDTH && y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH) {
-                config->player->field.newGame();
-            }
-
-            glutPostRedisplay();
-        }
-        else if (!(x>FIELD_X and x<FIELD_X+config->player->field.width*squareSize 
-            and y>FIELD_Y and y<FIELD_Y+config->player->field.height*squareSize)) { // outside of field - new game
-            config->player->field.newGame();
-        }
+        config->player->handleInput(button, x, y);
     }
 }
+
+void mouseMove(int x, int y) {
+    Config* const config = (Config*)glutGetWindowData();
+    config->player->handleInput(-1, x, y);
+}
+
 
 void update(int value) {
     glutPostRedisplay();
@@ -499,12 +457,6 @@ void update(int value) {
 	
     glutTimerFunc(0, update, 0);
 }
-
-void mouseMove(int x, int y) {
-    Config* const config = (Config*)glutGetWindowData();
-    config->player->field.replay.recordEvent(x,y,-1, config->player->field.timer.calculateElapsedTime());
-}
-
 void initGraph(Config* config) {
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);

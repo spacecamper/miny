@@ -34,7 +34,7 @@ void Replay::writeToFile(ofstream *file, void* fieldPtr) {
 
     *file << "miny-replay-file-version: 1" << endl;
 
-    *file << field->playerName << endl << squareSize << endl; 
+    *file << field->playerName << endl << squareSize << endl;
 
     *file << field->width << " " << field->height << endl;
 
