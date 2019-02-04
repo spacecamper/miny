@@ -6,14 +6,6 @@
 
 class Timer {
 public:
-
-    struct timeval timeStarted, timeFinished;
-    long totalTimePaused;
-    long pausedSince;
-
-
-    long calculateTimeSinceStart();
-
     long calculateElapsedTime();
 
     void start();
@@ -27,6 +19,14 @@ public:
     void unpause();
     
 private:
+    struct timeval timeStarted, timeFinished;
+    
+    long pausedSince;
+    
+    long totalTimePaused;
+    
     long calculateTimePaused();
+    
+    long calculateTimeSinceStart();
 };
 #endif
