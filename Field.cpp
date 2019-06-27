@@ -525,7 +525,7 @@ void Field::click(int x,int y,int button) {
     replay.recordEvent(x, y, button, timer.calculateElapsedTime());   
     
     if (button!=-1) {
-        viewClicks();
+        
 
         if(state[squareX][squareY]==9 and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON)) { // unrevealed
             if(button==GLUT_LEFT_BUTTON) {
@@ -556,5 +556,6 @@ void Field::click(int x,int y,int button) {
         else {
             ineffectiveClicks++;
         }
+		viewClicks();
     }
 }

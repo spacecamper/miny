@@ -273,9 +273,9 @@ void drawField(Field field, int squareSize){
     for (int x=0;x<field.width;x++) {
         for (int y=0;y<field.height;y++) {
             const int x1=FIELD_X+x*squareSize;
-            const int x2=FIELD_X+(x+1)*squareSize-1;
-            const int y1=FIELD_Y+1+y*squareSize;
-            const int y2=FIELD_Y+(y+1)*squareSize-1;
+            const int x2=FIELD_X+(x+1)*squareSize;
+            const int y1=FIELD_Y+y*squareSize;
+            const int y2=FIELD_Y+(y+1)*squareSize;
 
             const float zoom=1.5*squareSize/25;
 

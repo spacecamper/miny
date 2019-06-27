@@ -104,6 +104,10 @@ void Player::readFromFile(ifstream *ifile) {
             rp=new Action();
 
             *ifile >> rp->timeSinceStart >> rp->x >> rp->y >> rp->button;
+
+			if (i==0)
+                rp->timeSinceStart=0;
+
             data.push_back(*rp);
         }
 
