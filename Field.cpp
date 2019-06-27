@@ -16,7 +16,7 @@ using namespace std;
 
 extern void redisplay();
 
-extern int playReplay;
+extern bool playReplay;
 extern int gameState;
 extern bool isFlagging;
 extern bool gamePaused;

@@ -1,7 +1,7 @@
 /*
  * Miny
  * a minesweeper clone
- * (c) 2015-2019 spacecamper
+ * (c) 2015-2018 spacecamper
  */
 
 #include <stdlib.h>
@@ -35,7 +35,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.12+"
+#define VERSION "0.5.11"
 
 
 // TODO prevent buffer overflows (strcpy and strcat)
@@ -61,8 +61,9 @@ char option_char;
 char highScoreDir[100];
 bool isFlagging;
 bool gamePaused;
-int playReplay;	// 0 - not replay but game, 1 - playing replay, 2 - replay stopped
+bool playReplay;
 bool anyRank;
+bool boolDrawCursor;
 
 void redisplay() {
     glutPostRedisplay();
@@ -392,7 +393,7 @@ void drawScene() {
         return;
     }
 
-	if (playReplay) {
+    if (boolDrawCursor) {
         drawCursor(config->player->cursorX, config->player->cursorY);
     }
     
@@ -412,8 +413,6 @@ void drawScene() {
     }
 
     drawBackground(config->player->field.width, config->player->field.height);    
-    
-
 
     glutSwapBuffers();
 }
@@ -453,11 +452,11 @@ void update(int value) {
     
     Player* player = ((Config*)glutGetWindowData())->player;
     
-    playReplay=player->playStep(false);
-
-//	cout << playReplay << endl;
-    if (playReplay==1)
-        glutTimerFunc(0, update, 0);
+    if(!(player->playStep(false))){
+        playReplay=false;
+    }
+	
+    glutTimerFunc(0, update, 0);
 }
 void initGraph(Config* config) {
 
@@ -668,6 +667,7 @@ int main(int argc, char** argv) {
 
     gameState=GAME_INITIALIZED;
     gamePaused=false;
+	boolDrawCursor=false;
 
     char replayFileName[100];
     int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
@@ -715,7 +715,8 @@ int main(int argc, char** argv) {
             case 'p':
                 strcpy(replayFileName,highScoreDir);       
                 strcat(replayFileName,optarg);
-                playReplay=1;
+                playReplay=true;
+				boolDrawCursor=true;
                 break;
             case 'l':
                 scoreListLength=atoi(optarg);
