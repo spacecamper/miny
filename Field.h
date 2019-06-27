@@ -1,12 +1,18 @@
+#ifndef FIELD_H
+#define FIELD_H
+
+#include "Replay.h"
+#include "Timer.h"
+#include "common.h"
+
 class Field {
-
-    
-
 public:
-
-
     short width, height;
     short mineCount;
+    char playerName[21];
+
+    Replay replay;
+    Timer timer;
 
     bool mine[MAX_WIDTH][MAX_HEIGHT];
     int state[MAX_WIDTH][MAX_HEIGHT];  // 0-8 - adjacent mine count for revealed field, 9 - not revealed, 10 - flag
@@ -14,35 +20,29 @@ public:
     unsigned int effectiveClicks;
     unsigned int ineffectiveClicks;
 
-
-    int calculate3BV();
+    bool isMine(int x, int y);
+    void setMine(int x, int y);
+    void init();
+    void newGame();
+    int calculateRemainingMines();
+    void checkValues();
+    void click(int x, int y, int button);
+    void unpauseGame();
+private:
+    void endGame(const bool);
+    void viewClicks();
+    int get3BV();
+    void startGame(int, int);
+    void placeMines(int firstClickX, int firstClickY);
+    void saveReplay(const char*);
+    long findLowestUnusedReplayNumber();
+    void revealAround(int squareX, int squareY);
+    bool adjacentMinesFlagged(int squareX,int squareY);
+    void revealSquare(int squareX, int squareY);
+    bool replayFileNumberExists(long);
     void floodFillMark(int [MAX_WIDTH][MAX_HEIGHT],int,int);
     void ffmProc(int [MAX_WIDTH][MAX_HEIGHT],int,int);
-    bool isMine(int x, int y);
-
-    void setMine(int x, int y);
-
-    void placeMines(int firstClickX, int firstClickY);
-
-    void init();
-
-    void revealAround(int squareX, int squareY);
-
-    void revealSquare(int squareX, int squareY);
-
-    void squareClicked(int squareX, int squareY);
-
-    bool adjacentMinesFlagged(int squareX,int squareY);
-
-    int calculateRemainingMines();
-    
-    void checkValues();
-
-    void click(int, int, int);
-
-    int get3BV();
-
-    void viewClicks();
-    
-    float getGameProgress();
+    int calculate3BV(); //Calculates minimum number of clicks to solve the board
 };
+
+#endif

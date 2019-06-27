@@ -1,20 +1,11 @@
+#ifndef TIMER_H
+#define TIMER_H
 
 #include <stdlib.h>
 #include <sys/time.h>
 
 class Timer {
 public:
-
-    struct timeval timeStarted, timeFinished;
-    long totalTimePaused;
-    long pausedSince;
-
-
-    long calculateTimeSinceStart();
-
-
-    long calculateTimePaused();
-
     long calculateElapsedTime();
 
     void start();
@@ -26,5 +17,16 @@ public:
     void pause();
 
     void unpause();
-
+    
+private:
+    struct timeval timeStarted, timeFinished;
+    
+    long pausedSince;
+    
+    long totalTimePaused;
+    
+    long calculateTimePaused();
+    
+    long calculateTimeSinceStart();
 };
+#endif

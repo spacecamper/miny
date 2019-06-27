@@ -1,5 +1,3 @@
-
-
 #include "Timer.h"
 #include "common.h"
 
@@ -43,7 +41,7 @@ long Timer::calculateTimePaused() {
             return totalTimePaused;
         }
     }
-    else  { //if (gameState==GAME_LOST or gameState==GAME_WON) 
+    else {
         return totalTimePaused;
     }
 
