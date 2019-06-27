@@ -4,6 +4,8 @@
 #include "Replay.h"
 #include "Timer.h"
 #include "common.h"
+#include "scores.h"
+
 
 class Field {
 public:
@@ -34,7 +36,7 @@ private:
     int get3BV();
     void startGame(int, int);
     void placeMines(int firstClickX, int firstClickY);
-    void saveReplay(const char*);
+    void saveReplay(const char*,Score*);
     long findLowestUnusedReplayNumber();
     void revealAround(int squareX, int squareY);
     bool adjacentMinesFlagged(int squareX,int squareY);

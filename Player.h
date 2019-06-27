@@ -9,18 +9,19 @@
 
 #include "Action.h"
 #include "Field.h"
+#include "scores.h"
 
 class Player {
 public:
     Field field;
     bool playbackOn;
-    
+    Score score;
     int cursorX,cursorY; //player
     
     Player();
     
     void handleInput(int, int, int);
-    int playStep(bool); //player
+    bool playStep(bool); //player
     int loadReplay(const char* fname);
     
 private:

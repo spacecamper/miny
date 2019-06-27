@@ -113,6 +113,51 @@ void Player::readFromFile(ifstream *ifile) {
 
         break;
         }
+	case 2: {
+
+        string tmpname;
+        
+
+		score.readFromFile(ifile);
+		strcpy(field.playerName,score.name);
+		squareSize=score.squareSize;
+		field.width=score.width;
+		field.height=score.height;
+
+
+        int mineCount=0;
+        bool tmpmine;
+        for (int j=0;j<field.height;j++) 
+            for (int i=0;i<field.width;i++) {
+                
+                *ifile >> tmpmine;
+                if (tmpmine) {
+                    field.setMine(i,j);
+                    mineCount++;    
+                }
+            }
+
+        field.mineCount=mineCount;
+
+        int count;
+        *ifile>>count;
+        Action *rp;
+
+        for (int i=0;i<count;i++) {
+            rp=new Action();
+
+            *ifile >> rp->timeSinceStart >> rp->x >> rp->y >> rp->button;
+
+			if (i==0)
+                rp->timeSinceStart=0;
+
+            data.push_back(*rp);
+        }
+
+        break;
+        }
+		
+
     default:
         cout << "Unknown replay file version. You are probably running an old version of the"<<endl<<"game. Please upgrade to the latest version." << endl;
         exit(1);

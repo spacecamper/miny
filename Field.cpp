@@ -78,7 +78,7 @@ void Field::unpauseGame() {
     cout << "Game unpaused."<<endl;
 }
 
-void Field::saveReplay(const char *fname) {
+void Field::saveReplay(const char *fname, Score *score) {
     ofstream ofile;
     
     char fullpath[100];
@@ -92,7 +92,7 @@ void Field::saveReplay(const char *fname) {
         return;
     }
 
-    replay.writeToFile(&ofile, this);
+    replay.writeToFile(&ofile, this, score);
     ofile.close();
 }
 
@@ -364,9 +364,9 @@ void Field::endGame(const bool won) {
             strcpy(tmp,highScoreDir);
             sprintf(rfname,"%lu.replay",nr);
 
-            saveReplay(rfname);
+            saveReplay(rfname,&newScore);
 
-            saveReplay("last.replay");
+            saveReplay("last.replay",&newScore);
         } 
         else {
             cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
@@ -376,7 +376,7 @@ void Field::endGame(const bool won) {
             newScore.replayNumber=0;
             appendScore(fullpath,newScore);
 
-            saveReplay("last.replay");
+            saveReplay("last.replay", &newScore  );
         }
     }
 }
@@ -556,6 +556,8 @@ void Field::click(int x,int y,int button) {
         else {
             ineffectiveClicks++;
         }
-		viewClicks();
+		
+		if (gameState==0)
+			viewClicks();
     }
 }

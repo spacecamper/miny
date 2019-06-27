@@ -35,7 +35,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.11"
+#define VERSION "0.5.12+"
 
 
 // TODO prevent buffer overflows (strcpy and strcat)
@@ -772,7 +772,7 @@ int main(int argc, char** argv) {
     }
 
     if (listScoresType!=4) {
-        cout<<"Miny v"<<VERSION<<" (c) 2015-2017 spacecamper"<<endl;
+        cout<<"Miny v"<<VERSION<<" (c) 2015-2019 spacecamper"<<endl;
         cout << "See README for info and help."<<endl;
     }
 
