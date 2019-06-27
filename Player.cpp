@@ -16,7 +16,7 @@ extern int squareSize;
 extern int gameState;
 extern int originalWidth;
 extern int originalHeight;
-extern bool playReplay;
+extern int playReplay;
 extern bool gamePaused;
 
 int Player::loadReplay(const char *fname) {
@@ -118,14 +118,14 @@ void Player::readFromFile(ifstream *ifile) {
 
 }
 
-bool Player::playStep(bool firstClick) {
+int Player::playStep(bool firstClick) {
     std::list<Action>::iterator next;
     next=nextPlayed;
     next++;
     
     if (nextPlayed->timeSinceStart!=-1){
         if (nextPlayed->timeSinceStart > field.timer.calculateElapsedTime()) {
-            return true;
+            return 1;
         }
         
         if ((*nextPlayed).button>=-1) {
@@ -140,13 +140,13 @@ bool Player::playStep(bool firstClick) {
     if (next==data.end()) {
         if (playReplay) {
             cout<<"End of Replay."<<endl;
-            return false;
+            return 2;
         }
     }
     else {
         nextPlayed=next;
     }
-    return true;
+    return 1;
 }
 
 void Player::takeAction(int button, int x, int y) {

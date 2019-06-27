@@ -20,7 +20,7 @@ public:
     Player();
     
     void handleInput(int, int, int);
-    bool playStep(bool); //player
+    int playStep(bool); //player
     int loadReplay(const char* fname);
     
 private:
