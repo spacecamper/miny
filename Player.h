@@ -16,6 +16,7 @@ public:
     Field field;
     bool playbackOn;
     Score score;
+	bool replayHasScore;
     int cursorX,cursorY; //player
     
     Player();

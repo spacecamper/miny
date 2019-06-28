@@ -68,6 +68,9 @@ void Player::readFromFile(ifstream *ifile) {
         fileVersion=-1;
     }
 
+
+	replayHasScore=false;
+
     switch(fileVersion) {
     case -1:
         cout << "Unknown replay file format. Exiting." << endl;
@@ -117,7 +120,7 @@ void Player::readFromFile(ifstream *ifile) {
 
         string tmpname;
         
-
+		replayHasScore=true;
 		score.readFromFile(ifile);
 		strcpy(field.playerName,score.name);
 		squareSize=score.squareSize;
