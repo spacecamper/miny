@@ -1,7 +1,7 @@
 /*
  * Miny
  * a minesweeper clone
- * (c) 2015-2018 spacecamper
+ * (c) 2015-2019 spacecamper
  */
 
 #include <stdlib.h>
@@ -28,14 +28,19 @@
 #include <GL/freeglut_ext.h>
 #endif
 
+#include "Config.h"
 #include "Replay.h"
 #include "Player.h"
-#include "Timer.h"
 #include "common.h"
+
+#include "Timer.h"
+
 #include "scores.h"
 
 
 #define VERSION "0.5.12+"
+
+
 
 
 // TODO prevent buffer overflows (strcpy and strcat)
@@ -44,14 +49,6 @@
 
 using namespace std;
 
-struct Config {
-    Player* player;
-    int windowWidth;
-    int windowHeight;
-    int originalWidth;
-    int originalHeight;
-    int squareSize;
-};
 
 int windowWidth, windowHeight, originalWidth, originalHeight;
 int squareSize;
@@ -715,6 +712,7 @@ int main(int argc, char** argv) {
             case 'p':
                 strcpy(replayFileName,highScoreDir);       
                 strcat(replayFileName,optarg);
+				strcat(replayFileName,".replay");
                 playReplay=true;
 				boolDrawCursor=true;
                 break;

@@ -36,8 +36,9 @@ COMPILING AND PLAYING
  While playing, you can see how many effective / ineffective clicks you have
  made.
 
- After every game the replay is saved as last.replay. Replays for won games 
- are also saved as [number].replay. See below for how to play them.
+ After every game the replay is saved in the .miny subdirectory of user's home
+ directory as 'last.replay'. Replays for won games are also saved as 
+ [number].replay. See below for how to play them.
 
 
 MOUSE AND KEYBOARD CONTROLS
@@ -91,9 +92,9 @@ OPTIONS
 
   Other:
 
- -p?  play replay file. Value is a file name. This is by default of the format 
-      x.replay where x is the number found in high score table in the Rep
-      column.
+ -p?  play replay file. Value is by default either 'last' for the last played 
+      game or a number found in the Rep column of the high score table for 
+      other games.
  -a   After finishing a game, display how the score ranks among the current
       difficulty scores even if it doesn't rank in the top 20.
 
