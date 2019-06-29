@@ -383,33 +383,33 @@ void Field::endGame(const bool won) {
             saveReplay("last.replay", &newScore  );
         }
     }
-	else {
+    else {
         Config* config = (Config*)glutGetWindowData();
-		if (config->player->replayHasScore) {
-		    if(won) {
-		        cout << endl<<"YOU WIN!"<<endl;
+        if (config->player->replayHasScore) {
+            if(won) {
+                cout << endl<<"YOU WIN!"<<endl;
 
-		        cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< config->player->score.getIOE()<<endl;
-		    
-		        cout << setw(8)<<left << "3BV: " << config->player->score.val3BV<<endl;
+                cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< config->player->score.getIOE()<<endl;
+            
+                cout << setw(8)<<left << "3BV: " << config->player->score.val3BV<<endl;
 
-		        cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << config->player->score.time/1000.0
-		            << " s" << endl;
-		        cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<config->player->score.get3BVs()<<endl;
+                cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << config->player->score.time/1000.0
+                    << " s" << endl;
+                cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<config->player->score.get3BVs()<<endl;
 
-		        cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
-		        cout << endl;
+                cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
+                cout << endl;
 
-		       
-		    } 
-		    else {
-		        cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
-		            config->player->score.time/1000.0 <<" seconds." << endl << "3BV:  " 
-		            << setprecision(4) << fixed << config->player->score.val3BV << endl;
+               
+            } 
+            else {
+                cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
+                    config->player->score.time/1000.0 <<" seconds." << endl << "3BV:  " 
+                    << setprecision(4) << fixed << config->player->score.val3BV << endl;
 
-		         newScore.replayNumber=0;
-		    }
-		}
+                 newScore.replayNumber=0;
+            }
+        }
     }
 }
 
@@ -588,8 +588,8 @@ void Field::click(int x,int y,int button) {
         else {
             ineffectiveClicks++;
         }
-		
-		if (gameState==0)
-			viewClicks();
+        
+        if (gameState==0)
+            viewClicks();
     }
 }

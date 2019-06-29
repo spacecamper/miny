@@ -69,7 +69,7 @@ void Player::readFromFile(ifstream *ifile) {
     }
 
 
-	replayHasScore=false;
+    replayHasScore=false;
 
     switch(fileVersion) {
     case -1:
@@ -108,7 +108,7 @@ void Player::readFromFile(ifstream *ifile) {
 
             *ifile >> rp->timeSinceStart >> rp->x >> rp->y >> rp->button;
 
-			if (i==0)
+            if (i==0)
                 rp->timeSinceStart=0;
 
             data.push_back(*rp);
@@ -116,16 +116,16 @@ void Player::readFromFile(ifstream *ifile) {
 
         break;
         }
-	case 2: {
+    case 2: {
 
         string tmpname;
         
-		replayHasScore=true;
-		score.readFromFile(ifile);
-		strcpy(field.playerName,score.name);
-		squareSize=score.squareSize;
-		field.width=score.width;
-		field.height=score.height;
+        replayHasScore=true;
+        score.readFromFile(ifile);
+        strcpy(field.playerName,score.name);
+        squareSize=score.squareSize;
+        field.width=score.width;
+        field.height=score.height;
 
 
         int mineCount=0;
@@ -151,7 +151,7 @@ void Player::readFromFile(ifstream *ifile) {
 
             *ifile >> rp->timeSinceStart >> rp->x >> rp->y >> rp->button;
 
-			if (i==0)
+            if (i==0)
                 rp->timeSinceStart=0;
 
             data.push_back(*rp);
@@ -159,7 +159,7 @@ void Player::readFromFile(ifstream *ifile) {
 
         break;
         }
-		
+        
 
     default:
         cout << "Unknown replay file version. You are probably running an old version of the"<<endl<<"game. Please upgrade to the latest version." << endl;

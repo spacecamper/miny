@@ -100,41 +100,41 @@ int filterScores(Score *scores, int count, Score **filteredScores, int fla, int 
     for (int i=0;i<count;i++) {        
             
 
-		bool isBeg=scores[i].width==9 and scores[i].height==9 and scores[i].mines==10;
-		bool isInt=scores[i].width==16 and scores[i].height==16 and scores[i].mines==40;
-		bool isExp=scores[i].width==30 and scores[i].height==16 and scores[i].mines==99;
-		bool isBegC=scores[i].width==8 and scores[i].height==8 and scores[i].mines==10;
-	    bool isStandard=isBeg or isInt or isExp or isBegC;
+        bool isBeg=scores[i].width==9 and scores[i].height==9 and scores[i].mines==10;
+        bool isInt=scores[i].width==16 and scores[i].height==16 and scores[i].mines==40;
+        bool isExp=scores[i].width==30 and scores[i].height==16 and scores[i].mines==99;
+        bool isBegC=scores[i].width==8 and scores[i].height==8 and scores[i].mines==10;
+        bool isStandard=isBeg or isInt or isExp or isBegC;
 
-		if (	// flagging
-			((fla==0) or (fla==1 and scores[i].flagging) or (fla==2 and !scores[i].flagging))
+        if (    // flagging
+            ((fla==0) or (fla==1 and scores[i].flagging) or (fla==2 and !scores[i].flagging))
         
-	        and
-				// finished
-			((fin==0) or (fin==1 and scores[i].gameWon) or (fin==2 and !scores[i].gameWon))
+            and
+                // finished
+            ((fin==0) or (fin==1 and scores[i].gameWon) or (fin==2 and !scores[i].gameWon))
         
-			and 
-					// difficulty
-			/*((dif==0 and isStandard) or (dif==1 and isBeg) or (dif==2 and isInt) or (dif==3 and isExp)
-				or (dif==4 and isBegC))*/
+            and 
+                    // difficulty
+            /*((dif==0 and isStandard) or (dif==1 and isBeg) or (dif==2 and isInt) or (dif==3 and isExp)
+                or (dif==4 and isBegC))*/
             (
                 (scores[i].width==w and scores[i].height==h and scores[i].mines==m)
                 or
                 (w==0 and h==0 and m==0 and isStandard) // XXX BUG - for non-standard sizes scores can't be filtered for nf without specifying w,h,m
             )
 
-			and 
-				// square size
-			(ss==0 or scores[i].squareSize==ss)
+            and 
+                // square size
+            (ss==0 or scores[i].squareSize==ss)
 
-			and 
-				// player name
-			(pname[0]=='\0' or !strcmp(pname,scores[i].name))
+            and 
+                // player name
+            (pname[0]=='\0' or !strcmp(pname,scores[i].name))
 
-		    ) {
+            ) {
 
-		        (*filteredScores)[counter]=scores[i];
-		        counter++;
+                (*filteredScores)[counter]=scores[i];
+                counter++;
             
         }
     }
@@ -646,9 +646,9 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyR
     // anyRank = display how score ranks even if it ranks below MAX_HS
 
     /*if (difficulty!=1 and difficulty!=2 and difficulty!=3 and difficulty!=4) {
-		cout << "Scores for games with the current board dimensions and mine count aren't"<<endl<<"evaluated as potential high scores."<<endl<<endl;
+        cout << "Scores for games with the current board dimensions and mine count aren't"<<endl<<"evaluated as potential high scores."<<endl<<endl;
         return;
-	}*/
+    }*/
 
 
     Score *scoresFiltered;

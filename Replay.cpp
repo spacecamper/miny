@@ -39,7 +39,7 @@ void Replay::writeToFile(ofstream *file, void* fieldPtr, Score *score) {
     *file << field->width << " " << field->height << endl;
 */
 
-	score->writeToFile(file);
+    score->writeToFile(file);
 
     for (int j=0;j<field->height;j++) {
         for (int i=0;i<field->width;i++) 

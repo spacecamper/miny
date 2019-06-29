@@ -283,71 +283,71 @@ void drawField(Field field, int squareSize){
             // pretty square borders
             if (field.state[x][y]>=0 and field.state[x][y]<=8) {    // revealed square
                 glColor3f(.5,.5,.5);
-				glBegin(GL_LINES); 
+                glBegin(GL_LINES); 
 
-				// top
-				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
-				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
-				
+                // top
+                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+                glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
+                
                 // left
-				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
-				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
+                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
 
 
                 // bottom
-				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
-				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
-				
+                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
+                glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
+                
                 // right
-				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
-				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
-				
+                glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
+                glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
+                
 
-				
-				glEnd();
+                
+                glEnd();
 
             }
             else if (field.state[x][y]==9 or field.state[x][y]==10) {    // unrevealed or flag
-				
-			    glColor3f(.85,.85,.85);
-				glBegin(GL_LINES); 
+                
+                glColor3f(.85,.85,.85);
+                glBegin(GL_LINES); 
 
-				// top
-				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
-				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
-
-				glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+y*squareSize+1);
-				glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+y*squareSize+1);
-				
-                // left
-				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
-				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
+                // top
+                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+                glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
 
                 glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+y*squareSize+1);
-				glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+(y+1)*squareSize-2);
+                glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+y*squareSize+1);
+                
+                // left
+                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
 
-				glEnd();
+                glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+y*squareSize+1);
+                glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+(y+1)*squareSize-2);
 
-				glColor3f(.55,.55,.55);
-				glBegin(GL_LINES); 
+                glEnd();
+
+                glColor3f(.55,.55,.55);
+                glBegin(GL_LINES); 
 
                 // bottom
-				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
-				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
+                glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
+                glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
 
-				glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+(y+1)*squareSize-2);
-				glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+(y+1)*squareSize-2);
-				
+                glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+(y+1)*squareSize-2);
+                glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+(y+1)*squareSize-2);
+                
                 // right
-				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
-				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
-				
+                glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
+                glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
+                
                 glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+y*squareSize+1);
-				glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+(y+1)*squareSize-2);
-				
-				
-				glEnd();
-			}
+                glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+(y+1)*squareSize-2);
+                
+                
+                glEnd();
+            }
 */
 
 
@@ -529,7 +529,7 @@ void update(int value) {
     if(!(player->playStep(false))){
         playReplay=false;
     }
-	
+    
     glutTimerFunc(0, update, 0);
 }
 void initGraph(Config* config) {
@@ -741,7 +741,7 @@ int main(int argc, char** argv) {
 
     gameState=GAME_INITIALIZED;
     gamePaused=false;
-	boolDrawCursor=false;
+    boolDrawCursor=false;
 
     char replayFileName[100];
     int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
@@ -789,9 +789,9 @@ int main(int argc, char** argv) {
             case 'p':
                 strcpy(replayFileName,highScoreDir);       
                 strcat(replayFileName,optarg);
-				strcat(replayFileName,".replay");
+                strcat(replayFileName,".replay");
                 playReplay=true;
-				boolDrawCursor=true;
+                boolDrawCursor=true;
                 break;
             case 'l':
                 scoreListLength=atoi(optarg);
