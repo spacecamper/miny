@@ -203,6 +203,8 @@ bool Player::playStep(bool firstClick) {
 
 void Player::takeAction(int button, int x, int y) {
     if ((gameState==GAME_INITIALIZED or gameState==GAME_PLAYING)) {
+        // this should've been "x>=FIELD_X" and "y>=FIELD_Y", now
+        // the top row and left column are 1 pixel narrower
         if (x>FIELD_X and x<FIELD_X+field.width*squareSize 
             and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) { // field
             field.click(x, y, button);

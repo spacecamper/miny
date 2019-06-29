@@ -326,6 +326,8 @@ void Field::endGame(const bool won) {
     newScore.squareSize=squareSize;
     newScore.gameWon=won;
 
+    viewClicks();
+
     if(!playReplay) {
         char fullpath[100];
         strcpy(fullpath,highScoreDir);
@@ -559,8 +561,8 @@ void Field::click(int x,int y,int button) {
 
         if(state[squareX][squareY]==9 and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON)) { // unrevealed
             if(button==GLUT_LEFT_BUTTON) {
-                revealSquare(squareX, squareY);
                 effectiveClicks++;
+                revealSquare(squareX, squareY);
             }
             else if(button==GLUT_RIGHT_BUTTON) {
                 state[squareX][squareY]=10;

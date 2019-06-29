@@ -227,6 +227,7 @@ void drawBackground(int fieldWidth, int fieldHeight) {
             BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
+
     // grid lines
     glColor3f(.3,.3,.3);
     glBegin(GL_LINES); 
@@ -239,6 +240,8 @@ void drawBackground(int fieldWidth, int fieldHeight) {
         glVertex2f(FIELD_X+i*squareSize,FIELD_Y+fieldHeight*squareSize);
     }
     glEnd();
+
+
 }
 
 void drawMine(int x, int y, int squareSize) {
@@ -276,8 +279,82 @@ void drawField(Field field, int squareSize){
 
             const float zoom=1.5*squareSize/25;
 
+/*
+            // pretty square borders
             if (field.state[x][y]>=0 and field.state[x][y]<=8) {    // revealed square
-                
+                glColor3f(.5,.5,.5);
+				glBegin(GL_LINES); 
+
+				// top
+				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
+				
+                // left
+				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
+
+
+                // bottom
+				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
+				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
+				
+                // right
+				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
+				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
+				
+
+				
+				glEnd();
+
+            }
+            else if (field.state[x][y]==9 or field.state[x][y]==10) {    // unrevealed or flag
+				
+			    glColor3f(.85,.85,.85);
+				glBegin(GL_LINES); 
+
+				// top
+				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
+
+				glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+y*squareSize+1);
+				glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+y*squareSize+1);
+				
+                // left
+				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+y*squareSize);
+				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
+
+                glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+y*squareSize+1);
+				glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+(y+1)*squareSize-2);
+
+				glEnd();
+
+				glColor3f(.55,.55,.55);
+				glBegin(GL_LINES); 
+
+                // bottom
+				glVertex2f(FIELD_X+x*squareSize,FIELD_Y+(y+1)*squareSize-1);
+				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
+
+				glVertex2f(FIELD_X+x*squareSize+1,FIELD_Y+(y+1)*squareSize-2);
+				glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+(y+1)*squareSize-2);
+				
+                // right
+				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+y*squareSize);
+				glVertex2f(FIELD_X+(x+1)*squareSize-1,FIELD_Y+(y+1)*squareSize-1);
+				
+                glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+y*squareSize+1);
+				glVertex2f(FIELD_X+(x+1)*squareSize-2,FIELD_Y+(y+1)*squareSize-2);
+				
+				
+				glEnd();
+			}
+*/
+
+
+            if (field.state[x][y]>=0 and field.state[x][y]<=8) {    // revealed square
+
+
+
                 switch(field.state[x][y]) {
                     case 0: glColor3f(.5,.5,.5); break;
                     case 1: glColor3f(0,0,1); break;
