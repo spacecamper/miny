@@ -570,6 +570,8 @@ void displayReplay(char replayFileName[100], Config* config) {
     if (config->player->loadReplay(replayFileName)) {
         exit(1);
     }
+    config->squareSize=squareSize;
+
     config->player->field.init();
     cout << "Playing replay..." << endl;
     initGraph(config);
