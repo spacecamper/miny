@@ -830,21 +830,6 @@ int main(int argc, char** argv) {
         exit(1);   
     }
 
-    // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
-
-    if (strlen(player.field.playerName)==0) {      
-        if (isValidName(getenv("USER")))       
-            if (strlen(getenv("USER"))>20) {
-                strncpy(player.field.playerName,getenv("USER"),20);
-                player.field.playerName[21]='\0';
-            }
-            else {
-                strcpy(player.field.playerName,getenv("USER"));
-            }
-        else {
-            strcpy(player.field.playerName,"unnamed");
-        }
-    }
 
     if (listScoresType!=4) {
         cout<<"Miny v"<<VERSION<<" (c) 2015-2019 spacecamper"<<endl;
@@ -858,17 +843,6 @@ int main(int argc, char** argv) {
             cerr << "Error creating config directory. Exiting."<<endl;
             exit(1);
         }
-    }
-
-    if (squareSize==0) {
-        squareSize=35;
-    }
-
-    if (squareSize<3) {
-        squareSize=3;
-    }
-    else if (squareSize>100) {
-        squareSize=100;
     }
 
     Config config;
@@ -891,7 +865,38 @@ int main(int argc, char** argv) {
             listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, &config);
         }
         else {
-            // play
+           // play
+ 
+ 
+           // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
+
+            if (strlen(player.field.playerName)==0) {      
+                if (isValidName(getenv("USER")))       
+                    if (strlen(getenv("USER"))>20) {
+                        strncpy(player.field.playerName,getenv("USER"),20);
+                        player.field.playerName[21]='\0';
+                    }
+                    else {
+                        strcpy(player.field.playerName,getenv("USER"));
+                    }
+                else {
+                    strcpy(player.field.playerName,"unnamed");
+                }
+            }
+
+            if (config.squareSize==0) {
+                config.squareSize=35;
+            }
+
+            if (config.squareSize<3) {
+                config.squareSize=3;
+            }
+            else if (config.squareSize>100) {
+                config.squareSize=100;
+            }
+
+            squareSize=config.squareSize;
+
             beginGame(&config);
         }
     }
