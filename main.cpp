@@ -580,7 +580,7 @@ void displayReplay(char replayFileName[100], Config* config) {
     glutTimerFunc(0, update, 0);
 }
 
-void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, int difficulty, Config* config) {
+void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, Config* config) {
     // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
     char fullpath[100];
@@ -631,13 +631,29 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
             
             bool standardDifficulty=false;
 
-            switch (difficulty) {
-            case 0: cout << "beginner, intermediate, expert, beginner classic"<<endl; standardDifficulty=true; break;
-            case 1: cout << "beginner only"<<endl; standardDifficulty=true; break;
-            case 2: cout << "intermediate only"<<endl; standardDifficulty=true; break;
-            case 3: cout << "expert only"<<endl; standardDifficulty=true; break;
-            case 4: cout << "beginner classic only"<<endl; standardDifficulty=true; break;
+
+            if (config->player->field.width==0 and config->player->field.height==0 and config->player->field.mineCount==0) {
+                cout << "beginner, intermediate, expert, beginner classic"<<endl; 
+                standardDifficulty=true;
             }
+            else if (config->player->field.width==9 and config->player->field.height==9 and config->player->field.mineCount==10) {
+                cout << "beginner only"<<endl; 
+                standardDifficulty=true;
+            }
+            else if (config->player->field.width==16 and config->player->field.height==16 and config->player->field.mineCount==40) {
+                cout << "intermediate only"<<endl; 
+                standardDifficulty=true;
+            }
+            else if (config->player->field.width==30 and config->player->field.height==16 and config->player->field.mineCount==99) {
+                cout << "expert only"<<endl; 
+                standardDifficulty=true;
+            }
+            else if (config->player->field.width==8 and config->player->field.height==8 and config->player->field.mineCount==10) {
+                cout << "beginner classic only"<<endl; 
+                standardDifficulty=true;
+            }
+            
+
 
             if (!standardDifficulty) 
                 cout << config->player->field.width << "x" << config->player->field.height << ", " << config->player->field.mineCount << " mines" << endl;
@@ -745,18 +761,19 @@ int main(int argc, char** argv) {
     gamePaused=false;
     boolDrawCursor=false;
 
+    char replayName[100];
     char replayFileName[100];
     int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
 
-    int difficulty=2;   // 0-unspecified 1-beg 2-int 3-exp 4-beg classic
+    int difficulty=2;   // 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic
     int listFlagging=0;  // 0-both, 1-flagging, 2-nf
     int listFinished=1; //  0-both, 1-finished, 2-unfinished
     int scoreListLength=MAX_HS;        // how many scores to display
 
+    bool defaultConfigDirectory=true;
+
     strcpy(highScoreDir,getenv("HOME"));
     strcat(highScoreDir,"/.miny/");
-
-    // TODO allow specifying different config directory
 
     player.field.playerName[0]='\0';
 
@@ -764,7 +781,7 @@ int main(int argc, char** argv) {
 
     anyRank=false;
 
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:a")) != -1) {
+    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:aC:")) != -1) {
         switch (option_char) {  
             case 'd': 
                 difficulty=atoi(optarg);
@@ -789,9 +806,7 @@ int main(int argc, char** argv) {
                 
                 break;
             case 'p':
-                strcpy(replayFileName,highScoreDir);       
-                strcat(replayFileName,optarg);
-                strcat(replayFileName,".replay");
+                strcpy(replayName,optarg);
                 playReplay=true;
                 boolDrawCursor=true;
                 break;
@@ -820,6 +835,16 @@ int main(int argc, char** argv) {
             case 'a':
                 anyRank=true;
                 break;
+            case 'C':
+                if (strlen(optarg)>100) {
+                    cout<<"Config directory path must be shorter than 100 characters. Exiting."<<endl;
+                    exit(1);
+                }
+                else {
+                    defaultConfigDirectory=false;
+                    strcpy(highScoreDir,optarg);
+                }
+                break;
             case '?':
                 exit(1);
 
@@ -838,15 +863,28 @@ int main(int argc, char** argv) {
         cout << "See README for info and help."<<endl;
     }
 
-    // high score directory
+    // config directory
 
     if (!directoryExists(highScoreDir)) {
-        if (system("mkdir ~/.miny")) {
-            cerr << "Error creating config directory. Exiting."<<endl;
+        if (defaultConfigDirectory) {
+            if (system("mkdir ~/.miny")) {
+                cerr << "Error creating config directory. Exiting." << endl;
+                exit(1);
+            }
+        }
+        else {
+            cout << "Specified config directory doesn't exist. Please create it first." << endl;
             exit(1);
         }
+            
     }
 
+    if (playReplay) {
+        strcpy(replayFileName,highScoreDir);       
+        strcat(replayFileName,replayName);
+        strcat(replayFileName,".replay");
+    }
+    
     Config config;
 
     config.windowWidth=windowWidth;
@@ -860,11 +898,11 @@ int main(int argc, char** argv) {
         displayReplay(replayFileName, &config);
     }
     else { 
-
+        
         configureSize(difficulty, &(player.field));
         
         if (listScoresType!=0) { // list scores
-            listScores(listScoresType, scoreListLength, listFlagging, listFinished, difficulty, &config);
+            listScores(listScoresType, scoreListLength, listFlagging, listFinished, &config);
         }
         else {
            // play

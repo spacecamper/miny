@@ -97,7 +97,7 @@ OPTIONS
       other games.
  -a   After finishing a game, display how the score ranks among the current
       difficulty scores even if it doesn't rank in the top 20.
-
+ -C?  config directory different to the default $HOME/.miny
 
 NOTES
  
@@ -105,7 +105,7 @@ NOTES
  about played games. There currently isn't and probably won't be a tool to 
  convert old scores to the new system. If you don't want to keep them, you 
  can delete .hiscore (and whichever .replay you don't want) files from your 
- ~/.miny directory.
+ $HOME/.miny directory.
 
 
 EXAMPLES
