@@ -55,7 +55,7 @@ int squareSize;
 
 int gameState; // -1 - initialized, 0 - playing, 1 - lost, 2 - won
 char option_char;
-char highScoreDir[100];
+char configDirectory[100];
 bool isFlagging;
 bool gamePaused;
 bool playReplay;
@@ -583,13 +583,13 @@ void displayReplay(char replayFileName[100], Config* config) {
 void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, Config* config) {
     // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
-    char fullpath[100];
-    strcpy(fullpath,highScoreDir);
+    char fullpath[110];
+    strcpy(fullpath,configDirectory);
     strcat(fullpath,"scores.dat");
 
     Score *scores;
     int count=loadScores(fullpath,&scores);
-    
+
     if (count==0) {      // no scores in score file
         if (listScoresType!=4)
             cout<<"No high scores yet."<<endl;
@@ -683,7 +683,6 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
             qsort(scores,count,sizeof(Score),compareFunc);
         }
 
-        
 
 
         Score *filteredScores;
@@ -762,7 +761,7 @@ int main(int argc, char** argv) {
     boolDrawCursor=false;
 
     char replayName[100];
-    char replayFileName[100];
+    char replayFileName[110];
     int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
 
     int difficulty=2;   // 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic
@@ -772,8 +771,8 @@ int main(int argc, char** argv) {
 
     bool defaultConfigDirectory=true;
 
-    strcpy(highScoreDir,getenv("HOME"));
-    strcat(highScoreDir,"/.miny/");
+    strcpy(configDirectory,getenv("HOME"));
+    strcat(configDirectory,"/.miny/");
 
     player.field.playerName[0]='\0';
 
@@ -832,19 +831,27 @@ int main(int argc, char** argv) {
             case 'c':
                 listScoresType=4;
 
-            case 'a':
+            case 'a':   
                 anyRank=true;
                 break;
-            case 'C':
-                if (strlen(optarg)>100) {
+            case 'C': {
+                int length=strlen(optarg);
+
+                if (optarg[strlen(optarg)-1]!='/') 
+                    length++;
+
+                if (length>101) {
                     cout<<"Config directory path must be shorter than 100 characters. Exiting."<<endl;
                     exit(1);
                 }
                 else {
                     defaultConfigDirectory=false;
-                    strcpy(highScoreDir,optarg);
+                    strcpy(configDirectory,optarg);
+                    if (optarg[strlen(optarg)-1]!='/') 
+                        strcat(configDirectory,"/");
                 }
                 break;
+                }
             case '?':
                 exit(1);
 
@@ -865,7 +872,7 @@ int main(int argc, char** argv) {
 
     // config directory
 
-    if (!directoryExists(highScoreDir)) {
+    if (!directoryExists(configDirectory)) {
         if (defaultConfigDirectory) {
             if (system("mkdir ~/.miny")) {
                 cerr << "Error creating config directory. Exiting." << endl;
@@ -880,7 +887,7 @@ int main(int argc, char** argv) {
     }
 
     if (playReplay) {
-        strcpy(replayFileName,highScoreDir);       
+        strcpy(replayFileName,configDirectory);       
         strcat(replayFileName,replayName);
         strcat(replayFileName,".replay");
     }
