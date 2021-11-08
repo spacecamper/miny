@@ -1,0 +1,35 @@
+result of a flagging game
+
+YOU WIN!
+Time:   75.918 s
+3BV/s:  1.1065
+IOE:    0.8317
+3BV:    84
+You played flagging.
+
+High score reached (Intermediate top 40):
+Time    22nd NF
+3BV/s   22nd NF
+IOE     22nd NF
+
+
+
+
+----
+
+play a game, win, 3BV reported should be OK, then run
+
+miny -plast
+
+and the 3BV in the result output after the game is finished will probably (?)
+be a very low negative or high positive number
+
+like 591247846
+
+should be the same as in the output when game ended
+
+
+----
+
+
+estimate final statistics for a lost game, based on progress until losing

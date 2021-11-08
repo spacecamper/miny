@@ -5,7 +5,7 @@ using namespace std;
 bool isValidName(char *n) {
 
     char *c=n;
-    char *validChars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_";
+    char *validChars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.@-";
             
 
     while(*c) {

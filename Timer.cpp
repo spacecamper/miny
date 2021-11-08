@@ -62,7 +62,7 @@ long Timer::calculateElapsedTime() {
 
 
         elapsedTime=calculateTimeSinceStart()-calculateTimePaused();
-
+        
     }
     else if (gameState==GAME_LOST or gameState==GAME_WON) {
 

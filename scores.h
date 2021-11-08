@@ -47,6 +47,7 @@ public:
     void writeToFile(ofstream *f);
 };
 
+// XXX
 
 int compareByTime(const void *a,const void *b);
 
@@ -62,7 +63,7 @@ int loadScores(char *fname, Score **scores);
 
 void appendScore(char *fname, Score score);
 
-void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyRank=0);
+void evalScore(Score s, Score *scores, int count, int w, int h, int m, int scoreListLength);
 
 #endif
 

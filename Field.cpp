@@ -22,8 +22,8 @@ extern bool playReplay;
 extern int gameState;
 extern bool isFlagging;
 extern bool gamePaused;
-extern bool anyRank;
-extern unsigned short hitMineX, hitMineY;
+
+//extern unsigned short hitMineX, hitMineY;
 extern int squareSize;
 //extern char playerName[21];
 extern char configDirectory[100];
@@ -190,6 +190,8 @@ int Field::calculate3BV() {
             if (tmpField[i][j]==1)
                 tmp3BV++;
 
+//    cout << "[ 3BV calculated as "<<tmp3BV<<"]"<<endl;
+
     return tmp3BV;
 
 }
@@ -205,9 +207,7 @@ int Field::get3BV() {
 
 void Field::checkValues() {
 
-
-
-    if (height<2) 
+   if (height<2) 
         height=2;
     else if (height>MAX_HEIGHT) 
         height=MAX_HEIGHT;
@@ -219,9 +219,9 @@ void Field::checkValues() {
         width=MAX_WIDTH;
     
     if (mineCount>=height*width)
-        mineCount=height*width-1;
-    else if (mineCount<1)
-        mineCount=1;
+        mineCount=height*width-2;
+    else if (mineCount<2)
+        mineCount=2;
 
 }
 
@@ -294,7 +294,33 @@ void Field::init() {
 
 void Field::newGame() {
     init();
+    replay.deleteData();
     cout << "------------------------------------------------------------" << endl; 
+}
+
+void Field::showStatistics(bool won, Score score) {
+
+    if (won) {
+        cout << endl<<"YOU WIN!"<<endl;
+
+        cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << score.time/1000.0
+            << " s" << endl;
+        cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<score.get3BVs()<<endl;
+
+        cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< score.getIOE()<<endl;
+    
+        cout << setw(8)<<left << "3BV: " << get3BV()<<endl;
+
+        
+        cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
+        cout << endl;
+    }
+    else {
+        cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
+            score.time/1000.0 <<" seconds." << endl << "3BV:  " 
+            << setprecision(4) << fixed << score.val3BV << endl;
+    }
+
 }
 
 void Field::endGame(const bool won) {
@@ -332,25 +358,17 @@ void Field::endGame(const bool won) {
         char fullpath[110];
         strcpy(fullpath,configDirectory);
         strcat(fullpath,"scores.dat");
+ 
+        showStatistics(won,newScore);
+
         if(won) {
-            cout << endl<<"YOU WIN!"<<endl;
-
-            cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< newScore.getIOE()<<endl;
-        
-            cout << setw(8)<<left << "3BV: " << get3BV()<<endl;
-
-            cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << timeTaken/1000.0
-                << " s" << endl;
-            cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<newScore.get3BVs()<<endl;
-
-            cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
-            cout << endl;
+            int scoreListLength = ((Config*)glutGetWindowData())->scoreListLength;
 
             Score *scores;
 
             int count=loadScores(fullpath,&scores);
 
-            evalScore(newScore,scores, count, width, height, mineCount,anyRank);
+            evalScore(newScore,scores, count, width, height, mineCount,scoreListLength); // XXX
 
             free(scores); 
 
@@ -373,10 +391,7 @@ void Field::endGame(const bool won) {
             saveReplay("last.replay",&newScore);
         } 
         else {
-            cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
-                timer.calculateElapsedTime()/1000.0 <<" seconds." << endl << "3BV:  " 
-                << setprecision(4) << fixed << get3BV() << endl;
-
+            
             newScore.replayNumber=0;
             appendScore(fullpath,newScore);
 
@@ -386,29 +401,8 @@ void Field::endGame(const bool won) {
     else {
         Config* config = (Config*)glutGetWindowData();
         if (config->player->replayHasScore) {
-            if(won) {
-                cout << endl<<"YOU WIN!"<<endl;
-
-                cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< config->player->score.getIOE()<<endl;
             
-                cout << setw(8)<<left << "3BV: " << config->player->score.val3BV<<endl;
-
-                cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << config->player->score.time/1000.0
-                    << " s" << endl;
-                cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<config->player->score.get3BVs()<<endl;
-
-                cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
-                cout << endl;
-
-               
-            } 
-            else {
-                cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
-                    config->player->score.time/1000.0 <<" seconds." << endl << "3BV:  " 
-                    << setprecision(4) << fixed << config->player->score.val3BV << endl;
-
-                 newScore.replayNumber=0;
-            }
+            showStatistics(won, config->player->score);
         }
     }
 }
@@ -545,19 +539,19 @@ void Field::click(int x,int y,int button) {
     int squareX=(x-FIELD_X)/squareSize;
     int squareY=(y-FIELD_Y)/squareSize;
 
-    if (!replay.recording and !playReplay) {
-        replay.deleteData();
-        replay.recording = true;
-    }
 
-    if(gameState==GAME_INITIALIZED and button==GLUT_LEFT_BUTTON) {
+    if (!replay.recording and !playReplay and !gamePaused) {
+        replay.recording = true;
+    }    
+
+    if (gameState==GAME_INITIALIZED and button==GLUT_LEFT_BUTTON) {
         startGame(squareX, squareY);
     }
     
     replay.recordEvent(x, y, button, timer.calculateElapsedTime());   
     
+
     if (button!=-1) {
-        
 
         if(state[squareX][squareY]==9 and (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON)) { // unrevealed
             if(button==GLUT_LEFT_BUTTON) {
@@ -585,7 +579,7 @@ void Field::click(int x,int y,int button) {
             effectiveClicks++;
             revealAround(squareX,squareY);
         }
-        else {
+        else if (button==GLUT_LEFT_BUTTON or button==GLUT_RIGHT_BUTTON or button==GLUT_MIDDLE_BUTTON) {
             ineffectiveClicks++;
         }
         

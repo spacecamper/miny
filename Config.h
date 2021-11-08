@@ -10,6 +10,7 @@ struct Config {
     int originalWidth;
     int originalHeight;
     int squareSize;
+    int scoreListLength;
 };
 
 #endif

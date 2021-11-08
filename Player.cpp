@@ -11,7 +11,7 @@
 #include "Action.h"
 #include "scores.h"
 
-extern char playerName[21];
+//extern char playerName[21];
 extern int squareSize;
 extern int gameState;
 extern int originalWidth;
@@ -28,7 +28,7 @@ int Player::loadReplay(const char *fname) {
         return 1;
     }
     string content((istreambuf_iterator<char>(ifile) ), (istreambuf_iterator<char>()    )) ;
-    if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_ \x0d\x0a-:")) {
+    if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.@- \x0d\x0a-:")) {
         cout << "Replay file contains invalid characters. Exiting."<<endl;
         exit(1);
     }
@@ -112,6 +112,7 @@ void Player::readFromFile(ifstream *ifile) {
                 rp->timeSinceStart=0;
 
             data.push_back(*rp);
+//            cout << "rp" << endl;
         }
 
         break;
@@ -224,7 +225,6 @@ void Player::takeAction(int button, int x, int y) {
             y>FIELD_Y and 
             y<FIELD_Y+field.height*squareSize) and
             button!=-1) { // outside of field - new game
-        cout<<button<<endl;
         field.newGame();
     }
     cursorX=x;
@@ -255,6 +255,7 @@ void Player::takeAction(unsigned char button, int x, int y) {
         break;
     case 'r':
         field.replay.dump();
+        cout << field.calculate3BV() << endl;
         break;
     case 'd':
         cout << sizeof(Score)<<endl;
@@ -264,8 +265,6 @@ void Player::takeAction(unsigned char button, int x, int y) {
         exit(0);
     case 27:    // escape
         exit(0);
-    default:
-        cout<<button<<endl;
         break;
     }
 }
@@ -273,4 +272,9 @@ void Player::takeAction(unsigned char button, int x, int y) {
 void Player::handleInput(int button, int x, int y) {
     Action* input = new Action(x, y, button, 0);
     data.push_back(*input);
+ //   field.replay.data.push_back(*(new Action(x,y,button,(gameState==GAME_INITIALIZED ? 0 : field.timer.calculateElapsedTime()))));   
+ //   field.replay.recordEvent(x,y,button,field.timer.calculateElapsedTime());
+
+
+
 }

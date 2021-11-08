@@ -12,7 +12,7 @@
 #include "Field.h"
 
 extern int gameState;
-extern Timer timer;
+//extern Timer timer;
 extern int squareSize;
 
 Replay::Replay() {
@@ -26,6 +26,7 @@ void Replay::deleteData() {
 void Replay::recordEvent(int x, int y, int button, long elapsedTime) {
     if (recording) {
         data.push_back(*(new Action(x,y,button,(gameState==GAME_INITIALIZED ? 0 : elapsedTime))));
+    //    cout << "Elapsed time: " << elapsedTime << endl;
     }
 }
 

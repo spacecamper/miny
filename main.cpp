@@ -46,7 +46,6 @@
 // TODO prevent buffer overflows (strcpy and strcat)
 // TODO free allocated memory (after using scores from loadScores and filterScores is finished)
 
-
 using namespace std;
 
 
@@ -59,7 +58,6 @@ char configDirectory[100];
 bool isFlagging;
 bool gamePaused;
 bool playReplay;
-bool anyRank;
 bool boolDrawCursor;
 
 void redisplay() {
@@ -454,6 +452,8 @@ void drawCursor(int x, int y) {
 }
 
 void drawScene() {
+
+    
     glClearColor(.7, .7, .7, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -462,6 +462,8 @@ void drawScene() {
     glLoadIdentity();
 
     Config* config = (Config*)glutGetWindowData();
+
+    //cout<< config->player->field.timer.calculateElapsedTime() << endl;
 
     if(!config) { // if the field hasn't yet been configured
         return;
@@ -525,13 +527,16 @@ void update(int value) {
     glutPostRedisplay();
     
     Player* player = ((Config*)glutGetWindowData())->player;
-    
+
     if(!(player->playStep(false))){
         playReplay=false;
     }
-    
-    glutTimerFunc(0, update, 0);
+
+    // On my computer the first argument here being zero causes the game to register two events close to each other about every 16 ms instead of one event about every 8 ms. This might worsen the experience especially on monitors with higher refresh rate.
+    glutTimerFunc(0, update, 0); 
 }
+
+
 void initGraph(Config* config) {
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
@@ -753,6 +758,7 @@ int main(int argc, char** argv) {
     player.field.height=0;
     player.field.width=0;
     player.field.mineCount=0;
+    player.field.replay.recording=false;
 
     squareSize=0;
 
@@ -778,9 +784,7 @@ int main(int argc, char** argv) {
 
     strcpy(player.field.playerName,"");
 
-    anyRank=false;
-
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:aC:")) != -1) {
+    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:")) != -1) {
         switch (option_char) {  
             case 'd': 
                 difficulty=atoi(optarg);
@@ -830,9 +834,6 @@ int main(int argc, char** argv) {
                 break;
             case 'c':
                 listScoresType=4;
-
-            case 'a':   
-                anyRank=true;
                 break;
             case 'C': {
                 int length=strlen(optarg);
@@ -859,8 +860,8 @@ int main(int argc, char** argv) {
     }
 
     if (strlen(player.field.playerName)!=0 && !isValidName(player.field.playerName)) {
-        cout << "You entered an invalid name. Name can be max. 20 characters long and can only "
-        <<endl<<"contain the characters a-z, A-Z, 0-9 and underscore (_)."<<endl;
+        cout << "Name can be max. 20 characters long and can only contain the characters a-z, "
+            <<endl<<"A-Z, 0-9, underscore (_), dot (.), at sign (@) and dash (-)."<<endl;
         exit(1);   
     }
 
@@ -900,7 +901,8 @@ int main(int argc, char** argv) {
     config.originalHeight=originalHeight;
     config.squareSize=squareSize;
     config.player=&player;
-    
+    config.scoreListLength=scoreListLength;
+
     if (playReplay) {
         displayReplay(replayFileName, &config);
     }

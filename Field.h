@@ -30,6 +30,8 @@ public:
     void checkValues();
     void click(int x, int y, int button);
     void unpauseGame();
+    int calculate3BV(); //Calculates minimum number of clicks to solve the board
+    
 private:
     void endGame(const bool);
     void viewClicks();
@@ -44,7 +46,7 @@ private:
     bool replayFileNumberExists(long);
     void floodFillMark(int [MAX_WIDTH][MAX_HEIGHT],int,int);
     void ffmProc(int [MAX_WIDTH][MAX_HEIGHT],int,int);
-    int calculate3BV(); //Calculates minimum number of clicks to solve the board
+    void showStatistics(bool, Score);
 };
 
 #endif

@@ -25,6 +25,7 @@ float Score::getIOE() {
 }
 
 float Score::get3BVs() {
+    //cout << "val3BV=" << val3BV <<end;
     return 1000*(float)val3BV/time;
 }
 
@@ -42,7 +43,7 @@ void Score::readFromFile(ifstream *f) {
 
     *f >> timeStamp >> name >> replayNumber >> width >> height >> mines >> time >> val3BV >> flagging >> effectiveClicks >> ineffectiveClicks >> squareSize >> gameWon;
 
-
+  //  cout << val3BV << endl;
 
 
 //     cout << name << " "<<time<<endl;
@@ -476,7 +477,7 @@ int loadScores(char *fname, Score **scores) {
     case SCORE_FILE_VERSION:
     {
         string content((istreambuf_iterator<char>(inFile) ), (istreambuf_iterator<char>()    )) ;
-        if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_ \x0d\x0a")) {
+        if (string::npos != content.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.@- \x0d\x0a")) {
             cout << "Score file contains invalid characters. Exiting."<<endl;
             exit(1);
         }
@@ -568,7 +569,7 @@ void appendScore(char *fname, Score score) {
 
 
 
-bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int anyRank=0) {
+bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength=MAX_HS) {
 
     qsort(scoresAll,countAll,sizeof(Score),compareFunc);
 
@@ -600,11 +601,11 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
         free(scoresNF);
     }
     else 
-        posNF=MAX_HS+1;
+        posNF=scoreListLength+1;
 
     ordinalNumberSuffix(suffixNF,posNF+1);
 
-    if (anyRank) {
+    if (scoreListLength==0) {
         
         if (!s.flagging) {
             
@@ -618,17 +619,17 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
         }
         return true;
     }
-    else if (posAll<MAX_HS and posNF<MAX_HS) {
+    else if (posAll<scoreListLength and posNF<scoreListLength) {
         *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll
                                                  <<" ("<<posNF+1<<suffixNF<<" NF)"<<endl;
         
         return true;
     }
-    else if (posAll<MAX_HS) {
+    else if (posAll<scoreListLength) {
         *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll<<endl;
         return true;
     }
-    else if (posNF<MAX_HS) {
+    else if (posNF<scoreListLength) {
         *scoreString <<setw(8)<<left<< stringValueName<<posNF+1<<suffixNF<<" NF"<<endl;
         return true;
     }
@@ -641,9 +642,8 @@ bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countA
 
 }
 
-void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyRank/*=0*/) {
+void evalScore(Score s, Score *scores, int count, int w, int h, int m, int scoreListLength=MAX_HS) {
 
-    // anyRank = display how score ranks even if it ranks below MAX_HS
 
     /*if (difficulty!=1 and difficulty!=2 and difficulty!=3 and difficulty!=4) {
         cout << "Scores for games with the current board dimensions and mine count aren't"<<endl<<"evaluated as potential high scores."<<endl<<endl;
@@ -669,22 +669,22 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyR
 
     // TIME
 
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"Time",compareByTime,anyRank);
+    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"Time",compareByTime,scoreListLength);
         
 
     // 3BV/s
 
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"3BV/s",compareBy3BVs,anyRank);
+    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"3BV/s",compareBy3BVs,scoreListLength);
 
 
     // IOE
 
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"IOE",compareByIOE,anyRank);
+    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"IOE",compareByIOE,scoreListLength);
 
 
     if (scoreString.str().length()!=0) {
 
-        if (anyRank)
+        if (scoreListLength==0)
             cout << "Your score ranks as (out of "<<countFiltered+1<<" ";   // countFiltered+1 because current count + 1 new score
         else 
             cout << "High score reached (";
@@ -702,10 +702,10 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool anyR
             cout << '\'' << w << "x" << h << ", " << m << " mines'";
 
 
-        if (anyRank)
+        if (scoreListLength==0)
             cout << " scores";
         else            
-            cout <<" top "<<MAX_HS;
+            cout <<" top "<<scoreListLength;
 
         cout << "): "<<endl<<scoreString.str();
     }
