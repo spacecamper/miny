@@ -14,21 +14,6 @@ IOE     22nd NF
 
 
 
-
-----
-
-play a game, win, 3BV reported should be OK, then run
-
-miny -plast
-
-and the 3BV in the result output after the game is finished will probably (?)
-be a very low negative or high positive number
-
-like 591247846
-
-should be the same as in the output when game ended
-
-
 ----
 
 

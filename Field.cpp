@@ -28,6 +28,14 @@ extern int squareSize;
 //extern char playerName[21];
 extern char configDirectory[100];
 
+
+Field::Field() {
+
+    val3BV=0;
+    
+}
+
+
 bool Field::replayFileNumberExists(long nr) {
     struct stat buffer;  
     char rfname[100];
@@ -134,6 +142,7 @@ void Field::floodFillMark(int tmpField[MAX_WIDTH][MAX_HEIGHT],int i,int j) {
 }
 
 int Field::calculate3BV() {
+
 
     int tmpField[MAX_WIDTH][MAX_HEIGHT];    // 0=0, 1=other number, 2=mine, 3=processed
 

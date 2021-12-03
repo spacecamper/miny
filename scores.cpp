@@ -43,7 +43,8 @@ void Score::readFromFile(ifstream *f) {
 
     *f >> timeStamp >> name >> replayNumber >> width >> height >> mines >> time >> val3BV >> flagging >> effectiveClicks >> ineffectiveClicks >> squareSize >> gameWon;
 
-  //  cout << val3BV << endl;
+//    if (loadReplay) 
+  //      cout << val3BV << endl;
 
 
 //     cout << name << " "<<time<<endl;

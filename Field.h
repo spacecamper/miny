@@ -31,7 +31,7 @@ public:
     void click(int x, int y, int button);
     void unpauseGame();
     int calculate3BV(); //Calculates minimum number of clicks to solve the board
-    
+    Field();
 private:
     void endGame(const bool);
     void viewClicks();
