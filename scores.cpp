@@ -570,152 +570,178 @@ void appendScore(char *fname, Score score) {
 
 
 
-bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength=MAX_HS) {
-
+bool evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,int (*compareFunc)(const void *,const void *),int scoreListLength) {
+   
+    // prints the place and percentile of
+     
     qsort(scoresAll,countAll,sizeof(Score),compareFunc);
 
     
 
-    int posAll,posNF;
-    char suffixAll[3],suffixNF[3];
+    int position;
+    char suffix[3];
 
-    for (posAll=0;posAll<countAll;posAll++) {
-        if (compareFunc((const void*) &s,(const void*) &scoresAll[posAll])<0)
+    for (position=0;position<countAll;position++) {   // "position" is the position of the score currently being evaluated among scoresAll
+        if (compareFunc((const void*) &s,(const void*) &scoresAll[position])<0)
             break;
     }
 
-    ordinalNumberSuffix(suffixAll,posAll+1);
+    ordinalNumberSuffix(suffix,position+1);
 
-
-
-    if (!s.flagging) {
-        Score *scoresNF;
-        char zero='\0';
-
-        int countNF=filterScores(scoresAll, countAll,&scoresNF,2,1,s.width,s.height,s.mines,0,&zero); 
-
-        for (posNF=0;posNF<countNF;posNF++) {
-            if (compareFunc((const void*) &s,(const void*) &scoresNF[posNF])<0) {
-                break;
-            }
-        }
-        free(scoresNF);
+    float percentile;
+    /*
+    if (position==1) {
+        percentile=100;
     }
-    else 
-        posNF=scoreListLength+1;
-
-    ordinalNumberSuffix(suffixNF,posNF+1);
-
-    if (scoreListLength==0) {
-        
-        if (!s.flagging) {
-            
-            *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll
-                                                 <<" ("<<posNF+1<<suffixNF<<" NF)"<<endl;
-        }
-        else {
-            
-
-            *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll<<endl;
-        }
-        return true;
-    }
-    else if (posAll<scoreListLength and posNF<scoreListLength) {
-        *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll
-                                                 <<" ("<<posNF+1<<suffixNF<<" NF)"<<endl;
-        
-        return true;
-    }
-    else if (posAll<scoreListLength) {
-        *scoreString <<setw(8)<<left<< stringValueName<<posAll+1<<suffixAll<<endl;
-        return true;
-    }
-    else if (posNF<scoreListLength) {
-        *scoreString <<setw(8)<<left<< stringValueName<<posNF+1<<suffixNF<<" NF"<<endl;
-        return true;
-    }
-    return false;
+    else {*/
 
 
-
-
-
-
+        percentile=100*(float) (countAll-position+1)/(float)(countAll+1);     // fix this so that percentile is reported correctly
+//    }                                                                        // eg 0 when a score ranks as last
+                                                                                
+                     
+    cout ;
+    
+    *scoreString << right << fixed << 
+        setw(5) << setprecision(0) << (position+1) <<   // position
+        setw(2) << suffix <<                            // suffix (-st, -th)
+        setw(9) << setprecision(3) << percentile;       // percentile
+ 
 }
 
-void evalScore(Score s, Score *scores, int count, int w, int h, int m, int scoreListLength=MAX_HS) {
+
+int evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score *scoresFiltered,int countFiltered,Score *scoresFilteredNF,int countFilteredNF,int (*compareFunc)(const void *,const void *),int scoreListLength) {
+
+    // compare how this score ranks against older ones based on compareFunc 
 
 
-    /*if (difficulty!=1 and difficulty!=2 and difficulty!=3 and difficulty!=4) {
-        cout << "Scores for games with the current board dimensions and mine count aren't"<<endl<<"evaluated as potential high scores."<<endl<<endl;
+
+    // label on the left (time, 3bv/s, ioe)
+    
+    *scoreString<<"| "<<left<<setw(5)<<criterionName<<" | ";
+
+    
+    
+   // *scoreString<<" "<<left<<fixed<<setw(7)<<setprecision(3);
+    *scoreString<<setw(7)<<right;
+    
+    
+    // values
+    
+    // this game
+    if (criterionName=="Time") {
+        *scoreString<<setw(7)<<s.time/1000.0<<setw(2)<<" s";
+    }
+    else if (criterionName=="3BV/s") {
+        *scoreString<<s.get3BVs()<<"  ";
+    }
+    else if (criterionName=="IOE") {
+        *scoreString<<s.getIOE()<<"  ";
+    }
+
+    *scoreString<<" | ";
+    // f+nf
+    evalScore2v2(scoreString,s,scoresFiltered,countFiltered,compareFunc,scoreListLength) ;   
+    
+    
+    
+    if (!s.flagging) {
+        // nf only
+        *scoreString<<" |";
+        evalScore2v2(scoreString,s,scoresFilteredNF,countFilteredNF,compareFunc,scoreListLength);
+    }
+            
+    *scoreString<<" | "<<endl;
+}
+    
+
+
+void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldFinalResultDisplay, int scoreListLength) {
+
+    // compare how this score ranks against older ones
+
+    //cout<<oldFinalResultDisplay<<endl;
+    if (oldFinalResultDisplay) {
+  //      cout<<"YOU WIN!"<<endl;
+        cout<<"Time:   "<<s.time/1000.0<<" s"<<endl;
+        cout<<"3BV/s:  "<<s.get3BVs()<<endl;
+        cout<<"IOE:    "<<s.getIOE()/1.0<<endl;
+        cout<<"3BV:    "<<s.val3BV/1.0<<endl;
+
         return;
-    }*/
+    }
+        
+        
+    cout<<"3BV: "<<s.val3BV/1.0<<endl;
+
 
 
     Score *scoresFiltered;
+    Score *scoresFilteredNF;
     
     char zero='\0';
 
     // only won games from the current difficulty
     int countFiltered=filterScores(scores, count,&scoresFiltered,0,1,w,h,m,0,&zero); 
      
-
-
-    
-//    cout << "filtered scores: "<<countF<<endl;
-
+    // same but only NF scores
+    int countFilteredNF=filterScores(scores, count,&scoresFilteredNF,2,1,w,h,m,0,&zero); 
     
 
     ostringstream scoreString;
 
-    // TIME
+    char strr[50];
+    
+    if (!s.flagging)
+        sprintf(strr,"all NF games (%d) ",countFilteredNF+1);
+    else
+        strr[0]='\0';
+        
+        
+    cout << endl << "Your result's ranking (among won ";
 
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"Time",compareByTime,scoreListLength);
+
+    if (w==9 and h==9 and m==10)
+        cout << "Beginner";
+    else if (w==16 and h==16 and m==40)
+        cout << "Intermediate";
+    else if (w==30 and h==16 and m==99)
+        cout << "Expert";
+    else if (w==8 and h==8 and m==10)
+        cout << "Beginner classic";
+    else
+        cout << "'" << w << "x" << h << ", " << m << " mines\'";
+            
+    cout << " results)"<<endl<<endl;
+    
+    cout << "Percentiles are approximate, see README for details." << endl << endl ;
+    
+    scoreString << "        +-----------+-------------------"<<((!s.flagging)?"-----------------+":"")<<endl;
+    scoreString << "        |           | compared to      "<<((!s.flagging)?"                  |":"|")<<endl;
+    scoreString << "        |   this    +------------------+"<<((!s.flagging)?"-----------------+":"")<<endl;
+    scoreString << "        |   game    | "<<setw(13) /*intLength(countFiltered+1))*/<<right<<"all games ("<<countFiltered+1<<") | " <<strr << "|"<<endl;
+
+    scoreString << "        |           |   place    perc. |"<<((!s.flagging)?"  place    perc.   |":"")<<endl;
+    scoreString << "+-------+-----------+------------------+"<<((!s.flagging)?"-------------------+":"")<<endl;
+    
         
 
-    // 3BV/s
+    evalScoreMid(&scoreString,"Time",s,scoresFiltered,countFiltered,scoresFilteredNF,countFilteredNF,compareByTime,scoreListLength);
+    evalScoreMid(&scoreString,"3BV/s",s,scoresFiltered,countFiltered,scoresFilteredNF,countFilteredNF,compareBy3BVs,scoreListLength);
+    evalScoreMid(&scoreString,"IOE",s,scoresFiltered,countFiltered,scoresFilteredNF,countFilteredNF,compareByIOE,scoreListLength);
+    
+    
+    
+    
+    
+    
+    scoreString << "+-------+-----------+------------------+---"<<((!s.flagging)?"-------------------+":"")<<endl;
+ 
+        
+    
+    cout<<scoreString.str();
 
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"3BV/s",compareBy3BVs,scoreListLength);
-
-
-    // IOE
-
-    evalScore2(&scoreString,s,scoresFiltered,countFiltered,"IOE",compareByIOE,scoreListLength);
-
-
-    if (scoreString.str().length()!=0) {
-
-        if (scoreListLength==0)
-            cout << "Your score ranks as (out of "<<countFiltered+1<<" ";   // countFiltered+1 because current count + 1 new score
-        else 
-            cout << "High score reached (";
-
-        if (w==9 and h==9 and m==10)
-            cout << "Beginner";
-        else if (w==16 and h==16 and m==40)
-            cout << "Intermediate";
-        else if (w==30 and h==16 and m==99)
-            cout << "Expert";
-        else if (w==8 and h==8 and m==10)
-            cout << "Beginner classic";
-        else
-            //cout << "\"width: " << w << ", height: " << h << ", mines: " << m << "\"";
-            cout << '\'' << w << "x" << h << ", " << m << " mines'";
-
-
-        if (scoreListLength==0)
-            cout << " scores";
-        else            
-            cout <<" top "<<scoreListLength;
-
-        cout << "): "<<endl<<scoreString.str();
-    }
-    else {
-        cout << "You didn't get a high score."<<endl;
-    }
-   // cout << endl;
-
-   //   cout << "here3"<<endl;
+ 
     free(scoresFiltered);
 
 }

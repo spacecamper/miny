@@ -6,7 +6,8 @@ A minesweeper clone.
 FEATURES
 
  - Linux native
- - time, 3BV/s and IOE high scores, including non-flagging versions
+ - time, 3BV/s and IOE high scores, including percentiles and non-flagging 
+   versions
  - scores kept indefinitely for all played games
  - recording and playing replays
  - CSV export
@@ -19,7 +20,6 @@ FEATURES
  - pause
 
 
-
 TO DO
 
  - set window class to use with some window managers
@@ -29,7 +29,7 @@ TO DO
 COMPILING AND PLAYING
 
  To compile run 'make'. You'll need to have OpenGL libraries installed, on
- Ubuntu those should be covered by the package freeglut3-dev.
+ Ubuntu and Debian those should be covered by the package freeglut3-dev.
 
  To play run './miny [options]'. For best results run from terminal.
 
@@ -39,6 +39,25 @@ COMPILING AND PLAYING
  After every game the replay is saved in the .miny subdirectory of the user's 
  home directory as 'last.replay'. Replays for won games are also saved as 
  [number].replay. See below for how to play them.
+
+
+CURRENT GAME RESULTS TABLE
+
+ After every won game there's a table showing how the current game ranks among
+ all other results, and, if this game was non-flagging, among all other
+ non-flagging results. That includes this game's place and percentile.
+
+ Place is the position of this game among all other games (e.g. 213th).
+
+ Percentile is a number between 0 and 100 saying how many percent of results 
+ were worse than this game. 100 means this is the best result of all, 50 
+ means this is the middle result etc. The higher this number is, the better.
+ As of now this number is not exact but gives an approximate idea of how your
+ game ranks.
+ 
+ Layout of the table is a bit broken - basically things need to be moved a few
+ characters left or right. You can use -o if you don't like it, but that way 
+ you won't see your results get compared to older results at the end of a game.
 
 
 MOUSE AND KEYBOARD CONTROLS
@@ -70,28 +89,24 @@ OPTIONS
  -h?  field height (2 to 100)
 
 
-  Score display:
+  Result display:
 
  -t   list best times for the selected setup
  -3   list best 3BV/s for the selected setup
  -i   list best IOEs for the selected setup
- -c   list scores as CSV, e.g. for further analysis in Excel/Calc. Scores are
+ -c   list results as CSV, e.g. for further analysis in Excel/Calc. Scores are
       listed in the order they were achieved, i.e. ordered by date. The -l 
       option is ignored in this case, all scores specified by other options
       are displayed.
 
 
-  Score filter:
+  Result filter:
 
- -f?  select scores by flagging (0 - all (default), 1 - flagging only, 
+ -f?  select results by flagging (0 - all (default), 1 - flagging only, 
       2 - non-flagging only)
- -g?  select scores by whether the game was won (0 - all, 1 - won only 
+ -g?  select results by whether the game was won (0 - all, 1 - won only 
       (default), 2 - lost only) (using this option may produce buggy results)
- -l?  When displaying scores this is the number of best scores to display. 
-      When playing it's the number of best scores the current game score will
-      be compared to, i.e. if you want your score to be compared to the 30 
-      best ones, enter 30.
-      (0 - all/any, default=20)
+ -l?  number of best results to display. (0 - all, default=20)
 
 
   Other:
@@ -100,6 +115,7 @@ OPTIONS
       game or a number found in the Rep column of the high score table for 
       other games.
  -C?  config directory different to the default $HOME/.miny
+ -o   display the currently finished game result the more brief, old way
 
 
 NOTES

@@ -307,26 +307,29 @@ void Field::newGame() {
     cout << "------------------------------------------------------------" << endl; 
 }
 
-void Field::showStatistics(bool won, Score score) {
+void Field::showStatistics(bool won, Score score, bool playingReplay) {
 
     if (won) {
+
+        
         cout << endl<<"YOU WIN!"<<endl;
 
-        cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << score.time/1000.0
-            << " s" << endl;
-        cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<score.get3BVs()<<endl;
+        if (playingReplay) {
+            cout << setw(8)<<left << "Time: " << setprecision(3) << fixed << score.time/1000.0
+                << " s" << endl;
+            cout << setw(8)<<left << "3BV/s: " << setprecision(4)<< fixed<<score.get3BVs()<<endl;
 
-        cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< score.getIOE()<<endl;
-    
-        cout << setw(8)<<left << "3BV: " << get3BV()<<endl;
-
+            cout <<setw(8)<<left << "IOE: " << setprecision(4)<<fixed<< score.getIOE()<<endl;
+        
+            cout << setw(8)<<left << "3BV: " << get3BV()<<endl;
+        }
         
         cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
         cout << endl;
     }
     else {
         cout << endl<< "YOU HIT A MINE. You played for " << setprecision(3) << fixed <<
-            score.time/1000.0 <<" seconds." << endl << "3BV:  " 
+            score.time/1000.0 <<" seconds." << endl << "3BV: " 
             << setprecision(4) << fixed << score.val3BV << endl;
     }
 
@@ -363,21 +366,34 @@ void Field::endGame(const bool won) {
 
     viewClicks();
 
+
+
+    
+    
+    
     if(!playReplay) {
         char fullpath[110];
         strcpy(fullpath,configDirectory);
         strcat(fullpath,"scores.dat");
  
-        showStatistics(won,newScore);
-
+        showStatistics(won,newScore,playReplay);
+        
         if(won) {
+      //      cout << endl << "YOU WIN!" << endl;
+      //      cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
+            
             int scoreListLength = ((Config*)glutGetWindowData())->scoreListLength;
+            int oldFinalResultDisplay = ((Config*)glutGetWindowData())->player->field.oldFinalResultDisplay;
 
             Score *scores;
 
             int count=loadScores(fullpath,&scores);
 
-            evalScore(newScore,scores, count, width, height, mineCount,scoreListLength); // XXX
+
+            int *zero;
+            zero=0;
+            
+            evalScore(newScore,scores, count, width, height, mineCount,oldFinalResultDisplay,scoreListLength); // XXX
 
             free(scores); 
 
@@ -400,6 +416,8 @@ void Field::endGame(const bool won) {
             saveReplay("last.replay",&newScore);
         } 
         else {
+       //     cout << endl << "YOU HIT A MINE!" << endl;
+        //    cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
             
             newScore.replayNumber=0;
             appendScore(fullpath,newScore);
@@ -408,10 +426,13 @@ void Field::endGame(const bool won) {
         }
     }
     else {
+        //showStatistics(won,newScore);
+
+
         Config* config = (Config*)glutGetWindowData();
         if (config->player->replayHasScore) {
             
-            showStatistics(won, config->player->score);
+            showStatistics(won, config->player->score, playReplay);
         }
     }
 }
@@ -569,7 +590,7 @@ void Field::click(int x,int y,int button) {
             }
             else if(button==GLUT_RIGHT_BUTTON) {
                 state[squareX][squareY]=10;
-                if (!isFlagging and !playReplay) {
+                if (!isFlagging) {
                     cout<<"You are now playing with flagging."<<endl;
                     isFlagging=true;
                 }

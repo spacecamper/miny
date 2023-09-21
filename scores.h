@@ -63,7 +63,14 @@ int loadScores(char *fname, Score **scores);
 
 void appendScore(char *fname, Score score);
 
-void evalScore(Score s, Score *scores, int count, int w, int h, int m, int scoreListLength);
+bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength,int *returnCountNF);
+
+void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldView,int scoreListLength);
+
+
+
+
+//bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength,int *returnCountNF   ) ;
 
 #endif
 

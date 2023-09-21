@@ -1,7 +1,7 @@
 /*
  * Miny
  * a minesweeper clone
- * (c) 2015-2019 spacecamper
+ * (c) 2015-2019, 2021, 2023 spacecamper
  */
 
 #include <stdlib.h>
@@ -38,7 +38,7 @@
 #include "scores.h"
 
 
-#define VERSION "0.5.12+"
+#define VERSION "0.6.0"
 
 
 
@@ -624,11 +624,11 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
             case 2: cout << "non-flagging only"<<endl; break;
             }
 
-            cout << setw(16)<<left<<"Finished: ";
+            cout << setw(16)<<left<<"Won: ";
             switch (listFinished) {
             case 0: cout << "all"<<endl; break;
-            case 1: cout << "finished only"<<endl; break;
-            case 2: cout << "unfinished only"<<endl; break;
+            case 1: cout << "won only"<<endl; break;
+            case 2: cout << "lost only"<<endl; break;
             }
 
             cout << setw(16)<<left<<"Difficulty: ";
@@ -696,7 +696,7 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
         count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
             config->player->field.width, config->player->field.height, config->player->field.mineCount, squareSize,config->player->field.playerName);
 
-        
+    //    cout<<"count="<<count<<endl;
 
         displayScores(filteredScores,count,scoreListLength,listScoresType==4);
 
@@ -760,8 +760,7 @@ int main(int argc, char** argv) {
     player.field.mineCount=0;
     player.field.replay.recording=false;
 
-    squareSize=0;
-
+    
     gameState=GAME_INITIALIZED;
     gamePaused=false;
     boolDrawCursor=false;
@@ -784,8 +783,14 @@ int main(int argc, char** argv) {
 
     strcpy(player.field.playerName,"");
 
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:")) != -1) {
+    player.field.oldFinalResultDisplay=false;
+
+    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:o")) != -1) {
         switch (option_char) {  
+            case 'o':
+                player.field.oldFinalResultDisplay=true;
+                
+                break;
             case 'd': 
                 difficulty=atoi(optarg);
                 break;
@@ -858,6 +863,11 @@ int main(int argc, char** argv) {
 
         }
     }
+    
+    if (listScoresType==0 and squareSize==0) {
+        squareSize=50;
+    }
+
 
     if (strlen(player.field.playerName)!=0 && !isValidName(player.field.playerName)) {
         cout << "Name can be max. 20 characters long and can only contain the characters a-z, "
@@ -867,7 +877,7 @@ int main(int argc, char** argv) {
 
 
     if (listScoresType!=4) {
-        cout<<"Miny v"<<VERSION<<" (c) 2015-2019 spacecamper"<<endl;
+        cout<<"Miny v"<<VERSION<<" (c) 2015-2019, 2021, 2023 spacecamper"<<endl;
         cout << "See README for info and help."<<endl;
     }
 
@@ -933,9 +943,9 @@ int main(int argc, char** argv) {
                 }
             }
 
-            if (config.squareSize==0) {
+          /*  if (config.squareSize==0) {
                 config.squareSize=35;
-            }
+            }*/
 
             if (config.squareSize<3) {
                 config.squareSize=3;

@@ -12,7 +12,9 @@ public:
     short width, height;
     short mineCount;
     char playerName[21];
-
+    
+    bool oldFinalResultDisplay;
+    
     Replay replay;
     Timer timer;
 
@@ -46,7 +48,7 @@ private:
     bool replayFileNumberExists(long);
     void floodFillMark(int [MAX_WIDTH][MAX_HEIGHT],int,int);
     void ffmProc(int [MAX_WIDTH][MAX_HEIGHT],int,int);
-    void showStatistics(bool, Score);
+    void showStatistics(bool, Score, bool);
 };
 
 #endif
