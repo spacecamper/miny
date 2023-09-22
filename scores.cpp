@@ -603,10 +603,13 @@ bool evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int coun
     cout ;
     
     *scoreString << right << fixed << 
-        setw(5) << setprecision(0) << (position+1) <<   // position
-        setw(2) << suffix <<                            // suffix (-st, -th)
-        setw(9) << setprecision(3) << percentile;       // percentile
- 
+        setw(7) << setprecision(0) << (position+1) <<   // position
+       /* setw(2) <<*/ suffix <<                            // suffix (-st, -th)
+        setw(10) << setprecision(3) << percentile << " ";       // percentile
+
+   // *scoreString << ' ';
+    
+    //    | IOE   |   0.667   |    847th   100.000   |    470th   100.000   | 
 }
 
 
@@ -620,7 +623,8 @@ int evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score 
     
     *scoreString<<"| "<<left<<setw(5)<<criterionName<<" | ";
 
-    
+//    | Time  |   6.317 s |    296th    78.180   |    259th    68.727   | 
+
     
    // *scoreString<<" "<<left<<fixed<<setw(7)<<setprecision(3);
     *scoreString<<setw(7)<<right;
@@ -630,16 +634,16 @@ int evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score 
     
     // this game
     if (criterionName=="Time") {
-        *scoreString<<setw(7)<<s.time/1000.0<<setw(2)<<" s";
+        *scoreString<<setw(7)<<right<<s.time/1000.0<<" s";
     }
     else if (criterionName=="3BV/s") {
-        *scoreString<<s.get3BVs()<<"  ";
+        *scoreString<<setw(7)<<right<<s.get3BVs()<<"  ";
     }
     else if (criterionName=="IOE") {
-        *scoreString<<s.getIOE()<<"  ";
+        *scoreString<<setw(7)<<right<<s.getIOE()<<"  ";
     }
 
-    *scoreString<<" | ";
+    *scoreString<<" |";
     // f+nf
     evalScore2v2(scoreString,s,scoresFiltered,countFiltered,compareFunc,scoreListLength) ;   
     
@@ -647,11 +651,11 @@ int evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score 
     
     if (!s.flagging) {
         // nf only
-        *scoreString<<" |";
+        *scoreString<<"  |";
         evalScore2v2(scoreString,s,scoresFilteredNF,countFilteredNF,compareFunc,scoreListLength);
     }
             
-    *scoreString<<" | "<<endl;
+    *scoreString<<"  | "<<endl;
 }
     
 
@@ -690,12 +694,16 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldF
 
     ostringstream scoreString;
 
-    char strr[50];
+    char strAll[50], strNF[50];
+    
+    
+    sprintf(strAll,"all games (%d)",countFiltered+1);
+    
     
     if (!s.flagging)
-        sprintf(strr,"all NF games (%d) ",countFilteredNF+1);
+        sprintf(strNF,"all NF games (%d)",countFilteredNF+1);
     else
-        strr[0]='\0';
+        strNF[0]='\0';
         
         
     cout << endl << "Your result's ranking (among won ";
@@ -716,15 +724,14 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldF
     
     cout << "Percentiles are approximate, see README for details." << endl << endl ;
     
-    scoreString << "        +-----------+-------------------"<<((!s.flagging)?"-----------------+":"")<<endl;
-    scoreString << "        |           | compared to      "<<((!s.flagging)?"                  |":"|")<<endl;
-    scoreString << "        |   this    +------------------+"<<((!s.flagging)?"-----------------+":"")<<endl;
-    scoreString << "        |   game    | "<<setw(13) /*intLength(countFiltered+1))*/<<right<<"all games ("<<countFiltered+1<<") | " <<strr << "|"<<endl;
+    scoreString << "        +-----------+----------------------"<<((!s.flagging)?"-----------------------":"")<<"+"<<endl;
+    scoreString << "        |           |   compared to        "<<((!s.flagging)?"                       ":"")<<"|"<<endl;
+    scoreString << "        |   this    +----------------------"<<((!s.flagging)?"+----------------------":"")<<"+"<<endl;
+    scoreString << "        |   game    |"<<setw(19) <<right<<strAll<<"   |"<<setw(20) <<right<<(!s.flagging? strNF : "")<< "  |"<<endl;
+    scoreString << "        |           |    place    perc.    |"<<((!s.flagging)?"    place    perc.    |":"")<<endl;
+    scoreString << "+-------+-----------+----------------------+"<<((!s.flagging)?"----------------------+":"")<<endl;
 
-    scoreString << "        |           |   place    perc. |"<<((!s.flagging)?"  place    perc.   |":"")<<endl;
-    scoreString << "+-------+-----------+------------------+"<<((!s.flagging)?"-------------------+":"")<<endl;
-    
-        
+//                  | Time  |   6.317 s |    296th    78.180   |    259th    68.727   | 
 
     evalScoreMid(&scoreString,"Time",s,scoresFiltered,countFiltered,scoresFilteredNF,countFilteredNF,compareByTime,scoreListLength);
     evalScoreMid(&scoreString,"3BV/s",s,scoresFiltered,countFiltered,scoresFilteredNF,countFilteredNF,compareBy3BVs,scoreListLength);
@@ -733,10 +740,9 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldF
     
     
     
+    scoreString << "+-------+-----------+----------------------+"<<((!s.flagging)?"----------------------+":"")<<endl;
     
     
-    scoreString << "+-------+-----------+------------------+---"<<((!s.flagging)?"-------------------+":"")<<endl;
- 
         
     
     cout<<scoreString.str();

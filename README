@@ -54,12 +54,8 @@ CURRENT GAME RESULTS TABLE
  means this is the middle result etc. The higher this number is, the better.
  As of now this number is not exact but gives an approximate idea of how your
  game ranks.
+
  
- Layout of the table is a bit broken - basically things need to be moved a few
- characters left or right. You can use -o if you don't like it, but that way 
- you won't see your results get compared to older results at the end of a game.
-
-
 MOUSE AND KEYBOARD CONTROLS
 
  Apart from intuitive minesweeper mouse controls, these work:
