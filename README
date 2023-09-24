@@ -24,6 +24,7 @@ TO DO
 
  - set window class to use with some window managers
  - prevent buffer overflows
+ - estimate final statistics for a lost game, based on progress until losing
 
 
 COMPILING AND PLAYING
