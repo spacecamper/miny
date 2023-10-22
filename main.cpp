@@ -86,17 +86,7 @@ bool directoryExists( const char* pzPath )
 // ----------------------- GRAPHICS -------------------- //
 
 void drawRect(float x, float y, float w, float h) {
-    glBegin(GL_TRIANGLES);
-
-    glVertex2f(x,y);
-    glVertex2f(x+w,y);
-    glVertex2f(x,y+h);
-
-    glVertex2f(x,y+h);
-    glVertex2f(x+w,y+h);
-    glVertex2f(x+w,y);
-
-    glEnd();
+    glRectf(x, y, x+w, y+h);
 }
 
 void drawDigitRect(int i, int x, int y, float zoom=1) {
@@ -230,16 +220,14 @@ void drawBackground(int fieldWidth, int fieldHeight) {
     glColor3f(.3,.3,.3);
     glBegin(GL_LINES); 
     for (int i=0;i<fieldHeight+1;i++) {
-        glVertex2f(FIELD_X,FIELD_Y+i*squareSize);
-        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+i*squareSize);
+        glVertex2f(FIELD_X+0.5,FIELD_Y+i*squareSize+0.5);
+        glVertex2f(FIELD_X+fieldWidth*squareSize+0.5,FIELD_Y+i*squareSize+0.5);
     }
     for (int i=0;i<fieldWidth+1;i++) {
-        glVertex2f(FIELD_X+i*squareSize,FIELD_Y);
-        glVertex2f(FIELD_X+i*squareSize,FIELD_Y+fieldHeight*squareSize);
+        glVertex2f(FIELD_X+i*squareSize+0.5,FIELD_Y+0.5);
+        glVertex2f(FIELD_X+i*squareSize+0.5,FIELD_Y+fieldHeight*squareSize+0.5);
     }
     glEnd();
-
-
 }
 
 void drawMine(int x, int y, int squareSize) {
@@ -375,7 +363,7 @@ void drawField(Field field, int squareSize){
 
                 glColor3f(.5,.5,.5);
                 
-                drawRect(x1, y1, squareSize-1, squareSize-1);
+                glRectf(x1 + 1, y1 + 1, x2, y2);
             }
             if ((field.state[x][y]==9 or field.state[x][y]==11) 
                  and (gameState==GAME_LOST or gameState==GAME_WON)
@@ -387,7 +375,7 @@ void drawField(Field field, int squareSize){
             }
             if(field.state[x][y]==11) { // Hit mine
                 glColor3f(1,0,0);
-                drawRect(x1, y1, squareSize-1, squareSize-1);
+                glRectf(x1 + 1, y1 + 1, x2, y2);
             }
             if (field.state[x][y]==10) {  // flag
                 // cross out flag where there is no mine
