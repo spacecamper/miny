@@ -26,7 +26,7 @@ extern bool gamePaused;
 //extern unsigned short hitMineX, hitMineY;
 extern int squareSize;
 //extern char playerName[21];
-extern char configDirectory[100];
+extern char cacheDirectory[100];
 
 
 Field::Field() {
@@ -41,7 +41,7 @@ bool Field::replayFileNumberExists(long nr) {
     char rfname[100];
         
     char tmp[110];
-    strcpy(tmp,configDirectory);
+    strcpy(tmp,cacheDirectory);
     sprintf(rfname,"%lu.replay",nr);
 
     strcat(tmp,rfname);
@@ -92,7 +92,7 @@ void Field::saveReplay(const char *fname, Score *score) {
     ofstream ofile;
     
     char fullpath[110];
-    strcpy(fullpath,configDirectory);
+    strcpy(fullpath,cacheDirectory);
     strcat(fullpath,fname);
 
     ofile.open (fullpath);
@@ -373,7 +373,7 @@ void Field::endGame(const bool won) {
     
     if(!playReplay) {
         char fullpath[110];
-        strcpy(fullpath,configDirectory);
+        strcpy(fullpath,cacheDirectory);
         strcat(fullpath,"scores.dat");
  
         showStatistics(won,newScore,playReplay);
@@ -408,7 +408,7 @@ void Field::endGame(const bool won) {
             char rfname[100];
 
             char tmp[110];
-            strcpy(tmp,configDirectory);
+            strcpy(tmp,cacheDirectory);
             sprintf(rfname,"%lu.replay",nr);
 
             saveReplay(rfname,&newScore);

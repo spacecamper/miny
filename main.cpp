@@ -54,7 +54,7 @@ int squareSize;
 
 int gameState; // -1 - initialized, 0 - playing, 1 - lost, 2 - won
 char option_char;
-char configDirectory[100];
+char cacheDirectory[100];
 bool isFlagging;
 bool gamePaused;
 bool playReplay;
@@ -589,7 +589,7 @@ void listScores(int listScoresType, int scoreListLength, int listFlagging, int l
     // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
     char fullpath[110];
-    strcpy(fullpath,configDirectory);
+    strcpy(fullpath,cacheDirectory);
     strcat(fullpath,"scores.dat");
 
     Score *scores;
@@ -776,8 +776,26 @@ int main(int argc, char** argv) {
 
     bool defaultConfigDirectory=true;
 
-    strcpy(configDirectory,getenv("HOME"));
-    strcat(configDirectory,"/.miny/");
+    char *home = getenv("HOME");
+    char *xdgDataHome = getenv("XDG_DATA_HOME");
+    if (xdgDataHome) {
+        strcpy(cacheDirectory, xdgDataHome);
+    } else {
+        strcpy(cacheDirectory, home);
+        strcat(cacheDirectory, "/.local/share");
+    }
+    bool configExists = directoryExists(cacheDirectory);
+    strcat(cacheDirectory, "/miny/");
+    // default to the old file if it exists and the new one doesn't
+    // also check that config_home exists before putting stuff there
+    if (!directoryExists(cacheDirectory) ) {
+        char oldMinyDir[100];
+        strcpy(oldMinyDir, home);
+        strcat(oldMinyDir, "/.miny/");
+        if (!configExists || directoryExists(oldMinyDir)) {
+            strcpy(cacheDirectory, oldMinyDir);
+        }
+    }
 
     player.field.playerName[0]='\0';
 
@@ -852,9 +870,9 @@ int main(int argc, char** argv) {
                 }
                 else {
                     defaultConfigDirectory=false;
-                    strcpy(configDirectory,optarg);
+                    strcpy(cacheDirectory,optarg);
                     if (optarg[strlen(optarg)-1]!='/') 
-                        strcat(configDirectory,"/");
+                        strcat(cacheDirectory,"/");
                 }
                 break;
                 }
@@ -883,9 +901,9 @@ int main(int argc, char** argv) {
 
     // config directory
 
-    if (!directoryExists(configDirectory)) {
+    if (!directoryExists(cacheDirectory)) {
         if (defaultConfigDirectory) {
-            if (system("mkdir ~/.miny")) {
+            if (execlp("mkdir", "mkdir", cacheDirectory, NULL)) {
                 cerr << "Error creating config directory. Exiting." << endl;
                 exit(1);
             }
@@ -898,7 +916,7 @@ int main(int argc, char** argv) {
     }
 
     if (playReplay) {
-        strcpy(replayFileName,configDirectory);       
+        strcpy(replayFileName,cacheDirectory);       
         strcat(replayFileName,replayName);
         strcat(replayFileName,".replay");
     }
