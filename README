@@ -114,6 +114,15 @@ OPTIONS
  -C?  cache directory different to the default $XDG_DATA_HOME/miny or $HOME/.miny
  -o   display the currently finished game result the more brief, old way
 
+ --help display this message
+
+DEFAULT OPTIONS
+
+ Miny can be provided with a default set of arguments to use each time it runs.
+ Miny will look for these in $XDG_CONFIG_HOME/miny/default.args,
+ ~/.config/miny/default.args, and ~/.miny/default.args. Place the desired
+ commandline arguments on a single line sepparated by spaces in one of these
+ files.
 
 NOTES
  

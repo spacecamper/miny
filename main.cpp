@@ -8,6 +8,7 @@
 #include <iostream>
 #include <math.h>
 
+#include <unistd.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
@@ -67,6 +68,9 @@ void redisplay() {
 }
 
 
+bool fileExists(const char* path) {
+    return access(path, F_OK) == 0;
+}
 bool directoryExists( const char* pzPath )
 {
     if ( pzPath == NULL) return false;
@@ -738,6 +742,129 @@ void configureSize(int difficulty, Field* field) {
     } 
 }
 
+bool find_argfile(char* out) {
+    // Try $XDG_CONFIG_HOME/miny
+    char* confdir = getenv("XDG_CONFIG_HOME");
+    if (confdir) {
+        strcpy(out, confdir);
+        strcat(out, "/miny/default.args");
+        if (fileExists(out)) return true;
+    }
+
+    // Try ~/.config/miny
+    strcpy(out, getenv("HOME"));
+    strcat(out, "/.config/miny/default.args");
+    if (fileExists(out)) return true;
+
+    // Try ~/.miny
+    strcpy(out, getenv("HOME"));
+    strcat(out, "/.miny/default.args");
+    if (fileExists(out)) return true;
+
+    return false;
+}
+
+struct ArgInfo {
+    char replayName[100];
+    char replayFileName[110];
+    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
+
+    int difficulty=2;   // 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic
+    int listFlagging=0;  // 0-both, 1-flagging, 2-nf
+    int listFinished=1; //  0-both, 1-finished, 2-unfinished
+    int scoreListLength=MAX_HS;        // how many scores to display
+
+    bool defaultConfigDirectory=true;
+};
+
+void handle_args(int argc, char** argv, Player& player, ArgInfo& arg_info) {
+    const static option long_opts[2] = { {"help", 0, NULL, 'H'}, {} };
+
+    optind = 1;
+    while ((option_char = getopt_long(argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:o", long_opts, NULL)) != -1) {
+        switch (option_char) {  
+            case 'o':
+                player.field.oldFinalResultDisplay=true;
+                
+                break;
+            case 'd': 
+                arg_info.difficulty=atoi(optarg);
+                break;
+            case 's': 
+                squareSize=atoi(optarg);
+                break;
+            case 'm': 
+                player.field.mineCount=atoi(optarg);
+                break;
+            case 'w': 
+                player.field.width=atoi(optarg);
+                break;
+            case 'h': 
+                player.field.height=atoi(optarg);
+                break;
+            case 'n':
+                if (strlen(optarg)<20)
+                    strcpy(player.field.playerName,optarg);
+                else
+                    strncpy(player.field.playerName,optarg,20);
+                
+                break;
+            case 'p':
+                strcpy(arg_info.replayName,optarg);
+                playReplay=true;
+                boolDrawCursor=true;
+                break;
+            case 'l':
+                arg_info.scoreListLength=atoi(optarg);
+                break;
+            case '3':
+                arg_info.listScoresType=2;
+                break;
+            case 't':
+                arg_info.listScoresType=1;
+                break;
+            case 'i':
+                arg_info.listScoresType=3;
+                break;
+
+            case 'f':
+                arg_info.listFlagging=optarg[0]-'0';
+                break;
+            case 'g':
+                arg_info.listFinished=optarg[0]-'0';
+                break;
+            case 'c':
+                arg_info.listScoresType=4;
+                break;
+            case 'C': {
+                int length=strlen(optarg);
+
+                if (optarg[strlen(optarg)-1]!='/') 
+                    length++;
+
+                if (length>101) {
+                    cout<<"Config directory path must be shorter than 100 characters. Exiting."<<endl;
+                    exit(1);
+                }
+                else {
+                    arg_info.defaultConfigDirectory=false;
+                    strcpy(cacheDirectory,optarg);
+                    if (optarg[strlen(optarg)-1]!='/') 
+                        strcat(cacheDirectory,"/");
+                }
+                break;
+                }
+            case 'H':
+                puts(readme);
+                exit(0);
+            case '?':
+                exit(1);
+
+        }
+    }
+    
+}
+
 int main(int argc, char** argv) {
     srand (time(NULL));
 
@@ -750,21 +877,11 @@ int main(int argc, char** argv) {
     player.field.mineCount=0;
     player.field.replay.recording=false;
 
-    
+    ArgInfo arg_info;
+
     gameState=GAME_INITIALIZED;
     gamePaused=false;
     boolDrawCursor=false;
-
-    char replayName[100];
-    char replayFileName[110];
-    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
-
-    int difficulty=2;   // 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic
-    int listFlagging=0;  // 0-both, 1-flagging, 2-nf
-    int listFinished=1; //  0-both, 1-finished, 2-unfinished
-    int scoreListLength=MAX_HS;        // how many scores to display
-
-    bool defaultConfigDirectory=true;
 
     char *home = getenv("HOME");
     char *xdgDataHome = getenv("XDG_DATA_HOME");
@@ -793,91 +910,29 @@ int main(int argc, char** argv) {
 
     player.field.oldFinalResultDisplay=false;
 
-    option long_opts[2] = { {"help", 0, NULL, 'H'}, {} };
-
-    while ((option_char = getopt_long(argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:o", long_opts, NULL)) != -1) {
-        switch (option_char) {  
-            case 'o':
-                player.field.oldFinalResultDisplay=true;
-                
-                break;
-            case 'd': 
-                difficulty=atoi(optarg);
-                break;
-            case 's': 
-                squareSize=atoi(optarg);
-                break;
-            case 'm': 
-                player.field.mineCount=atoi(optarg);
-                break;
-            case 'w': 
-                player.field.width=atoi(optarg);
-                break;
-            case 'h': 
-                player.field.height=atoi(optarg);
-                break;
-            case 'n':
-                if (strlen(optarg)<20)
-                    strcpy(player.field.playerName,optarg);
-                else
-                    strncpy(player.field.playerName,optarg,20);
-                
-                break;
-            case 'p':
-                strcpy(replayName,optarg);
-                playReplay=true;
-                boolDrawCursor=true;
-                break;
-            case 'l':
-                scoreListLength=atoi(optarg);
-                break;
-            case '3':
-                listScoresType=2;
-                break;
-            case 't':
-                listScoresType=1;
-                break;
-            case 'i':
-                listScoresType=3;
-                break;
-
-            case 'f':
-                listFlagging=optarg[0]-'0';
-                break;
-            case 'g':
-                listFinished=optarg[0]-'0';
-                break;
-            case 'c':
-                listScoresType=4;
-                break;
-            case 'C': {
-                int length=strlen(optarg);
-
-                if (optarg[strlen(optarg)-1]!='/') 
-                    length++;
-
-                if (length>101) {
-                    cout<<"Config directory path must be shorter than 100 characters. Exiting."<<endl;
-                    exit(1);
+    char args[512];
+    if (find_argfile(args)) {
+        std::ifstream file(args, ios_base::in);
+        file.getline(args, sizeof(args));
+        if (args[0]) {
+            int file_argc = 2;
+            char* file_argv[32];
+            file_argv[0] = argv[0];
+            file_argv[1] = args;
+            for (int i = 0; args[i]; ++i) {
+                if (args[i] == ' ') {
+                    args[i++] = 0;
+                    while (args[i] == ' ' && args[i] != 0) ++i;
+                    file_argv[file_argc++] = args + i;
                 }
-                else {
-                    defaultConfigDirectory=false;
-                    strcpy(cacheDirectory,optarg);
-                    if (optarg[strlen(optarg)-1]!='/') 
-                        strcat(cacheDirectory,"/");
-                }
-                break;
-                }
-            case 'H':
-                puts(readme);
-                exit(0);
-            case '?':
-                exit(1);
-
+            }
+            handle_args(file_argc, file_argv, player, arg_info);
         }
     }
-    
-    if (listScoresType==0 and squareSize==0) {
+
+    handle_args(argc, argv, player, arg_info);
+
+    if (arg_info.listScoresType==0 and squareSize==0) {
         squareSize=35;
     }
 
@@ -889,7 +944,7 @@ int main(int argc, char** argv) {
     }
 
 
-    if (listScoresType!=4) {
+    if (arg_info.listScoresType!=4) {
         cout<<"Miny v"<<VERSION<<" (c) 2015-2019, 2021, 2023 spacecamper"<<endl;
         cout << "See README or --help for info and help."<<endl;
     }
@@ -897,7 +952,7 @@ int main(int argc, char** argv) {
     // config directory
 
     if (!directoryExists(cacheDirectory)) {
-        if (defaultConfigDirectory) {
+        if (arg_info.defaultConfigDirectory) {
             if (execlp("mkdir", "mkdir", cacheDirectory, NULL)) {
                 cerr << "Error creating config directory. Exiting." << endl;
                 exit(1);
@@ -911,9 +966,9 @@ int main(int argc, char** argv) {
     }
 
     if (playReplay) {
-        strcpy(replayFileName,cacheDirectory);       
-        strcat(replayFileName,replayName);
-        strcat(replayFileName,".replay");
+        strcpy(arg_info.replayFileName,cacheDirectory);
+        strcat(arg_info.replayFileName,arg_info.replayName);
+        strcat(arg_info.replayFileName,".replay");
     }
     
     Config config;
@@ -924,17 +979,17 @@ int main(int argc, char** argv) {
     config.originalHeight=originalHeight;
     config.squareSize=squareSize;
     config.player=&player;
-    config.scoreListLength=scoreListLength;
+    config.scoreListLength=arg_info.scoreListLength;
 
     if (playReplay) {
-        displayReplay(replayFileName, &config);
+        displayReplay(arg_info.replayFileName, &config);
     }
     else { 
         
-        configureSize(difficulty, &(player.field));
+        configureSize(arg_info.difficulty, &(player.field));
         
-        if (listScoresType!=0) { // list scores
-            listScores(listScoresType, scoreListLength, listFlagging, listFinished, &config);
+        if (arg_info.listScoresType!=0) { // list scores
+            listScores(arg_info.listScoresType, arg_info.scoreListLength, arg_info.listFlagging, arg_info.listFinished, &config);
         }
         else {
            // play
@@ -973,7 +1028,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    if(listScoresType==0){
+    if(arg_info.listScoresType==0){
         glutMainLoop();
     }
 
