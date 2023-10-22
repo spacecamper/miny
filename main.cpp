@@ -8,7 +8,7 @@
 #include <iostream>
 #include <math.h>
 
-#include <unistd.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
@@ -59,6 +59,8 @@ bool isFlagging;
 bool gamePaused;
 bool playReplay;
 bool boolDrawCursor;
+
+extern char readme[];
 
 void redisplay() {
     glutPostRedisplay();
@@ -791,7 +793,9 @@ int main(int argc, char** argv) {
 
     player.field.oldFinalResultDisplay=false;
 
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:o")) != -1) {
+    option long_opts[2] = { {"help", 0, NULL, 'H'}, {} };
+
+    while ((option_char = getopt_long(argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:o", long_opts, NULL)) != -1) {
         switch (option_char) {  
             case 'o':
                 player.field.oldFinalResultDisplay=true;
@@ -864,6 +868,9 @@ int main(int argc, char** argv) {
                 }
                 break;
                 }
+            case 'H':
+                puts(readme);
+                exit(0);
             case '?':
                 exit(1);
 
@@ -884,7 +891,7 @@ int main(int argc, char** argv) {
 
     if (listScoresType!=4) {
         cout<<"Miny v"<<VERSION<<" (c) 2015-2019, 2021, 2023 spacecamper"<<endl;
-        cout << "See README for info and help."<<endl;
+        cout << "See README or --help for info and help."<<endl;
     }
 
     // config directory
