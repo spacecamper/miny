@@ -865,7 +865,7 @@ int main(int argc, char** argv) {
     }
     
     if (listScoresType==0 and squareSize==0) {
-        squareSize=50;
+        squareSize=35;
     }
 
 
