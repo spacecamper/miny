@@ -381,9 +381,6 @@ void Field::endGame(const bool won) {
             int count=loadScores(fullpath,&scores);
 
 
-            int *zero;
-            zero=0;
-            
             evalScore(newScore,scores, count, width, height, mineCount,oldFinalResultDisplay,conf.scoreListLength); // XXX
 
             free(scores); 
