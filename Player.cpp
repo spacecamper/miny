@@ -5,19 +5,14 @@
 #include <GL/glut.h>
 #endif
 
+#include "Config.h"
 #include "Timer.h"
 #include "Player.h"
 #include "Field.h"
 #include "Action.h"
 #include "scores.h"
 
-//extern char playerName[21];
-extern int squareSize;
-extern int gameState;
-extern int originalWidth;
-extern int originalHeight;
-extern bool playReplay;
-extern bool gamePaused;
+extern Config conf;
 
 int Player::loadReplay(const char *fname) {
     ifstream ifile;
@@ -81,7 +76,7 @@ void Player::readFromFile(ifstream *ifile) {
         
         *ifile >> field.playerName; 
         
-        *ifile >> squareSize;
+        *ifile >> conf.squareSize;
         
         *ifile >> field.width >> field.height;
         
@@ -124,7 +119,7 @@ void Player::readFromFile(ifstream *ifile) {
         replayHasScore=true;
         score.readFromFile(ifile);
         strcpy(field.playerName,score.name);
-        squareSize=score.squareSize;
+        conf.squareSize=score.squareSize;
         field.width=score.width;
         field.height=score.height;
 
@@ -191,7 +186,7 @@ bool Player::playStep(bool firstClick) {
     }
 
     if (next==data.end()) {
-        if (playReplay) {
+        if (conf.playReplay) {
             cout<<"End of Replay."<<endl;
             return false;
         }
@@ -203,27 +198,27 @@ bool Player::playStep(bool firstClick) {
 }
 
 void Player::takeAction(int button, int x, int y) {
-    if ((gameState==GAME_INITIALIZED or gameState==GAME_PLAYING)) {
+    if ((conf.gameState==Config::GAME_INITIALIZED or conf.gameState==Config::GAME_PLAYING)) {
         // this should've been "x>=FIELD_X" and "y>=FIELD_Y", now
         // the top row and left column are 1 pixel narrower
-        if (x>FIELD_X and x<FIELD_X+field.width*squareSize 
-            and y>FIELD_Y and y<FIELD_Y+field.height*squareSize) { // field
+        if (x>FIELD_X and x<FIELD_X+field.width*conf.squareSize 
+            and y>FIELD_Y and y<FIELD_Y+field.height*conf.squareSize) { // field
             field.click(x, y, button);
         }
 
-        else if (x>originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 and 
-                x<originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 and
-                y>BORDER_WIDTH and 
+        else if (x>conf.originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 and
+                x<conf.originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 and
+                y>BORDER_WIDTH and
                 y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH and
                 button!=-1) {
             field.newGame();
         }
         glutPostRedisplay();
     }
-    else if (!(x>FIELD_X and 
-            x<FIELD_X+field.width*squareSize and 
-            y>FIELD_Y and 
-            y<FIELD_Y+field.height*squareSize) and
+    else if (!(x>FIELD_X and
+            x<FIELD_X+field.width*conf.squareSize and
+            y>FIELD_Y and
+            y<FIELD_Y+field.height*conf.squareSize) and
             button!=-1) { // outside of field - new game
         field.newGame();
     }
@@ -234,15 +229,15 @@ void Player::takeAction(int button, int x, int y) {
 void Player::takeAction(unsigned char button, int x, int y) {
     switch (button) {
     case ' ':
-        if (!gamePaused and !playReplay) {
+        if (!conf.gamePaused and !conf.playReplay) {
             field.newGame();
         }
         break;
     case 'p':   // pause
-        if (gameState==GAME_PLAYING and !playReplay) {
-            if (!gamePaused) {
+        if (conf.gameState==Config::GAME_PLAYING and !conf.playReplay) {
+            if (!conf.gamePaused) {
 
-                gamePaused=true;
+                conf.gamePaused=true;
                 field.timer.pause(); 
                 field.replay.recording = false;
                 cout << "Game paused. Press P to continue. Elapsed time: "
@@ -272,7 +267,7 @@ void Player::takeAction(unsigned char button, int x, int y) {
 void Player::handleInput(int button, int x, int y) {
     Action* input = new Action(x, y, button, 0);
     data.push_back(*input);
- //   field.replay.data.push_back(*(new Action(x,y,button,(gameState==GAME_INITIALIZED ? 0 : field.timer.calculateElapsedTime()))));   
+ //   field.replay.data.push_back(*(new Action(x,y,button,(gameState==Config::GAME_INITIALIZED ? 0 : field.timer.calculateElapsedTime()))));
  //   field.replay.recordEvent(x,y,button,field.timer.calculateElapsedTime());
 
 

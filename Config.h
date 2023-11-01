@@ -11,6 +11,18 @@ struct Config {
     int originalHeight;
     int squareSize;
     int scoreListLength;
+
+    enum {
+      GAME_INITIALIZED=-1,
+      GAME_PLAYING=0,
+      GAME_LOST=1,
+      GAME_WON=2,
+    } gameState;
+    char cacheDirectory[100];
+    bool isFlagging;
+    bool gamePaused;
+    bool playReplay;
+    bool boolDrawCursor;
 };
 
 #endif
