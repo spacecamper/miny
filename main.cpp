@@ -1001,7 +1001,7 @@ int main(int argc, char** argv) {
                 if (isValidName(getenv("USER")))       
                     if (strlen(getenv("USER"))>20) {
                         strncpy(player.field.playerName,getenv("USER"),20);
-                        player.field.playerName[21]='\0';
+                        player.field.playerName[sizeof(player.field.playerName) - 1]='\0';
                     }
                     else {
                         strcpy(player.field.playerName,getenv("USER"));
