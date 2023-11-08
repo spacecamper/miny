@@ -512,14 +512,10 @@ void initGraph() {
 
     glutInitWindowSize(conf.windowWidth, conf.windowHeight);
         
-    char title[100];
+    string title = "Miny v" VERSION ". Player: ";
+    title += conf.player.field.playerName;
 
-    strcpy(title,"Miny v");
-    strcpy(title+6,VERSION);
-    strcpy(title+6+strlen(VERSION),". Player: ");
-    strcpy(title+16+strlen(VERSION),conf.player.field.playerName);
-
-    glutCreateWindow(title);
+    glutCreateWindow(title.c_str());
            
     glEnable(GL_DEPTH_TEST);
                             
