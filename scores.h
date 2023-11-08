@@ -3,14 +3,11 @@
 
 #include <time.h>
 #include <fstream>
-
 #include <iostream>
-
 #include <iomanip>
-
 #include <sstream>
-
 #include <algorithm>
+#include <vector>
 
 
 using namespace std;
@@ -36,39 +33,39 @@ public:
     Score();
 
 
-    float getIOE();
+    float getIOE() const;
 
-    float get3BVs();
+    float get3BVs() const;
 
     void readFromFile(ifstream *f);
+    static Score readNewFromFile(ifstream *f);
     
     void writeToFile(ofstream *f);
 };
 
 // XXX
+typedef int ScoreCmpFunc(const Score& a,const Score& b);
 
-int compareByTime(const void *a,const void *b);
+ScoreCmpFunc compareByTime;
+ScoreCmpFunc compareBy3BVs;
+ScoreCmpFunc compareByIOE;
 
-int compareBy3BVs(const void *a,const void *b);
+vector<Score> filterScores(const vector<Score>& scores,int fla, int fin, int w, int h, int m, int ss, const string& pname);
 
-int compareByIOE(const void *a,const void *b);
+void displayScores(const vector<Score>& scores, int limit,bool csv=false);
 
-int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fin, int w, int h, int m, int ss, const string& pname);
+vector<Score> loadScores(const string& fname);
 
-void displayScores(Score *scores, int count,int limit,bool csv=false);
+void appendScore(const string& fname, Score& score);
 
-int loadScores(const string& fname, Score **scores);
+bool evalScore2(ostringstream *scoreString, Score& s, vector<Score>& scoresAll,const string& stringValueName,ScoreCmpFunc compareFunc,int scoreListLength,int *returnCountNF);
 
-void appendScore(const string& fname, Score score);
-
-bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,const string& stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength,int *returnCountNF);
-
-void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldView,int scoreListLength);
-
+void evalScore(Score s, const vector<Score>& scores, int w, int h, int m, bool oldView,int scoreListLength);
 
 
 
-//bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength,int *returnCountNF   ) ;
+
+//bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const Score&,const Score&),int scoreListLength,int *returnCountNF   ) ;
 
 #endif
 

@@ -11,9 +11,6 @@
 #include <GL/freeglut_ext.h>
 #endif
 
-// TODO free allocated memory (after using scores from loadScores and
-// filterScores is finished)
-
 void Config::gameStarted() {
     gameState = GAME_PLAYING;
     prefixArg = 0;
@@ -187,10 +184,9 @@ void Config::listScores() {
 
     string fullpath = cacheDirectory + "scores.dat";
 
-    Score *scores;
-    int count = loadScores(fullpath, &scores);
+    vector<Score> scores = loadScores(fullpath);
 
-    if (count == 0) { // no scores in score file
+    if (scores.size() == 0) { // no scores in score file
         if (scoreListType != List::EXPORT_CSV)
             cout << "No high scores yet." << endl;
     } else {
@@ -199,7 +195,7 @@ void Config::listScores() {
             cout << endl << "Displaying scores." << endl;
             cout << setw(16) << left << "Sorted by: ";
 
-            int (*compareFunc)(const void *, const void *) = NULL;
+            ScoreCmpFunc *compareFunc;
             switch (scoreListType) {
             case List::TIME:
                 cout << "time" << endl;
@@ -285,22 +281,20 @@ void Config::listScores() {
 
             cout << endl;
 
-            qsort(scores, count, sizeof(Score), compareFunc);
+            sort(scores.begin(), scores.end(), compareFunc);
         }
 
-        Score *filteredScores;
-
-        count = filterScores(scores, count, &filteredScores, (int)listFlagging,
-                             (int)listFinished, player.field.width,
-                             player.field.height, player.field.mineCount,
-                             squareSize, player.field.playerName);
+        vector<Score> filteredScores =
+          filterScores(scores, (int)listFlagging,
+                       (int)listFinished, player.field.width,
+                       player.field.height, player.field.mineCount,
+                       squareSize, player.field.playerName);
 
         //    cout<<"count="<<count<<endl;
 
-        displayScores(filteredScores, count, scoreListLength,
+        displayScores(filteredScores, scoreListLength,
                       scoreListType == List::EXPORT_CSV);
 
         cout << endl;
-        free(scores);
     }
 }

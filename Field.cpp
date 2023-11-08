@@ -354,17 +354,11 @@ void Field::endGame(const bool won) {
             
             int oldFinalResultDisplay = conf.player.field.oldFinalResultDisplay;
 
-            Score *scores;
-
-            int count=loadScores(fullpath,&scores);
+            vector<Score> scores = loadScores(fullpath);
 
 
-            evalScore(newScore,scores, count, width, height, mineCount,oldFinalResultDisplay,conf.scoreListLength); // XXX
+            evalScore(newScore,scores, width, height, mineCount,oldFinalResultDisplay,conf.scoreListLength); // XXX
 
-            free(scores); 
-
-            // find the lowest unused replay file number
-            
             long nr=1;
 
             nr=findLowestUnusedReplayNumber();
