@@ -3,6 +3,7 @@
 
 #include "Player.h"
 #include "common.h"
+#include <string>
 
 struct Config {
     enum GameState {
@@ -56,13 +57,13 @@ struct Config {
     List scoreListType = List::TIME;
     Flagging listFlagging = Flagging::BOTH;
     Finished listFinished = Finished::FINISHED_ONLY;
-    char cacheDirectory[100];
+    string cacheDirectory;
     bool isFlagging;
     bool gamePaused = false;
     bool playReplay = false;
     bool boolDrawCursor = false;
 
-    char replayFileName[110];
+    string replayFileName;
     bool printScores = false;
 
     bool defaultCacheDirectory = true;

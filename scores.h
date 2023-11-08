@@ -59,9 +59,9 @@ int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fi
 
 void displayScores(Score *scores, int count,int limit,bool csv=false);
 
-int loadScores(char *fname, Score **scores);
+int loadScores(const char *fname, Score **scores);
 
-void appendScore(char *fname, Score score);
+void appendScore(const char *fname, Score score);
 
 bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength,int *returnCountNF);
 

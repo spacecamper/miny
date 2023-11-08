@@ -2,7 +2,6 @@
 
 #include "scores.h"
 #include <algorithm>
-#include <string.h>
 
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
@@ -117,9 +116,7 @@ void Config::handleOption(char option, char *arg, bool from_cli) {
             strncpy(player.field.playerName, optarg, 20);
         break;
     case 'p':
-        strcpy(replayFileName, cacheDirectory);
-        strcat(replayFileName, arg);
-        strcat(replayFileName, ".replay");
+        replayFileName = cacheDirectory + arg + ".replay";
         playReplay = true;
         boolDrawCursor = true;
         break;
@@ -131,14 +128,14 @@ void Config::handleOption(char option, char *arg, bool from_cli) {
 
         if (length > 101) {
             cout << "Config directory path must be shorter than 100 characters. "
-                            "Exiting."
-                     << endl;
+                    "Exiting."
+                 << endl;
             exit(1);
         } else {
             defaultCacheDirectory = false;
-            strcpy(cacheDirectory, optarg);
+            cacheDirectory = optarg;
             if (optarg[strlen(optarg) - 1] != '/')
-                strcat(cacheDirectory, "/");
+                cacheDirectory += "/";
         }
         break;
     }
@@ -216,12 +213,10 @@ void Config::handleOption(char option, int arg, bool from_cli) {
 void Config::listScores() {
     // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
-    char fullpath[110];
-    strcpy(fullpath, cacheDirectory);
-    strcat(fullpath, "scores.dat");
+    string fullpath = cacheDirectory + "scores.dat";
 
     Score *scores;
-    int count = loadScores(fullpath, &scores);
+    int count = loadScores(fullpath.c_str(), &scores);
 
     if (count == 0) { // no scores in score file
         if (scoreListType != List::EXPORT_CSV)

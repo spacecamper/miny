@@ -7,6 +7,7 @@
 #endif
 
 #include <algorithm>
+#include <string>
 #include <sys/stat.h>
 #include "Config.h"
 #include "common.h"
@@ -31,15 +32,9 @@ Field::Field() {
 
 bool Field::replayFileNumberExists(long nr) {
     struct stat buffer;  
-    char rfname[100];
-        
-    char tmp[110];
-    strcpy(tmp,conf.cacheDirectory);
-    sprintf(rfname,"%lu.replay",nr);
-
-    strcat(tmp,rfname);
+    string tmp = conf.cacheDirectory + to_string(nr) + ".replay";
     
-    if (stat(tmp, &buffer) != 0) {
+    if (stat(tmp.c_str(), &buffer) != 0) {
         return false;
     }
 
@@ -84,9 +79,7 @@ void Field::unpauseGame() {
 void Field::saveReplay(const char *fname, Score *score) {
     ofstream ofile;
     
-    char fullpath[110];
-    strcpy(fullpath,conf.cacheDirectory);
-    strcat(fullpath,fname);
+    string fullpath = conf.cacheDirectory + fname;
 
     ofile.open (fullpath);
 
@@ -351,9 +344,7 @@ void Field::endGame(const bool won) {
     
     
     if(!conf.playReplay) {
-        char fullpath[110];
-        strcpy(fullpath,conf.cacheDirectory);
-        strcat(fullpath,"scores.dat");
+        string fullpath = conf.cacheDirectory + "scores.dat";
  
         showStatistics(won,newScore,conf.playReplay);
         
@@ -365,7 +356,7 @@ void Field::endGame(const bool won) {
 
             Score *scores;
 
-            int count=loadScores(fullpath,&scores);
+            int count=loadScores(fullpath.c_str(),&scores);
 
 
             evalScore(newScore,scores, count, width, height, mineCount,oldFinalResultDisplay,conf.scoreListLength); // XXX
@@ -378,15 +369,11 @@ void Field::endGame(const bool won) {
 
             nr=findLowestUnusedReplayNumber();
             newScore.replayNumber=nr;
-            appendScore(fullpath,newScore);
+            appendScore(fullpath.c_str(),newScore);
 
-            char rfname[100];
+            string rfname = to_string(nr) + ".replay";
 
-            char tmp[110];
-            strcpy(tmp,conf.cacheDirectory);
-            sprintf(rfname,"%lu.replay",nr);
-
-            saveReplay(rfname,&newScore);
+            saveReplay(rfname.c_str(),&newScore);
 
             saveReplay("last.replay",&newScore);
         } 
@@ -395,7 +382,7 @@ void Field::endGame(const bool won) {
         //    cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
             
             newScore.replayNumber=0;
-            appendScore(fullpath,newScore);
+            appendScore(fullpath.c_str(),newScore);
 
             saveReplay("last.replay", &newScore  );
         }

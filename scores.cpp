@@ -456,7 +456,7 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
 
 
-int loadScores(char *fname, Score **scores) {
+int loadScores(const char *fname, Score **scores) {
 
 
     *scores=NULL;
@@ -533,7 +533,7 @@ int loadScores(char *fname, Score **scores) {
 }
 
 
-void appendScore(char *fname, Score score) {
+void appendScore(const char *fname, Score score) {
 
  //   cout << "Opening score file... "<<flush;
     
@@ -600,8 +600,6 @@ void evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int coun
 //    }                                                                        // eg 0 when a score ranks as last
                                                                                 
                      
-    cout ;
-    
     *scoreString << right << fixed << 
         setw(7) << setprecision(0) << (position+1) <<   // position
        /* setw(2) <<*/ suffix <<                            // suffix (-st, -th)

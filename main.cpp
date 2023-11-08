@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <stdio.h>
-#include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -19,6 +18,7 @@
 #include <sstream>
 #include <algorithm>
 #include <list>
+#include <vector>
 #include <iomanip>
 
 #ifdef __APPLE__
@@ -55,8 +55,8 @@ void redisplay() {
 }
 
 
-bool fileExists(const char* path) {
-    return access(path, F_OK) == 0;
+bool fileExists(string& path) {
+    return access(path.c_str(), F_OK) == 0;
 }
 bool directoryExists( const char* pzPath )
 {
@@ -535,7 +535,7 @@ void initGraph() {
 }
 
 void displayReplay() {
-    if (conf.player.loadReplay(conf.replayFileName)) {
+    if (conf.player.loadReplay(conf.replayFileName.c_str())) {
         exit(1);
     }
 
@@ -557,29 +557,29 @@ void beginGame() {
     glutTimerFunc(50, update, 0);
 }
 
-bool find_argfile(char* out) {
+bool findArgFile(string& file) {
     // Try $XDG_CONFIG_HOME/miny
     char* confdir = getenv("XDG_CONFIG_HOME");
     if (confdir) {
-        strcpy(out, confdir);
-        strcat(out, "/miny/default.args");
-        if (fileExists(out)) return true;
+        file = confdir;
+        file += "/miny/default.args";
+        if (fileExists(file)) return true;
     }
 
     // Try ~/.config/miny
-    strcpy(out, getenv("HOME"));
-    strcat(out, "/.config/miny/default.args");
-    if (fileExists(out)) return true;
+    file = getenv("HOME");
+    file += "/.config/miny/default.args";
+    if (fileExists(file)) return true;
 
     // Try ~/.miny
-    strcpy(out, getenv("HOME"));
-    strcat(out, "/.miny/default.args");
-    if (fileExists(out)) return true;
+    file = getenv("HOME");
+    file += "/.miny/default.args";
+    if (fileExists(file)) return true;
 
     return false;
 }
 
-void handle_args(int argc, char** argv) {
+void handleArgs(int argc, char* const argv[]) {
     const static option long_opts[2] = { {"help", 0, NULL, 'H'}, {} };
 
     optind = 1;
@@ -599,24 +599,22 @@ int main(int argc, char** argv) {
 
     glutInit(&argc, argv);
 
-    char *home = getenv("HOME");
+    string home = getenv("HOME");
     char *xdgDataHome = getenv("XDG_DATA_HOME");
     if (xdgDataHome) {
-        strcpy(conf.cacheDirectory, xdgDataHome);
+        conf.cacheDirectory = xdgDataHome;
     } else {
-        strcpy(conf.cacheDirectory, home);
-        strcat(conf.cacheDirectory, "/.local/share");
+        conf.cacheDirectory = home + "/.local/share";
     }
-    bool configExists = directoryExists(conf.cacheDirectory);
-    strcat(conf.cacheDirectory, "/miny/");
+    bool configExists = directoryExists(conf.cacheDirectory.c_str());
+    conf.cacheDirectory += "/miny/";
     // default to the old file if it exists and the new one doesn't
     // also check that config_home exists before putting stuff there
-    if (!directoryExists(conf.cacheDirectory) ) {
-        char oldMinyDir[100];
-        strcpy(oldMinyDir, home);
-        strcat(oldMinyDir, "/.miny/");
-        if (!configExists || directoryExists(oldMinyDir)) {
-            strcpy(conf.cacheDirectory, oldMinyDir);
+    if (!directoryExists(conf.cacheDirectory.c_str()) ) {
+        string oldMinyDir = home;
+        oldMinyDir += "/.miny/";
+        if (!configExists || directoryExists(oldMinyDir.c_str())) {
+            conf.cacheDirectory = oldMinyDir;
         }
     }
 
@@ -626,27 +624,29 @@ int main(int argc, char** argv) {
 
     conf.player.field.oldFinalResultDisplay=false;
 
-    char args[512];
-    if (find_argfile(args)) {
-        std::ifstream file(args, ios_base::in);
-        file.getline(args, sizeof(args));
-        if (args[0]) {
-            int file_argc = 2;
-            char* file_argv[32];
-            file_argv[0] = argv[0];
-            file_argv[1] = args;
-            for (int i = 0; args[i]; ++i) {
-                if (args[i] == ' ') {
-                    args[i++] = 0;
-                    while (args[i] == ' ' && args[i] != 0) ++i;
-                    file_argv[file_argc++] = args + i;
-                }
-            }
-            handle_args(file_argc, file_argv);
+    string fileName;
+    if (findArgFile(fileName)) {
+        std::ifstream file(fileName, ios_base::in);
+        string str;
+        getline(file, str);
+        vector<string> argsStrs;
+        vector<char*> args { nullptr };
+        const char* space = " \t";
+        int j = str.find_first_of(space);
+        if (j == -1 && str.size() > 0) j = str.size();
+        for (int i = 0; i != -1 && j != -1;) {
+            argsStrs.push_back(str.substr(i, j - i));
+            cout << argsStrs.back() << endl;
+            args.push_back(&argsStrs.back()[0]);
+            i = str.find_first_not_of(space, j);
+            if (i == -1) break;
+            j = str.find_first_of(space, i);
+            if (j == -1) j = str.size();
         }
+        handleArgs((int)args.size(), &args[0]);
     }
 
-    handle_args(argc, argv);
+    handleArgs(argc, argv);
 
     if (strlen(conf.player.field.playerName)!=0 && !isValidName(conf.player.field.playerName)) {
         cout << "Name can be max. 20 characters long and can only contain the characters a-z, "
@@ -662,9 +662,9 @@ int main(int argc, char** argv) {
 
     // config directory
 
-    if (!directoryExists(conf.cacheDirectory)) {
+    if (!directoryExists(conf.cacheDirectory.c_str())) {
         if (conf.defaultCacheDirectory) {
-            if (execlp("mkdir", "mkdir", conf.cacheDirectory, NULL)) {
+            if (execlp("mkdir", "mkdir", conf.cacheDirectory.c_str(), NULL)) {
                 cerr << "Error creating config directory. Exiting." << endl;
                 exit(1);
             }
