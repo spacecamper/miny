@@ -6,6 +6,7 @@
 #include <GL/freeglut_ext.h>
 #endif
 
+#include <algorithm>
 #include <sys/stat.h>
 #include "Config.h"
 #include "common.h"
@@ -207,23 +208,9 @@ int Field::get3BV() {
 
 
 void Field::checkValues() {
-
-   if (height<2) 
-        height=2;
-    else if (height>MAX_HEIGHT) 
-        height=MAX_HEIGHT;
-    
-
-    if (width<2) 
-        width=2;
-    else if (width>MAX_WIDTH) 
-        width=MAX_WIDTH;
-    
-    if (mineCount>=height*width)
-        mineCount=height*width-2;
-    else if (mineCount<2)
-        mineCount=2;
-
+   height=clamp(height, (short)2, (short)MAX_HEIGHT);
+   width=clamp(width, (short)2, (short)MAX_WIDTH);
+   mineCount=clamp(mineCount, (short)2, (short)(height * width - 2));
 }
 
 
@@ -547,7 +534,7 @@ void Field::startGame(int squareX, int squareY) {
         placeMines(squareX,squareY);
 
     timer.start();
-    conf.gameState=Config::GAME_PLAYING;
+    conf.gameStarted();
 }
 
 void Field::click(int x,int y,int button) {

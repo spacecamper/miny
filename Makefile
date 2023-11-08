@@ -11,7 +11,7 @@ endif
 
 all: $(PROG)
 
-$(PROG): Timer.o main.o Replay.o Field.o scores.o common.o Player.o Action.o ReadMe.o
+$(PROG): Timer.o main.o Replay.o Config.o Field.o scores.o common.o Player.o Action.o ReadMe.o
 	${CXX} -o $@ $^ ${LDLIBS}
 
 main.o: main.cpp

@@ -45,14 +45,10 @@
 
 
 // TODO prevent buffer overflows (strcpy and strcat)
-// TODO free allocated memory (after using scores from loadScores and filterScores is finished)
-
 using namespace std;
 
 
 Config conf;
-
-extern char readme[];
 
 void redisplay() {
     glutPostRedisplay();
@@ -202,13 +198,13 @@ void drawBackground(int fieldWidth, int fieldHeight) {
             48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
     glColor3f(0,0,0);
-    drawRect(conf.originalWidth-(BORDER_WIDTH+DISPLAY_BORDER_WIDTH+48),
+    drawRect(conf.targetWidth()-(BORDER_WIDTH+DISPLAY_BORDER_WIDTH+48),
             BORDER_WIDTH,
             48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
     // new game button
     glColor3f(1,1,0);
-    drawRect(conf.originalWidth/2-12-DISPLAY_BORDER_WIDTH/2,
+    drawRect(conf.targetWidth()/2-12-DISPLAY_BORDER_WIDTH/2,
             BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
@@ -416,7 +412,7 @@ void displayElapsedTime(long etime) {
 
     if (etime>999) etime=999;
 
-    const int dx=conf.originalWidth-BORDER_WIDTH-16;
+    const int dx=conf.targetWidth()-BORDER_WIDTH-16;
     const int dy=BORDER_WIDTH+DISPLAY_BORDER_WIDTH;
 
     for (int i=0;i<3;i++) {
@@ -481,6 +477,7 @@ void handleResize(int w, int h) {
 }
 
 void keyDown(unsigned char key, int x, int y) {
+    conf.handleInput(key);
     conf.player->handleInput(-((int)key), 0, 0);
 }
 
@@ -512,11 +509,8 @@ void update(int value) {
 void initGraph() {
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    conf.windowWidth=FIELD_X+conf.player->field.width*conf.squareSize+BORDER_WIDTH;
-    conf.windowHeight=FIELD_Y+conf.player->field.height*conf.squareSize+BORDER_WIDTH;
-
-    conf.originalWidth=conf.windowWidth;
-    conf.originalHeight=conf.windowHeight;
+    conf.windowWidth=conf.targetWidth();
+    conf.windowHeight=conf.targetHeight();
 
     glutInitWindowSize(conf.windowWidth, conf.windowHeight);
         
@@ -542,11 +536,10 @@ void initGraph() {
     }
 }
 
-void displayReplay(char replayFileName[100]) {
-    if (conf.player->loadReplay(replayFileName)) {
+void displayReplay() {
+    if (conf.player->loadReplay(conf.replayFileName)) {
         exit(1);
     }
-    conf.squareSize=conf.squareSize;
 
     conf.player->field.init();
     cout << "Playing replay..." << endl;
@@ -556,167 +549,14 @@ void displayReplay(char replayFileName[100]) {
     glutTimerFunc(0, update, 0);
 }
 
-void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished) {
-    // TODO 'other' setups may produce too high 3BV/s etc and break layout
-
-    char fullpath[110];
-    strcpy(fullpath,conf.cacheDirectory);
-    strcat(fullpath,"scores.dat");
-
-    Score *scores;
-    int count=loadScores(fullpath,&scores);
-
-    if (count==0) {      // no scores in score file
-        if (listScoresType!=4)
-            cout<<"No high scores yet."<<endl;
-    }
-    else {
-        if (listScoresType!=4) {    // if not display as csv, then info about filter and sort
-            cout << endl << "Displaying scores."<<endl;
-            cout << setw(16)<<left<<"Sorted by: ";
-
-            int (*compareFunc)(const void *,const void *)=NULL;
-            switch(listScoresType) {
-            case 1:
-                cout << "time" << endl;
-                compareFunc=compareByTime; break;
-            case 2:
-                cout << "3BV/s" << endl;
-                compareFunc=compareBy3BVs; break;
-            case 3:
-                cout << "IOE" << endl;
-                compareFunc=compareByIOE; break;
-            }
-
-            cout << setw(16)<<left<<"Flagging: ";
-            switch (listFlagging) {
-            case 0: cout << "all"<<endl; break;
-            case 1: cout << "flagging only"<<endl; break;
-            case 2: cout << "non-flagging only"<<endl; break;
-            }
-
-            cout << setw(16)<<left<<"Won: ";
-            switch (listFinished) {
-            case 0: cout << "all"<<endl; break;
-            case 1: cout << "won only"<<endl; break;
-            case 2: cout << "lost only"<<endl; break;
-            }
-
-            cout << setw(16)<<left<<"Difficulty: ";
-
-            
-            bool standardDifficulty=false;
-
-
-            if (conf.player->field.width==0 and conf.player->field.height==0 and conf.player->field.mineCount==0) {
-                cout << "beginner, intermediate, expert, beginner classic"<<endl; 
-                standardDifficulty=true;
-            }
-            else if (conf.player->field.width==9 and conf.player->field.height==9 and conf.player->field.mineCount==10) {
-                cout << "beginner only"<<endl; 
-                standardDifficulty=true;
-            }
-            else if (conf.player->field.width==16 and conf.player->field.height==16 and conf.player->field.mineCount==40) {
-                cout << "intermediate only"<<endl; 
-                standardDifficulty=true;
-            }
-            else if (conf.player->field.width==30 and conf.player->field.height==16 and conf.player->field.mineCount==99) {
-                cout << "expert only"<<endl; 
-                standardDifficulty=true;
-            }
-            else if (conf.player->field.width==8 and conf.player->field.height==8 and conf.player->field.mineCount==10) {
-                cout << "beginner classic only"<<endl; 
-                standardDifficulty=true;
-            }
-            
-
-
-            if (!standardDifficulty) 
-                cout << conf.player->field.width << "x" << conf.player->field.height << ", " << conf.player->field.mineCount << " mines" << endl;
-            
-
-
-            cout << setw(16)<<left<<"Square size: ";
-            if (conf.squareSize!=0)
-                cout <<conf.squareSize<<endl;
-            else
-                cout << "all"<<endl;
-
-            cout << setw(16)<<left<<"Player name: ";
-            if (!strcmp(conf.player->field.playerName,""))
-                cout<<"all"<<endl;
-            else
-                cout<<conf.player->field.playerName<<endl;
-
-            cout << setw(16)<<left<<"Count: ";
-            if (scoreListLength!=0)
-                cout <<scoreListLength<<endl;
-            else
-                cout << "all"<<endl;
-        
-            cout<<endl;
-
-            qsort(scores,count,sizeof(Score),compareFunc);
-        }
-
-
-
-        Score *filteredScores;
-
-
-        count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
-            conf.player->field.width, conf.player->field.height, conf.player->field.mineCount, conf.squareSize,conf.player->field.playerName);
-
-    //    cout<<"count="<<count<<endl;
-
-        displayScores(filteredScores,count,scoreListLength,listScoresType==4);
-
-        cout<<endl;
-        free(scores);
-    }
-}
 
 void beginGame() {
-    
     conf.player->field.checkValues();
 
     initGraph();
     conf.player->field.init();
 
     glutTimerFunc(50, update, 0);
-}
-
-void configureSize(int difficulty, Field* field) {
-    if (field->width!=0 and field->height!=0 and field->mineCount!=0) {  // if these values were specified on the command line
-        difficulty=-1;      // prevent altering them in the switch
-    }
-    switch(difficulty) {
-        case 0:
-            field->height=0;
-            field->width=0;
-            field->mineCount=0;
-            break;
-        case 1:
-            field->height=9;
-            field->width=9;
-            field->mineCount=10;
-            break;
-        case 2:
-            field->height=16;
-            field->width=16;
-            field->mineCount=40;
-            break;
-        case 3:
-            field->height=16;
-            field->width=30;
-            field->mineCount=99;
-            break;
-        case 4:
-            field->height=8;
-            field->width=8;
-            field->mineCount=10;
-            break;
-    } 
 }
 
 bool find_argfile(char* out) {
@@ -741,104 +581,17 @@ bool find_argfile(char* out) {
     return false;
 }
 
-struct ArgInfo {
-    char replayName[100];
-    char replayFileName[110];
-    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
-
-    int difficulty=2;   // 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic
-    int listFlagging=0;  // 0-both, 1-flagging, 2-nf
-    int listFinished=1; //  0-both, 1-finished, 2-unfinished
-    int scoreListLength=MAX_HS;        // how many scores to display
-
-    bool defaultConfigDirectory=true;
-};
-
-void handle_args(int argc, char** argv, Player& player, ArgInfo& arg_info) {
+void handle_args(int argc, char** argv) {
     const static option long_opts[2] = { {"help", 0, NULL, 'H'}, {} };
 
     optind = 1;
     char option_char;
-    while ((option_char = getopt_long(argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:o", long_opts, NULL)) != -1) {
-        switch (option_char) {  
-            case 'o':
-                player.field.oldFinalResultDisplay=true;
-                
-                break;
-            case 'd': 
-                arg_info.difficulty=atoi(optarg);
-                break;
-            case 's': 
-                conf.squareSize=atoi(optarg);
-                break;
-            case 'm': 
-                player.field.mineCount=atoi(optarg);
-                break;
-            case 'w': 
-                player.field.width=atoi(optarg);
-                break;
-            case 'h': 
-                player.field.height=atoi(optarg);
-                break;
-            case 'n':
-                if (strlen(optarg)<20)
-                    strcpy(player.field.playerName,optarg);
-                else
-                    strncpy(player.field.playerName,optarg,20);
-                
-                break;
-            case 'p':
-                strcpy(arg_info.replayName,optarg);
-                conf.playReplay=true;
-                conf.boolDrawCursor=true;
-                break;
-            case 'l':
-                arg_info.scoreListLength=atoi(optarg);
-                break;
-            case '3':
-                arg_info.listScoresType=2;
-                break;
-            case 't':
-                arg_info.listScoresType=1;
-                break;
-            case 'i':
-                arg_info.listScoresType=3;
-                break;
-
-            case 'f':
-                arg_info.listFlagging=optarg[0]-'0';
-                break;
-            case 'g':
-                arg_info.listFinished=optarg[0]-'0';
-                break;
-            case 'c':
-                arg_info.listScoresType=4;
-                break;
-            case 'C': {
-                int length=strlen(optarg);
-
-                if (optarg[strlen(optarg)-1]!='/') 
-                    length++;
-
-                if (length>101) {
-                    cout<<"Config directory path must be shorter than 100 characters. Exiting."<<endl;
-                    exit(1);
-                }
-                else {
-                    arg_info.defaultConfigDirectory=false;
-                    strcpy(conf.cacheDirectory,optarg);
-                    if (optarg[strlen(optarg)-1]!='/') 
-                        strcat(conf.cacheDirectory,"/");
-                }
-                break;
-                }
-            case 'H':
-                puts(readme);
-                exit(0);
-            case '?':
-                exit(1);
-
-        }
+    while ((option_char = getopt_long(argc, argv, "Hd:s:w:h:m:n:p:t3f:cg:il:C:o", long_opts, NULL)) != -1) {
+        conf.handleOption(option_char, optarg);
+        if (option_char == 'H')
+           exit(0);
+        else if(option_char == '?')
+           exit(1);
     }
     
 }
@@ -849,17 +602,9 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
 
     Player player;
-
-    player.field.height=0;
-    player.field.width=0;
-    player.field.mineCount=0;
     player.field.replay.recording=false;
-
-    ArgInfo arg_info;
-
-    conf.gameState=Config::GAME_INITIALIZED;
-    conf.gamePaused=false;
-    conf.boolDrawCursor=false;
+    conf.player=&player;
+    conf.setDifficulty(2);
 
     char *home = getenv("HOME");
     char *xdgDataHome = getenv("XDG_DATA_HOME");
@@ -904,16 +649,11 @@ int main(int argc, char** argv) {
                     file_argv[file_argc++] = args + i;
                 }
             }
-            handle_args(file_argc, file_argv, player, arg_info);
+            handle_args(file_argc, file_argv);
         }
     }
 
-    handle_args(argc, argv, player, arg_info);
-
-    if (arg_info.listScoresType==0 and conf.squareSize==0) {
-        conf.squareSize=35;
-    }
-
+    handle_args(argc, argv);
 
     if (strlen(player.field.playerName)!=0 && !isValidName(player.field.playerName)) {
         cout << "Name can be max. 20 characters long and can only contain the characters a-z, "
@@ -922,7 +662,7 @@ int main(int argc, char** argv) {
     }
 
 
-    if (arg_info.listScoresType!=4) {
+    if (conf.scoreListType!=Config::List::EXPORT_CSV) {
         cout<<"Miny v"<<VERSION<<" (c) 2015-2019, 2021, 2023 spacecamper"<<endl;
         cout << "See README or --help for info and help."<<endl;
     }
@@ -930,7 +670,7 @@ int main(int argc, char** argv) {
     // config directory
 
     if (!directoryExists(conf.cacheDirectory)) {
-        if (arg_info.defaultConfigDirectory) {
+        if (conf.defaultCacheDirectory) {
             if (execlp("mkdir", "mkdir", conf.cacheDirectory, NULL)) {
                 cerr << "Error creating config directory. Exiting." << endl;
                 exit(1);
@@ -944,23 +684,11 @@ int main(int argc, char** argv) {
     }
 
     if (conf.playReplay) {
-        strcpy(arg_info.replayFileName,conf.cacheDirectory);
-        strcat(arg_info.replayFileName,arg_info.replayName);
-        strcat(arg_info.replayFileName,".replay");
-    }
-    
-    conf.player=&player;
-    conf.scoreListLength=arg_info.scoreListLength;
-
-    if (conf.playReplay) {
-        displayReplay(arg_info.replayFileName);
+        displayReplay();
     }
     else { 
-        
-        configureSize(arg_info.difficulty, &(player.field));
-        
-        if (arg_info.listScoresType!=0) { // list scores
-            listScores(arg_info.listScoresType, arg_info.scoreListLength, arg_info.listFlagging, arg_info.listFinished);
+        if (conf.printScores) { // list scores
+            conf.listScores();
         }
         else {
            // play
@@ -981,23 +709,11 @@ int main(int argc, char** argv) {
                     strcpy(player.field.playerName,"unnamed");
                 }
             }
-
-          /*  if (config.squareSize==0) {
-                config.squareSize=35;
-            }*/
-
-            if (conf.squareSize<3) {
-                conf.squareSize=3;
-            }
-            else if (conf.squareSize>100) {
-                conf.squareSize=100;
-            }
-
             beginGame();
         }
     }
 
-    if(arg_info.listScoresType==0){
+    if (!conf.printScores) {
         glutMainLoop();
     }
 

@@ -206,8 +206,8 @@ void Player::takeAction(int button, int x, int y) {
             field.click(x, y, button);
         }
 
-        else if (x>conf.originalWidth/2-12-DISPLAY_BORDER_WIDTH/2 and
-                x<conf.originalWidth/2+12+DISPLAY_BORDER_WIDTH/2 and
+        else if (x>conf.targetWidth()/2-12-DISPLAY_BORDER_WIDTH/2 and
+                x<conf.targetWidth()/2+12+DISPLAY_BORDER_WIDTH/2 and
                 y>BORDER_WIDTH and
                 y<BORDER_WIDTH+24+DISPLAY_BORDER_WIDTH and
                 button!=-1) {
@@ -252,9 +252,6 @@ void Player::takeAction(unsigned char button, int x, int y) {
         field.replay.dump();
         cout << field.calculate3BV() << endl;
         break;
-    case 'd':
-        cout << sizeof(Score)<<endl;
-        break;
 
     case 'q':
         exit(0);
@@ -269,7 +266,4 @@ void Player::handleInput(int button, int x, int y) {
     data.push_back(*input);
  //   field.replay.data.push_back(*(new Action(x,y,button,(gameState==Config::GAME_INITIALIZED ? 0 : field.timer.calculateElapsedTime()))));
  //   field.replay.recordEvent(x,y,button,field.timer.calculateElapsedTime());
-
-
-
 }

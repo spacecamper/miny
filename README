@@ -90,6 +90,7 @@ OPTIONS
 
  -t   list best times for the selected setup
  -3   list best 3BV/s for the selected setup
+ -B   alias for -3
  -i   list best IOEs for the selected setup
  -c   list results as CSV, e.g. for further analysis in Excel/Calc. Scores are
       listed in the order they were achieved, i.e. ordered by date. The -l 
@@ -113,8 +114,9 @@ OPTIONS
       other games.
  -C?  cache directory different to the default $XDG_DATA_HOME/miny or $HOME/.miny
  -o   display the currently finished game result the more brief, old way
+ -H   display this message
+ --help alias for -H
 
- --help display this message
 
 DEFAULT OPTIONS
 

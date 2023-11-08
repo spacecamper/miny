@@ -26,6 +26,8 @@ using namespace std;
 
 #define MAX_NAME_LENGTH 20
 
+extern char readme[];
+
 void ordinalNumberSuffix(char *, int);
 
 unsigned int terminalWidth();
