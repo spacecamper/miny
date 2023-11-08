@@ -108,7 +108,7 @@ int Config::getDifficulty() {
 }
 
 void Config::handleOption(char option, char *arg, bool from_cli) {
-    handleOption(option, atoi(arg), from_cli);
+    handleOption(option, arg == nullptr ? 0 : atoi(arg), from_cli);
     switch (option) {
     case 'n':
         if (strlen(optarg) < 20)
@@ -185,8 +185,7 @@ void Config::handleOption(char option, int arg, bool from_cli) {
     case 'l':
         scoreListLength = arg;
         break;
-    case '3':
-    case 'B':
+    case '3': case 'B':
         printScores = true;
         scoreListType = List::BBBV;
         break;
@@ -209,7 +208,8 @@ void Config::handleOption(char option, int arg, bool from_cli) {
         listFinished = getFinishedOrDefault(arg);
         break;
     case 'H':
-        puts(readme);
+        cout << readme;
+        break;
     }
 }
 
