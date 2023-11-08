@@ -57,13 +57,13 @@ void Config::handleInput(char key) {
     }
 }
 
-#define set_if_0(VAR, VAL) if (VAR == 0 || !from_cli) VAR = VAL;
+#define set_if_0(VAR, VAL) if (VAR == 0 || force) VAR = VAL;
 #define set3(H, W, M) \
 set_if_0(player.field.height, H);\
 set_if_0(player.field.width, W);\
 set_if_0(player.field.mineCount, M);
-void Config::setDifficulty(int difficulty, bool from_cli) {
-    switch (difficulty) {
+void Config::setDifficulty(bool force) {
+    switch (baseDifficulty) {
     case 0: set3(0, 0, 0); break;
     case 1: set3(9, 9, 10); break;
     case 2: set3(16, 16, 40); break;
@@ -125,10 +125,12 @@ void Config::handleOption(char option, int arg, bool from_cli) {
                      << " format." << endl;
         break;
     case 'd':
-        setDifficulty(arg, from_cli);
-        if (!from_cli)
-            cout << "Set difficulty to " << getDifficulty() << "." << endl;
-        break;
+        baseDifficulty = arg;
+        if (!from_cli) {
+            setDifficulty(true);
+            cout << "Set difficulty to " << arg << "." << endl;
+        }
+      break;
     case 's':
         squareSize = clamp(arg, 3, 100);
         if (!from_cli)

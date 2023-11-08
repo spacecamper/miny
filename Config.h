@@ -43,13 +43,16 @@ struct Config {
 
     inline Config() {
 	  player.field.replay.recording=false;
-	  setDifficulty(0, false);
 	}
 
 
     Player player;
     int windowWidth;
     int windowHeight;
+    // difficulty: 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic; -1 custom
+    // The difficulty value used from the CLI if other values were not
+    // explicitly given.
+    int baseDifficulty = 2;
 
     int squareSize = 35;
     int scoreListLength = MAX_HS;
@@ -74,8 +77,10 @@ struct Config {
     // Handle input relating to game configuration, rather than actions that
     // affect the game.
     void handleInput(char key);
-    // difficulty: 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic; -1 custom
-    void setDifficulty(int difficulty, bool from_cli);
+    // Update Field to reflect the stated difficulty option, setting those
+    // options that have not already been set unless force.
+    void setDifficulty(bool force = false);
+    // Get the value of difficulty being used.
     int getDifficulty();
     int targetWidth();
     int targetHeight();

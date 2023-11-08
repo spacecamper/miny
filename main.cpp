@@ -638,6 +638,10 @@ int main(int argc, char** argv) {
 
     handleArgs(argc, argv);
 
+    // Set the difficulty after other args have been set so that only the final
+    // value -d argument affects the values used.
+    conf.setDifficulty();
+
     if (conf.player.field.playerName != "" && !isValidName(conf.player.field.playerName)) {
         cout << "Name can can only contain the characters a-z, A-Z, 0-9, underscore (_), dot" << endl
              << "(.), at sign (@) and dash (-)." << endl;
