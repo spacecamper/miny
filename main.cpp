@@ -186,6 +186,15 @@ void drawFlag(int squareSize, int x, int y) {
     glEnd();
 }
 
+void horizontalLine(float x, float y, float length) {
+    glVertex2f(x, y + 0.6);
+    glVertex2f(x + length, y + 0.6);
+}
+void verticalLine(float x, float y, float length) {
+    glVertex2f(x + 0.6, y);
+    glVertex2f(x + 0.6, y + length);
+}
+
 void drawBackground(int fieldWidth, int fieldHeight) {
     // highlight boxes for in game statistics    
     glColor3f(0,0,0);
@@ -209,12 +218,10 @@ void drawBackground(int fieldWidth, int fieldHeight) {
     glColor3f(.3,.3,.3);
     glBegin(GL_LINES); 
     for (int i=0;i<fieldHeight+1;i++) {
-        glVertex2f(FIELD_X+0.5,FIELD_Y+i*conf.squareSize+0.5);
-        glVertex2f(FIELD_X+fieldWidth*conf.squareSize+1.5,FIELD_Y+i*conf.squareSize+0.5);
+        horizontalLine(FIELD_X, FIELD_Y+i*conf.squareSize, fieldWidth*conf.squareSize + 1.4);
     }
     for (int i=0;i<fieldWidth+1;i++) {
-        glVertex2f(FIELD_X+i*conf.squareSize+0.5,FIELD_Y+0.5);
-        glVertex2f(FIELD_X+i*conf.squareSize+0.5,FIELD_Y+fieldHeight*conf.squareSize+1.5);
+        verticalLine(FIELD_X+i*conf.squareSize, FIELD_Y, fieldHeight*conf.squareSize + 1.4);
     }
     glEnd();
 }
