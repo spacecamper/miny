@@ -3,7 +3,7 @@
 using namespace std;
 
 bool isValidName(const string& s) {
-   return -1 == s.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.@-");
+   return string::npos == s.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.@-");
 }
 
 const char* ordinalNumberSuffix(int n) {

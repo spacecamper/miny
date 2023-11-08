@@ -622,16 +622,16 @@ int main(int argc, char** argv) {
         vector<string> argsStrs;
         vector<char*> args { nullptr };
         const char* space = " \t";
-        int j = str.find_first_of(space);
-        if (j == -1 && str.size() > 0) j = str.size();
-        for (int i = 0; i != -1 && j != -1;) {
+        size_t j = str.find_first_of(space);
+        if (j == string::npos && str.size() > 0) j = str.size();
+        for (size_t i = 0; i != string::npos && j != string::npos;) {
             argsStrs.push_back(str.substr(i, j - i));
             cout << argsStrs.back() << endl;
             args.push_back(&argsStrs.back()[0]);
             i = str.find_first_not_of(space, j);
-            if (i == -1) break;
+            if (i == string::npos) break;
             j = str.find_first_of(space, i);
-            if (j == -1) j = str.size();
+            if (j == string::npos) j = str.size();
         }
         handleArgs((int)args.size(), &args[0]);
     }
