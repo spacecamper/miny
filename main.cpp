@@ -443,25 +443,25 @@ void drawScene() {
     glLoadIdentity();
 
     if (conf.boolDrawCursor) {
-        drawCursor(conf.player->cursorX, conf.player->cursorY);
+        drawCursor(conf.player.cursorX, conf.player.cursorY);
     }
     
-    displayRemainingMines(conf.player->field.calculateRemainingMines());
+    displayRemainingMines(conf.player.field.calculateRemainingMines());
 
-    displayElapsedTime(conf.player->field.timer.calculateElapsedTime()/1000);
+    displayElapsedTime(conf.player.field.timer.calculateElapsedTime()/1000);
 
     if (conf.gamePaused) {    // hide field when game is paused
 
         glColor3f(.5,.5,.5);
         
-        drawRect(FIELD_X + .5, FIELD_Y + .5, conf.player->field.width*conf.squareSize - 1, conf.player->field.height*conf.squareSize - 1);
+        drawRect(FIELD_X + .5, FIELD_Y + .5, conf.player.field.width*conf.squareSize - 1, conf.player.field.height*conf.squareSize - 1);
 
     }
     else {
-        drawField(conf.player->field, conf.squareSize);
+        drawField(conf.player.field, conf.squareSize);
     }
 
-    drawBackground(conf.player->field.width, conf.player->field.height);
+    drawBackground(conf.player.field.width, conf.player.field.height);
 
     glutSwapBuffers();
 }
@@ -478,26 +478,24 @@ void handleResize(int w, int h) {
 
 void keyDown(unsigned char key, int x, int y) {
     conf.handleInput(key);
-    conf.player->handleInput(-((int)key), 0, 0);
+    conf.player.handleInput(-((int)key), 0, 0);
 }
 
 void mouseClick(int button, int mState, int x, int y) {
     if (!conf.gamePaused and mState==GLUT_DOWN) {
-        conf.player->handleInput(button, x, y);
+        conf.player.handleInput(button, x, y);
     }
 }
 
 void mouseMove(int x, int y) {
-    conf.player->handleInput(-1, x, y);
+    conf.player.handleInput(-1, x, y);
 }
 
 
 void update(int value) {
     glutPostRedisplay();
     
-    Player* player = conf.player;
-
-    if(!(player->playStep(false))){
+    if(!(conf.player.playStep(false))){
         conf.playReplay=false;
     }
 
@@ -519,7 +517,7 @@ void initGraph() {
     strcpy(title,"Miny v");
     strcpy(title+6,VERSION);
     strcpy(title+6+strlen(VERSION),". Player: ");
-    strcpy(title+16+strlen(VERSION),conf.player->field.playerName);
+    strcpy(title+16+strlen(VERSION),conf.player.field.playerName);
 
     glutCreateWindow(title);
            
@@ -537,24 +535,24 @@ void initGraph() {
 }
 
 void displayReplay() {
-    if (conf.player->loadReplay(conf.replayFileName)) {
+    if (conf.player.loadReplay(conf.replayFileName)) {
         exit(1);
     }
 
-    conf.player->field.init();
+    conf.player.field.init();
     cout << "Playing replay..." << endl;
     initGraph();
 
-    conf.player->playStep(true);
+    conf.player.playStep(true);
     glutTimerFunc(0, update, 0);
 }
 
 
 void beginGame() {
-    conf.player->field.checkValues();
+    conf.player.field.checkValues();
 
     initGraph();
-    conf.player->field.init();
+    conf.player.field.init();
 
     glutTimerFunc(50, update, 0);
 }
@@ -601,11 +599,6 @@ int main(int argc, char** argv) {
 
     glutInit(&argc, argv);
 
-    Player player;
-    player.field.replay.recording=false;
-    conf.player=&player;
-    conf.setDifficulty(2);
-
     char *home = getenv("HOME");
     char *xdgDataHome = getenv("XDG_DATA_HOME");
     if (xdgDataHome) {
@@ -627,11 +620,11 @@ int main(int argc, char** argv) {
         }
     }
 
-    player.field.playerName[0]='\0';
+    conf.player.field.playerName[0]='\0';
 
-    strcpy(player.field.playerName,"");
+    strcpy(conf.player.field.playerName,"");
 
-    player.field.oldFinalResultDisplay=false;
+    conf.player.field.oldFinalResultDisplay=false;
 
     char args[512];
     if (find_argfile(args)) {
@@ -655,7 +648,7 @@ int main(int argc, char** argv) {
 
     handle_args(argc, argv);
 
-    if (strlen(player.field.playerName)!=0 && !isValidName(player.field.playerName)) {
+    if (strlen(conf.player.field.playerName)!=0 && !isValidName(conf.player.field.playerName)) {
         cout << "Name can be max. 20 characters long and can only contain the characters a-z, "
             <<endl<<"A-Z, 0-9, underscore (_), dot (.), at sign (@) and dash (-)."<<endl;
         exit(1);   
@@ -696,17 +689,17 @@ int main(int argc, char** argv) {
  
            // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
 
-            if (strlen(player.field.playerName)==0) {      
+            if (strlen(conf.player.field.playerName)==0) {      
                 if (isValidName(getenv("USER")))       
                     if (strlen(getenv("USER"))>20) {
-                        strncpy(player.field.playerName,getenv("USER"),20);
-                        player.field.playerName[sizeof(player.field.playerName) - 1]='\0';
+                        strncpy(conf.player.field.playerName,getenv("USER"),20);
+                        conf.player.field.playerName[sizeof(conf.player.field.playerName) - 1]='\0';
                     }
                     else {
-                        strcpy(player.field.playerName,getenv("USER"));
+                        strcpy(conf.player.field.playerName,getenv("USER"));
                     }
                 else {
-                    strcpy(player.field.playerName,"unnamed");
+                    strcpy(conf.player.field.playerName,"unnamed");
                 }
             }
             beginGame();

@@ -361,7 +361,7 @@ void Field::endGame(const bool won) {
       //      cout << endl << "YOU WIN!" << endl;
       //      cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
             
-            int oldFinalResultDisplay = conf.player->field.oldFinalResultDisplay;
+            int oldFinalResultDisplay = conf.player.field.oldFinalResultDisplay;
 
             Score *scores;
 
@@ -404,8 +404,8 @@ void Field::endGame(const bool won) {
         //showStatistics(won,newScore);
 
 
-        if (conf.player->replayHasScore) {
-            showStatistics(won, conf.player->score, conf.playReplay);
+        if (conf.player.replayHasScore) {
+            showStatistics(won, conf.player.score, conf.playReplay);
         }
     }
 }

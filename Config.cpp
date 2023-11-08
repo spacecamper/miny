@@ -21,10 +21,10 @@ void Config::gameStarted() {
 }
 
 int Config::targetWidth() {
-    return FIELD_X + player->field.width * squareSize + BORDER_WIDTH;
+    return FIELD_X + player.field.width * squareSize + BORDER_WIDTH;
 }
 int Config::targetHeight() {
-    return FIELD_Y + player->field.height * squareSize + BORDER_WIDTH;
+    return FIELD_Y + player.field.height * squareSize + BORDER_WIDTH;
 }
 
 void Config::handleInput(char key) {
@@ -42,15 +42,15 @@ void Config::handleInput(char key) {
         return;
     }
     if (gameState == GAME_WON || gameState == GAME_LOST) {
-        player->field.newGame();
+        player.field.newGame();
     }
     handleOption(key, prefixArg, false);
     prefixArg = 0;
     switch (key) {
     case 'd': case 's': case 'm': case 'w': case 'h':
-        player->field.checkValues();
+        player.field.checkValues();
         glutReshapeWindow(targetWidth(), targetHeight());
-        player->field.newGame();
+        player.field.newGame();
         break;
     case 'l': case '3': case 'B': case 't': case 'i': case 'c': case 'f': case 'g':
         listScores();
@@ -61,47 +61,47 @@ void Config::handleInput(char key) {
 void Config::setDifficulty(int difficulty) {
     switch (difficulty) {
     case 0:
-        player->field.height = 0;
-        player->field.width = 0;
-        player->field.mineCount = 0;
+        player.field.height = 0;
+        player.field.width = 0;
+        player.field.mineCount = 0;
         break;
     case 1:
-        player->field.height = 9;
-        player->field.width = 9;
-        player->field.mineCount = 10;
+        player.field.height = 9;
+        player.field.width = 9;
+        player.field.mineCount = 10;
         break;
     case 2:
-        player->field.height = 16;
-        player->field.width = 16;
-        player->field.mineCount = 40;
+        player.field.height = 16;
+        player.field.width = 16;
+        player.field.mineCount = 40;
         break;
     case 3:
-        player->field.height = 16;
-        player->field.width = 30;
-        player->field.mineCount = 99;
+        player.field.height = 16;
+        player.field.width = 30;
+        player.field.mineCount = 99;
         break;
     case 4:
-        player->field.height = 8;
-        player->field.width = 8;
-        player->field.mineCount = 10;
+        player.field.height = 8;
+        player.field.width = 8;
+        player.field.mineCount = 10;
         break;
     }
 }
 int Config::getDifficulty() {
-    if (player->field.width == 0 and player->field.height == 0 and
-        player->field.mineCount == 0)
+    if (player.field.width == 0 and player.field.height == 0 and
+        player.field.mineCount == 0)
         return 0;
-    else if (player->field.width == 9 and player->field.height == 9 and
-             player->field.mineCount == 10)
+    else if (player.field.width == 9 and player.field.height == 9 and
+             player.field.mineCount == 10)
         return 1;
-    else if (player->field.width == 16 and player->field.height == 16 and
-             player->field.mineCount == 40)
+    else if (player.field.width == 16 and player.field.height == 16 and
+             player.field.mineCount == 40)
         return 2;
-    else if (player->field.width == 30 and player->field.height == 16 and
-             player->field.mineCount == 99)
+    else if (player.field.width == 30 and player.field.height == 16 and
+             player.field.mineCount == 99)
         return 3;
-    else if (player->field.width == 8 and player->field.height == 8 and
-             player->field.mineCount == 10)
+    else if (player.field.width == 8 and player.field.height == 8 and
+             player.field.mineCount == 10)
         return 4;
     else
         return -1;
@@ -112,9 +112,9 @@ void Config::handleOption(char option, char *arg, bool from_cli) {
     switch (option) {
     case 'n':
         if (strlen(optarg) < 20)
-            strcpy(player->field.playerName, optarg);
+            strcpy(player.field.playerName, optarg);
         else
-            strncpy(player->field.playerName, optarg, 20);
+            strncpy(player.field.playerName, optarg, 20);
         break;
     case 'p':
         strcpy(replayFileName, cacheDirectory);
@@ -148,13 +148,13 @@ void Config::handleOption(char option, int arg, bool from_cli) {
     switch (option) {
     case 'o':
         if (from_cli)
-            player->field.oldFinalResultDisplay = true;
+            player.field.oldFinalResultDisplay = true;
         else
-            player->field.oldFinalResultDisplay =
-                    !player->field.oldFinalResultDisplay;
+            player.field.oldFinalResultDisplay =
+                    !player.field.oldFinalResultDisplay;
         if (!from_cli)
             cout << "Displaying results in "
-                     << (player->field.oldFinalResultDisplay ? "old" : "new")
+                     << (player.field.oldFinalResultDisplay ? "old" : "new")
                      << " format." << endl;
         break;
     case 'd':
@@ -168,17 +168,17 @@ void Config::handleOption(char option, int arg, bool from_cli) {
             cout << "Set square size to " << squareSize << "." << endl;
         break;
     case 'm':
-        player->field.mineCount = arg;
+        player.field.mineCount = arg;
         if (!from_cli)
             cout << "Set mine count to " << arg << "." << endl;
         break;
     case 'w':
-        player->field.width = arg;
+        player.field.width = arg;
         if (!from_cli)
             cout << "Set field width to " << arg << "." << endl;
         break;
     case 'h':
-        player->field.height = arg;
+        player.field.height = arg;
         if (!from_cli)
             cout << "Set field height to " << arg << "." << endl;
         break;
@@ -278,8 +278,8 @@ void Config::listScores() {
 
             switch (getDifficulty()) {
             case -1:
-                cout << player->field.width << "x" << player->field.height << ", "
-                         << player->field.mineCount << " mines" << endl;
+                cout << player.field.width << "x" << player.field.height << ", "
+                         << player.field.mineCount << " mines" << endl;
                 break;
             case 0:
                 cout << "beginner, intermediate, expert, beginner classic" << endl;
@@ -305,10 +305,10 @@ void Config::listScores() {
                 cout << "all" << endl;
 
             cout << setw(16) << left << "Player name: ";
-            if (!strcmp(player->field.playerName, ""))
+            if (!strcmp(player.field.playerName, ""))
                 cout << "all" << endl;
             else
-                cout << player->field.playerName << endl;
+                cout << player.field.playerName << endl;
 
             cout << setw(16) << left << "Count: ";
             if (scoreListLength != 0)
@@ -324,9 +324,9 @@ void Config::listScores() {
         Score *filteredScores;
 
         count = filterScores(scores, count, &filteredScores, (int)listFlagging,
-                             (int)listFinished, player->field.width,
-                             player->field.height, player->field.mineCount,
-                             squareSize, player->field.playerName);
+                             (int)listFinished, player.field.width,
+                             player.field.height, player.field.mineCount,
+                             squareSize, player.field.playerName);
 
         //    cout<<"count="<<count<<endl;
 

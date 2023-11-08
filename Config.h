@@ -40,7 +40,13 @@ struct Config {
                 : Finished::BOTH;
     }
 
-    Player *player;
+    inline Config() {
+	  player.field.replay.recording=false;
+	  setDifficulty(2);
+	}
+
+
+    Player player;
     int windowWidth;
     int windowHeight;
 
