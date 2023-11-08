@@ -57,33 +57,18 @@ void Config::handleInput(char key) {
     }
 }
 
-void Config::setDifficulty(int difficulty) {
+#define set_if_0(VAR, VAL) if (VAR == 0 || !from_cli) VAR = VAL;
+#define set3(H, W, M) \
+set_if_0(player.field.height, H);\
+set_if_0(player.field.width, W);\
+set_if_0(player.field.mineCount, M);
+void Config::setDifficulty(int difficulty, bool from_cli) {
     switch (difficulty) {
-    case 0:
-        player.field.height = 0;
-        player.field.width = 0;
-        player.field.mineCount = 0;
-        break;
-    case 1:
-        player.field.height = 9;
-        player.field.width = 9;
-        player.field.mineCount = 10;
-        break;
-    case 2:
-        player.field.height = 16;
-        player.field.width = 16;
-        player.field.mineCount = 40;
-        break;
-    case 3:
-        player.field.height = 16;
-        player.field.width = 30;
-        player.field.mineCount = 99;
-        break;
-    case 4:
-        player.field.height = 8;
-        player.field.width = 8;
-        player.field.mineCount = 10;
-        break;
+    case 0: set3(0, 0, 0); break;
+    case 1: set3(9, 9, 10); break;
+    case 2: set3(16, 16, 40); break;
+    case 3: set3(16, 30, 99); break;
+    case 4: set3(8, 8, 10); break;
     }
 }
 int Config::getDifficulty() {
@@ -155,7 +140,7 @@ void Config::handleOption(char option, int arg, bool from_cli) {
                      << " format." << endl;
         break;
     case 'd':
-        setDifficulty(arg);
+        setDifficulty(arg, from_cli);
         if (!from_cli)
             cout << "Set difficulty to " << getDifficulty() << "." << endl;
         break;

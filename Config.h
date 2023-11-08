@@ -43,7 +43,7 @@ struct Config {
 
     inline Config() {
 	  player.field.replay.recording=false;
-	  setDifficulty(2);
+	  setDifficulty(0, false);
 	}
 
 
@@ -75,7 +75,7 @@ struct Config {
     // affect the game.
     void handleInput(char key);
     // difficulty: 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic; -1 custom
-    void setDifficulty(int difficulty);
+    void setDifficulty(int difficulty, bool from_cli);
     int getDifficulty();
     int targetWidth();
     int targetHeight();

@@ -68,6 +68,16 @@ MOUSE AND KEYBOARD CONTROLS
 
  To quit press Escape or Q.
 
+ Before a game has started or after it has ended, some command line switches can
+ be entered with the keys they use. Those that need a numeric argument take it
+ as a prefix typed out before they are entered. The backspace key will clear
+ this prefix.
+
+ Examples:
+
+ t    list scores for current difficulty by time
+ 3d   change to difficultry 3
+ l    list all scores (the default prefix is 0)
 
 OPTIONS
 
@@ -78,8 +88,8 @@ OPTIONS
  -n?  player name. If this option is missing, system username is used.
  -d?  difficulty - 0, 1, 2, 3 or 4 (1 - Beginner, 2 - Intermediate (default), 
       3 - Expert, 4 - Beginner Classic, 0 - all of the preceding four. 0 can
-      be used when displaying scores) If -w, -h and -m are set, this option
-      is ignored.
+      be used when displaying scores) If -w, -h and -m are set, will only set
+	  the values those did not.
  -s?  square size in pixels (3 to 100, default=35)
  -m?  number of mines (min=2, max depends on field dimensions)
  -w?  field width (2 to 100)
