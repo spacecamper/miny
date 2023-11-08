@@ -187,12 +187,10 @@ void drawFlag(int squareSize, int x, int y) {
 }
 
 void horizontalLine(float x, float y, float length) {
-    glVertex2f(x, y + 0.6);
-    glVertex2f(x + length, y + 0.6);
+    drawRect(x, y, length, 1);
 }
 void verticalLine(float x, float y, float length) {
-    glVertex2f(x + 0.6, y);
-    glVertex2f(x + 0.6, y + length);
+    drawRect(x, y, 1, length);
 }
 
 void drawBackground(int fieldWidth, int fieldHeight) {
@@ -216,14 +214,12 @@ void drawBackground(int fieldWidth, int fieldHeight) {
 
     // grid lines
     glColor3f(.3,.3,.3);
-    glBegin(GL_LINES); 
     for (int i=0;i<fieldHeight+1;i++) {
-        horizontalLine(FIELD_X, FIELD_Y+i*conf.squareSize, fieldWidth*conf.squareSize + 1.4);
+        horizontalLine(FIELD_X, FIELD_Y+i*conf.squareSize, fieldWidth*conf.squareSize + 1);
     }
     for (int i=0;i<fieldWidth+1;i++) {
-        verticalLine(FIELD_X+i*conf.squareSize, FIELD_Y, fieldHeight*conf.squareSize + 1.4);
+        verticalLine(FIELD_X+i*conf.squareSize, FIELD_Y, fieldHeight*conf.squareSize + 1);
     }
-    glEnd();
 }
 
 void drawMine(int x, int y, int squareSize) {
