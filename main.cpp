@@ -209,12 +209,12 @@ void drawBackground(int fieldWidth, int fieldHeight) {
     glColor3f(.3,.3,.3);
     glBegin(GL_LINES); 
     for (int i=0;i<fieldHeight+1;i++) {
-        glVertex2f(FIELD_X+0.5,FIELD_Y+i*conf.squareSize+0.5);
-        glVertex2f(FIELD_X+fieldWidth*conf.squareSize+0.5,FIELD_Y+i*conf.squareSize+0.5);
+        glVertex2f(FIELD_X,FIELD_Y+i*conf.squareSize+0.5);
+        glVertex2f(FIELD_X+fieldWidth*conf.squareSize+1,FIELD_Y+i*conf.squareSize+0.5);
     }
     for (int i=0;i<fieldWidth+1;i++) {
-        glVertex2f(FIELD_X+i*conf.squareSize+0.5,FIELD_Y+0.5);
-        glVertex2f(FIELD_X+i*conf.squareSize+0.5,FIELD_Y+fieldHeight*conf.squareSize+0.5);
+        glVertex2f(FIELD_X+i*conf.squareSize+0.5,FIELD_Y);
+        glVertex2f(FIELD_X+i*conf.squareSize+0.5,FIELD_Y+fieldHeight*conf.squareSize+1);
     }
     glEnd();
 }
