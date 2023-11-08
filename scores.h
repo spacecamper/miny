@@ -6,8 +6,6 @@
 
 #include <iostream>
 
-#include <string.h>
-
 #include <iomanip>
 
 #include <sstream>
@@ -22,7 +20,7 @@ class Score {
 public:
 
     time_t timeStamp;
-    char name[21];
+    string name;
     unsigned int replayNumber;
 
     unsigned short width,height;
@@ -55,15 +53,15 @@ int compareBy3BVs(const void *a,const void *b);
 
 int compareByIOE(const void *a,const void *b);
 
-int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fin, int w, int h, int m, int ss, char *pname);
+int filterScores(Score *scores, int count,Score **filteredScores,int fla, int fin, int w, int h, int m, int ss, const string& pname);
 
 void displayScores(Score *scores, int count,int limit,bool csv=false);
 
-int loadScores(const char *fname, Score **scores);
+int loadScores(const string& fname, Score **scores);
 
-void appendScore(const char *fname, Score score);
+void appendScore(const string& fname, Score score);
 
-bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,char *stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength,int *returnCountNF);
+bool evalScore2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,const string& stringValueName,int (*compareFunc)(const void *,const void *),int scoreListLength,int *returnCountNF);
 
 void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldView,int scoreListLength);
 

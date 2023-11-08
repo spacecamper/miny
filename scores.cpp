@@ -3,7 +3,7 @@
 
 Score::Score() {
     timeStamp=0;
-    strcpy(name,"not-set-yet");
+    name = "name-not-set";
     //strcpy(replayFile,"*");
     replayNumber=0;
     width=0;
@@ -131,7 +131,7 @@ int filterScores(Score *scores, int count, Score **filteredScores, int fla, int 
 
             and 
                 // player name
-            (pname[0]=='\0' or !strcmp(pname,scores[i].name))
+            (pname[0]=='\0' or scores[i].name != pname)
 
             ) {
 
@@ -194,8 +194,8 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
         for (int i=0;i<outputCount;i++) {
 
-            if (strlen(scores[i].name)>maxNameLen)
-                maxNameLen=strlen(scores[i].name);
+            if (scores[i].name.size()>maxNameLen)
+                maxNameLen=scores[i].name.size();
 
             int currentTimeLen=intLength(scores[i].time);
             if (currentTimeLen>maxTimeLen) 
@@ -456,7 +456,7 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
 
 
-int loadScores(const char *fname, Score **scores) {
+int loadScores(const string& fname, Score **scores) {
 
 
     *scores=NULL;
@@ -533,7 +533,7 @@ int loadScores(const char *fname, Score **scores) {
 }
 
 
-void appendScore(const char *fname, Score score) {
+void appendScore(const string& fname, Score score) {
 
  //   cout << "Opening score file... "<<flush;
     
@@ -579,14 +579,11 @@ void evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int coun
     
 
     int position;
-    char suffix[3];
 
     for (position=0;position<countAll;position++) {   // "position" is the position of the score currently being evaluated among scoresAll
         if (compareFunc((const void*) &s,(const void*) &scoresAll[position])<0)
             break;
     }
-
-    ordinalNumberSuffix(suffix,position+1);
 
     float percentile;
     /*
@@ -602,7 +599,7 @@ void evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int coun
                      
     *scoreString << right << fixed << 
         setw(7) << setprecision(0) << (position+1) <<   // position
-       /* setw(2) <<*/ suffix <<                            // suffix (-st, -th)
+       /* setw(2) <<*/     ordinalNumberSuffix(position+1) <<                            // suffix (-st, -th)
         setw(10) << setprecision(3) << percentile << " ";       // percentile
 
    // *scoreString << ' ';

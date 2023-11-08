@@ -2,7 +2,6 @@
 #define COMMON_H
 
 #include <stdio.h>
-#include <cstring>
 #include <string>
 #include <iostream>
 #include <sys/ioctl.h>
@@ -28,13 +27,13 @@ using namespace std;
 
 extern char readme[];
 
-void ordinalNumberSuffix(char *, int);
+const char* ordinalNumberSuffix(int);
 
 unsigned int terminalWidth();
 
 bool outputLine(string,int);
 
-bool isValidName(char *);
+bool isValidName(const string&);
 
 #endif
 

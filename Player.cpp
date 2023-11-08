@@ -14,7 +14,7 @@
 
 extern Config conf;
 
-int Player::loadReplay(const char *fname) {
+int Player::loadReplay(const string& fname) {
     ifstream ifile;
 
     ifile.open(fname);
@@ -118,7 +118,7 @@ void Player::readFromFile(ifstream *ifile) {
         
         replayHasScore=true;
         score.readFromFile(ifile);
-        strcpy(field.playerName,score.name);
+        field.playerName = score.name;
         conf.squareSize=score.squareSize;
         field.width=score.width;
         field.height=score.height;

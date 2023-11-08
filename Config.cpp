@@ -95,10 +95,7 @@ void Config::handleOption(char option, char *arg, bool from_cli) {
     handleOption(option, arg == nullptr ? 0 : atoi(arg), from_cli);
     switch (option) {
     case 'n':
-        if (strlen(optarg) < 20)
-            strcpy(player.field.playerName, optarg);
-        else
-            strncpy(player.field.playerName, optarg, 20);
+        player.field.playerName = optarg;
         break;
     case 'p':
         replayFileName = cacheDirectory + arg + ".replay";
@@ -106,22 +103,10 @@ void Config::handleOption(char option, char *arg, bool from_cli) {
         boolDrawCursor = true;
         break;
     case 'C': {
-        int length = strlen(optarg);
-
-        if (optarg[strlen(optarg) - 1] != '/')
-            length++;
-
-        if (length > 101) {
-            cout << "Config directory path must be shorter than 100 characters. "
-                    "Exiting."
-                 << endl;
-            exit(1);
-        } else {
-            defaultCacheDirectory = false;
-            cacheDirectory = optarg;
-            if (optarg[strlen(optarg) - 1] != '/')
-                cacheDirectory += "/";
-        }
+        defaultCacheDirectory = false;
+        cacheDirectory = optarg;
+        if (cacheDirectory.back() != '/')
+            cacheDirectory += "/";
         break;
     }
     }
@@ -201,7 +186,7 @@ void Config::listScores() {
     string fullpath = cacheDirectory + "scores.dat";
 
     Score *scores;
-    int count = loadScores(fullpath.c_str(), &scores);
+    int count = loadScores(fullpath, &scores);
 
     if (count == 0) { // no scores in score file
         if (scoreListType != List::EXPORT_CSV)
@@ -285,7 +270,7 @@ void Config::listScores() {
                 cout << "all" << endl;
 
             cout << setw(16) << left << "Player name: ";
-            if (!strcmp(player.field.playerName, ""))
+            if (player.field.playerName != "")
                 cout << "all" << endl;
             else
                 cout << player.field.playerName << endl;

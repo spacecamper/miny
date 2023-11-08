@@ -23,7 +23,7 @@ public:
     
     void handleInput(int, int, int);
     bool playStep(bool); //player
-    int loadReplay(const char* fname);
+    int loadReplay(const string& fname);
     
 private:
     std::list<Action> data;

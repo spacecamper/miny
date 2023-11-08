@@ -41,12 +41,7 @@
 
 #define VERSION "0.6.0"
 
-
-
-
-// TODO prevent buffer overflows (strcpy and strcat)
 using namespace std;
-
 
 Config conf;
 
@@ -58,8 +53,9 @@ void redisplay() {
 bool fileExists(string& path) {
     return access(path.c_str(), F_OK) == 0;
 }
-bool directoryExists( const char* pzPath )
+bool directoryExists(const string& str)
 {
+    const char* pzPath = str.c_str();
     if ( pzPath == NULL) return false;
 
     DIR *pDir;
@@ -531,7 +527,7 @@ void initGraph() {
 }
 
 void displayReplay() {
-    if (conf.player.loadReplay(conf.replayFileName.c_str())) {
+    if (conf.player.loadReplay(conf.replayFileName)) {
         exit(1);
     }
 
@@ -602,21 +598,19 @@ int main(int argc, char** argv) {
     } else {
         conf.cacheDirectory = home + "/.local/share";
     }
-    bool configExists = directoryExists(conf.cacheDirectory.c_str());
+    bool configExists = directoryExists(conf.cacheDirectory);
     conf.cacheDirectory += "/miny/";
     // default to the old file if it exists and the new one doesn't
     // also check that config_home exists before putting stuff there
-    if (!directoryExists(conf.cacheDirectory.c_str()) ) {
+    if (!directoryExists(conf.cacheDirectory) ) {
         string oldMinyDir = home;
         oldMinyDir += "/.miny/";
-        if (!configExists || directoryExists(oldMinyDir.c_str())) {
+        if (!configExists || directoryExists(oldMinyDir)) {
             conf.cacheDirectory = oldMinyDir;
         }
     }
 
     conf.player.field.playerName[0]='\0';
-
-    strcpy(conf.player.field.playerName,"");
 
     conf.player.field.oldFinalResultDisplay=false;
 
@@ -644,9 +638,9 @@ int main(int argc, char** argv) {
 
     handleArgs(argc, argv);
 
-    if (strlen(conf.player.field.playerName)!=0 && !isValidName(conf.player.field.playerName)) {
-        cout << "Name can be max. 20 characters long and can only contain the characters a-z, "
-            <<endl<<"A-Z, 0-9, underscore (_), dot (.), at sign (@) and dash (-)."<<endl;
+    if (conf.player.field.playerName != "" && !isValidName(conf.player.field.playerName)) {
+        cout << "Name can can only contain the characters a-z, A-Z, 0-9, underscore (_), dot" << endl
+             << "(.), at sign (@) and dash (-)." << endl;
         exit(1);   
     }
 
@@ -658,54 +652,34 @@ int main(int argc, char** argv) {
 
     // config directory
 
-    if (!directoryExists(conf.cacheDirectory.c_str())) {
+    if (!directoryExists(conf.cacheDirectory)) {
         if (conf.defaultCacheDirectory) {
             if (execlp("mkdir", "mkdir", conf.cacheDirectory.c_str(), NULL)) {
                 cerr << "Error creating config directory. Exiting." << endl;
                 exit(1);
             }
-        }
-        else {
+        } else {
             cout << "Specified config directory doesn't exist. Please create it first." << endl;
             exit(1);
         }
-            
     }
 
+    if (conf.printScores) { // list scores
+        conf.listScores();
+        exit(0);
+    }
     if (conf.playReplay) {
         displayReplay();
-    }
-    else { 
-        if (conf.printScores) { // list scores
-            conf.listScores();
-        }
-        else {
-           // play
- 
- 
-           // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
-
-            if (strlen(conf.player.field.playerName)==0) {      
-                if (isValidName(getenv("USER")))       
-                    if (strlen(getenv("USER"))>20) {
-                        strncpy(conf.player.field.playerName,getenv("USER"),20);
-                        conf.player.field.playerName[sizeof(conf.player.field.playerName) - 1]='\0';
-                    }
-                    else {
-                        strcpy(conf.player.field.playerName,getenv("USER"));
-                    }
-                else {
-                    strcpy(conf.player.field.playerName,"unnamed");
-                }
+    } else {
+        if (conf.player.field.playerName == "") {
+            if (isValidName(getenv("USER"))) {
+                conf.player.field.playerName = getenv("USER");
+            } else {
+                conf.player.field.playerName = "unnamed";
             }
-            beginGame();
         }
+        beginGame();
     }
-
-    if (!conf.printScores) {
-        glutMainLoop();
-    }
-
+    glutMainLoop();
     return 0;
-
 }

@@ -76,7 +76,7 @@ void Field::unpauseGame() {
     cout << "Game unpaused."<<endl;
 }
 
-void Field::saveReplay(const char *fname, Score *score) {
+void Field::saveReplay(const string& fname, Score *score) {
     ofstream ofile;
     
     string fullpath = conf.cacheDirectory + fname;
@@ -320,7 +320,7 @@ void Field::endGame(const bool won) {
     Score newScore;
 
     newScore.timeStamp=ts;
-    strcpy(newScore.name,playerName);
+    newScore.name = playerName;
     newScore.width=width;
     newScore.height=height;
     newScore.mines=mineCount;
@@ -356,7 +356,7 @@ void Field::endGame(const bool won) {
 
             Score *scores;
 
-            int count=loadScores(fullpath.c_str(),&scores);
+            int count=loadScores(fullpath,&scores);
 
 
             evalScore(newScore,scores, count, width, height, mineCount,oldFinalResultDisplay,conf.scoreListLength); // XXX
@@ -369,11 +369,11 @@ void Field::endGame(const bool won) {
 
             nr=findLowestUnusedReplayNumber();
             newScore.replayNumber=nr;
-            appendScore(fullpath.c_str(),newScore);
+            appendScore(fullpath,newScore);
 
             string rfname = to_string(nr) + ".replay";
 
-            saveReplay(rfname.c_str(),&newScore);
+            saveReplay(rfname,&newScore);
 
             saveReplay("last.replay",&newScore);
         } 
@@ -382,7 +382,7 @@ void Field::endGame(const bool won) {
         //    cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
             
             newScore.replayNumber=0;
-            appendScore(fullpath.c_str(),newScore);
+            appendScore(fullpath,newScore);
 
             saveReplay("last.replay", &newScore  );
         }
