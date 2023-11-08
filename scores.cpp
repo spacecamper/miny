@@ -570,7 +570,7 @@ void appendScore(char *fname, Score score) {
 
 
 
-bool evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,int (*compareFunc)(const void *,const void *),int scoreListLength) {
+void evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,int (*compareFunc)(const void *,const void *),int scoreListLength) {
    
     // prints the place and percentile of
      
@@ -613,7 +613,7 @@ bool evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int coun
 }
 
 
-int evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score *scoresFiltered,int countFiltered,Score *scoresFilteredNF,int countFilteredNF,int (*compareFunc)(const void *,const void *),int scoreListLength) {
+void evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score *scoresFiltered,int countFiltered,Score *scoresFilteredNF,int countFilteredNF,int (*compareFunc)(const void *,const void *),int scoreListLength) {
 
     // compare how this score ranks against older ones based on compareFunc 
 
