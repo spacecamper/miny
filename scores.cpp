@@ -120,7 +120,7 @@ vector<Score> filterScores(const vector<Score>& scores, int fla, int fin, int w,
 
             and 
                 // player name
-            (pname[0]=='\0' or scores[i].name != pname)
+            (pname == "" or scores[i].name == pname)
 
             ) {
             filteredScores.push_back(scores[i]);

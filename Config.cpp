@@ -268,7 +268,7 @@ void Config::listScores() {
                 cout << "all" << endl;
 
             cout << setw(16) << left << "Player name: ";
-            if (player.field.playerName != "")
+            if (player.field.playerName == "")
                 cout << "all" << endl;
             else
                 cout << player.field.playerName << endl;
