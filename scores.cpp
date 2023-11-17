@@ -524,7 +524,7 @@ void evalScore2v2(ostringstream *scoreString, Score& s, vector<Score>& scoresAll
    
     // prints the place and percentile of
      
-    sort(scoresAll.begin(), scoresAll.end(), compareFunc);
+    sort(scoresAll.begin(), scoresAll.end(), [&] (const Score& a, const Score& b) { return compareFunc(a, b) > 0; });
 
     
 

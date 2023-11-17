@@ -281,7 +281,7 @@ void Config::listScores() {
 
             cout << endl;
 
-            sort(scores.begin(), scores.end(), compareFunc);
+            sort(scores.begin(), scores.end(), [&] (const Score& a, const Score& b) { return compareFunc(a, b) > 0; });
         }
 
         vector<Score> filteredScores =
