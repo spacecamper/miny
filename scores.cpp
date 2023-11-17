@@ -535,16 +535,7 @@ void evalScore2v2(ostringstream *scoreString, Score& s, vector<Score>& scoresAll
             break;
     }
 
-    float percentile;
-    /*
-    if (position==1) {
-        percentile=100;
-    }
-    else {*/
-
-
-        percentile=100*(float) (scoresAll.size()-position+1)/(float)(scoresAll.size()+1);     // fix this so that percentile is reported correctly
-//    }                                                                        // eg 0 when a score ranks as last
+    float percentile = 100*(1 - (float)position/(scoresAll.size() - 1));
                                                                                 
                      
     *scoreString << right << fixed << 
