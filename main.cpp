@@ -4,16 +4,13 @@
  * (c) 2015-2019, 2021, 2023 spacecamper
  */
 
-#include <stdlib.h>
 #include <iostream>
 #include <math.h>
 
 #include <unistd.h>
 #include <getopt.h>
-#include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -613,8 +610,6 @@ int main(int argc, char** argv) {
         }
     }
 
-    conf.player.field.playerName[0]='\0';
-
     conf.player.field.oldFinalResultDisplay=false;
 
     string fileName;
@@ -685,6 +680,7 @@ int main(int argc, char** argv) {
                 conf.player.field.playerName = "unnamed";
             }
         }
+        cout << "You are playing as " << conf.player.field.playerName << "." << endl;
         beginGame();
     }
     glutMainLoop();
