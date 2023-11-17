@@ -598,14 +598,13 @@ int main(int argc, char** argv) {
     } else {
         conf.cacheDirectory = home + "/.local/share";
     }
-    bool configExists = directoryExists(conf.cacheDirectory);
     conf.cacheDirectory += "/miny/";
     // default to the old file if it exists and the new one doesn't
     // also check that config_home exists before putting stuff there
     if (!directoryExists(conf.cacheDirectory) ) {
         string oldMinyDir = home;
         oldMinyDir += "/.miny/";
-        if (!configExists || directoryExists(oldMinyDir)) {
+        if (directoryExists(oldMinyDir)) {
             conf.cacheDirectory = oldMinyDir;
         }
     }
