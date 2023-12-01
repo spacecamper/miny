@@ -12,8 +12,6 @@
 #include "Action.h"
 #include "Field.h"
 
-extern Config conf;
-
 Replay::Replay() {
     recording=false;
 }

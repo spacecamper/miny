@@ -1,5 +1,6 @@
 #include "common.h"
 #include "scores.h"
+#include "Config.h"
 
 Score::Score() {
     timeStamp=0;
@@ -30,12 +31,9 @@ float Score::get3BVs() const {
 }
 
 void Score::writeToFile(ofstream *f) {
-
     *f << timeStamp << " " << name << " " << replayNumber << " " << width << " " << height <<
          " " << mines << " " << time << " " << val3BV << " " << flagging << " " << effectiveClicks <<
          " " << ineffectiveClicks << " " << squareSize << " " << gameWon << endl;
-
-
 }
 
 void Score::readFromFile(ifstream *f) {
@@ -46,9 +44,6 @@ Score Score::readNewFromFile(ifstream *f) {
     ret.readFromFile(f);
     return ret;
 }
-
-
-
 
 int compareByTime(const Score& a,const Score& b) {
 
@@ -64,9 +59,6 @@ int compareBy3BVs(const Score& a,const Score& b) {
     float v1=a.get3BVs();
     float v2=b.get3BVs();
 
- /*   v1=1000*(*(Score*)a).val3BV/(*(Score*)a).time;
-    v2=1000*(*(Score*)b).val3BV/(*(Score*)b).time;
-*/
     if ( v1 <  v2 ) return 1;
     if ( v1 >  v2 ) return -1;
 
@@ -88,42 +80,25 @@ int compareByIOE(const Score& a,const Score& b) {
 }
 
 
-vector<Score> filterScores(const vector<Score>& scores, int fla, int fin, int w, int h, int m, int ss, const string& pname) {
+vector<Score> filterScores(const vector<Score>& scores, Flagging fla, Finished fin, const string& pname) {
     vector<Score> filteredScores;
     for (int i=0;i<scores.size();i++) {        
-        bool isBeg=scores[i].width==9 and scores[i].height==9 and scores[i].mines==10;
-        bool isInt=scores[i].width==16 and scores[i].height==16 and scores[i].mines==40;
-        bool isExp=scores[i].width==30 and scores[i].height==16 and scores[i].mines==99;
-        bool isBegC=scores[i].width==8 and scores[i].height==8 and scores[i].mines==10;
-        bool isStandard=isBeg or isInt or isExp or isBegC;
+        const Score& s = scores[i];
+        Field& f = conf.player.field;
+        bool flagging_matches =
+          ((int)fla & (int)Flagging::FLAGGING and s.flagging)
+          or ((int)fla & (int)Flagging::NO_FLAGGING and not s.flagging);
+        bool finished_matches =
+          ((int)fla & (int)Finished::FINISHED and s.gameWon)
+          or ((int)fla & (int)Finished::UNFINISHED and not s.gameWon);
 
-        if (    // flagging
-            ((fla==0) or (fla==1 and scores[i].flagging) or (fla==2 and !scores[i].flagging))
-        
-            and
-                // finished
-            ((fin==0) or (fin==1 and scores[i].gameWon) or (fin==2 and !scores[i].gameWon))
-        
-            and 
-                    // difficulty
-            /*((dif==0 and isStandard) or (dif==1 and isBeg) or (dif==2 and isInt) or (dif==3 and isExp)
-                or (dif==4 and isBegC))*/
-            (
-                (scores[i].width==w and scores[i].height==h and scores[i].mines==m)
-                or
-                (w==0 and h==0 and m==0 and isStandard) // XXX BUG - for non-standard sizes scores can't be filtered for nf without specifying w,h,m
-            )
-
-            and 
-                // square size
-            (ss==0 or scores[i].squareSize==ss)
-
-            and 
-                // player name
-            (pname == "" or scores[i].name == pname)
-
-            ) {
-            filteredScores.push_back(scores[i]);
+        if (flagging_matches and finished_matches
+            and (pname == "" or pname == scores[i].name)
+            // Use baseDifficulty here as getDifficulty() can't return 0.
+            and (conf.baseDifficulty == 0
+                 or (s.width == f.width and s.height == f.height and s.mines == f.mineCount))
+        ) {
+            filteredScores.push_back(s);
         }
     }
     return filteredScores;
@@ -296,16 +271,13 @@ void displayScores(const vector<Score>& scores, int limit,bool csv /*=false*/) {
           
             // difficulty
 
-            if (scores[i].width==8 and scores[i].height==8 and scores[i].mines==10)
-                currentLine  <<"  "<< "beC";
-            else if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
-                currentLine  <<"  "<< "beg";
-            else if (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
-                currentLine  <<"  "<< "int";
-            else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
-                currentLine  <<"  "<< "exp";
-            else
-                currentLine  <<"  "<< "oth";
+            switch (Config::getDifficulty(scores[i].width, scores[i].height, scores[i].mines)) {
+                case 1: currentLine  <<"  "<< "beg"; break;
+                case 2: currentLine  <<"  "<< "int"; break;
+                case 3: currentLine  <<"  "<< "exp"; break;
+                case 4: currentLine  <<"  "<< "beC"; break;
+                default: currentLine  <<"  "<< "oth"; break;
+            }
 
             // date and time
 
@@ -600,7 +572,7 @@ void evalScoreMid(ostringstream *scoreString,string criterionName, Score s,vecto
     
 
 
-void evalScore(Score s, const vector<Score>& scores, int w, int h, int m, bool oldFinalResultDisplay, int scoreListLength) {
+void evalScore(Score s, const vector<Score>& scores, bool oldFinalResultDisplay, int scoreListLength) {
 
     // compare how this score ranks against older ones
 
@@ -618,11 +590,10 @@ void evalScore(Score s, const vector<Score>& scores, int w, int h, int m, bool o
         
     cout<<"3BV: "<<s.val3BV/1.0<<endl;
 
-    char zero='\0';
     // only won games from the current difficulty
-    vector<Score> scoresFiltered = filterScores(scores,0,1,w,h,m,0,&zero); 
+    vector<Score> scoresFiltered = filterScores(scores, Flagging::BOTH, Finished::FINISHED, "");
     // same but only NF scores
-    vector<Score> scoresFilteredNF = filterScores(scores,2,1,w,h,m,0,&zero); 
+    vector<Score> scoresFilteredNF = filterScores(scores, Flagging::NO_FLAGGING, Finished::FINISHED, "");
     
 
     ostringstream scoreString;
@@ -642,17 +613,15 @@ void evalScore(Score s, const vector<Score>& scores, int w, int h, int m, bool o
     cout << endl << "Your result's ranking (among won ";
 
 
-    if (w==9 and h==9 and m==10)
-        cout << "Beginner";
-    else if (w==16 and h==16 and m==40)
-        cout << "Intermediate";
-    else if (w==30 and h==16 and m==99)
-        cout << "Expert";
-    else if (w==8 and h==8 and m==10)
-        cout << "Beginner classic";
-    else
-        cout << "'" << w << "x" << h << ", " << m << " mines\'";
-            
+    switch (conf.getDifficulty()) {
+        case 1: cout << "Beginner";
+        case 2: cout << "Intermediate";
+        case 3: cout << "Expert";
+        case 4: cout << "Beginner classic";
+        default:
+          Field& f = conf.player.field;
+          cout << "'" << f.width << "x" << f.height << ", " << f.mineCount << " mines\'";
+    }
     cout << " results)"<<endl<<endl;
     
     cout << "Percentiles are approximate, see README for details." << endl << endl ;

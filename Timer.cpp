@@ -2,8 +2,6 @@
 #include "Timer.h"
 #include "common.h"
 
-extern Config conf;
-
 long Timer::calculateTimeSinceStart() {
     
     if (conf.gameState==Config::GAME_INITIALIZED)

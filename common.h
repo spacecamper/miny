@@ -34,5 +34,31 @@ bool outputLine(string,int);
 
 bool isValidName(const string&);
 
+// Bit flags
+enum class Flagging : int {
+    FLAGGING = 1,
+    NO_FLAGGING = 2,
+    BOTH = 3,
+};
+static inline Flagging getFlaggingOrDefault(int value) {
+    switch (value) {
+        case 1: return Flagging::FLAGGING;
+        case 2: return Flagging::NO_FLAGGING;
+        default: return Flagging::BOTH;
+    }
+}
+enum class Finished : int {
+    FINISHED = 1,
+    UNFINISHED = 2,
+    BOTH = 3,
+};
+static inline Finished getFinishedOrDefault(int value) {
+    switch (value) {
+        case 1: return Finished::FINISHED;
+        case 2: return Finished::UNFINISHED;
+        default: return Finished::BOTH;
+    }
+}
+
 #endif
 

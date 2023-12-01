@@ -12,8 +12,6 @@
 #include "Action.h"
 #include "scores.h"
 
-extern Config conf;
-
 int Player::loadReplay(const string& fname) {
     ifstream ifile;
 

@@ -1,6 +1,7 @@
 #ifndef SCORES_H
 #define SCORES_H
 
+#include "common.h"
 #include <time.h>
 #include <fstream>
 #include <iostream>
@@ -51,7 +52,7 @@ ScoreCmpFunc compareBy3BVs;
 ScoreCmpFunc compareByIOE;
 
 void sortScores(vector<Score>& scores, ScoreCmpFunc by);
-vector<Score> filterScores(const vector<Score>& scores,int fla, int fin, int w, int h, int m, int ss, const string& pname);
+vector<Score> filterScores(const vector<Score>& scores, Flagging fla, Finished fin, const string& pname);
 
 void displayScores(const vector<Score>& scores, int limit,bool csv=false);
 
@@ -61,7 +62,7 @@ void appendScore(const string& fname, Score& score);
 
 bool evalScore2(ostringstream *scoreString, Score& s, vector<Score>& scoresAll,const string& stringValueName,ScoreCmpFunc compareFunc,int scoreListLength,int *returnCountNF);
 
-void evalScore(Score s, const vector<Score>& scores, int w, int h, int m, bool oldView,int scoreListLength);
+void evalScore(Score s, const vector<Score>& scores, bool oldView, int scoreListLength);
 
 
 

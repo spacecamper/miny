@@ -40,8 +40,6 @@
 
 using namespace std;
 
-Config conf;
-
 void redisplay() {
     glutPostRedisplay();
 }
@@ -438,7 +436,7 @@ void drawScene() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    if (conf.boolDrawCursor) {
+    if (conf.drawCursor) {
         drawCursor(conf.player.cursorX, conf.player.cursorY);
     }
     

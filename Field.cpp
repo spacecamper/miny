@@ -20,13 +20,8 @@ using namespace std;
 
 extern void redisplay();
 
-extern Config conf;
-
-
 Field::Field() {
-
     val3BV=0;
-    
 }
 
 
@@ -357,7 +352,7 @@ void Field::endGame(const bool won) {
             vector<Score> scores = loadScores(fullpath);
 
 
-            evalScore(newScore,scores, width, height, mineCount,oldFinalResultDisplay,conf.scoreListLength); // XXX
+            evalScore(newScore, scores, oldFinalResultDisplay, conf.scoreListLength); // XXX
 
             long nr=1;
 

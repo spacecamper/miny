@@ -11,6 +11,8 @@
 #include <GL/freeglut_ext.h>
 #endif
 
+Config conf;
+
 void Config::gameStarted() {
     gameState = GAME_PLAYING;
     prefixArg = 0;
@@ -68,21 +70,20 @@ void Config::setDifficulty(bool force) {
     case 4: set3(8, 8, 10); break;
     }
 }
-int Config::getDifficulty() {
-    if (player.field.width == 9 and player.field.height == 9 and
-             player.field.mineCount == 10)
+int Config::getDifficulty(int width, int height, int mines) {
+    if (width == 9 and height == 9 and mines == 10)
         return 1;
-    else if (player.field.width == 16 and player.field.height == 16 and
-             player.field.mineCount == 40)
+    else if (width == 16 and height == 16 and mines == 40)
         return 2;
-    else if (player.field.width == 30 and player.field.height == 16 and
-             player.field.mineCount == 99)
+    else if (width == 30 and height == 16 and mines == 99)
         return 3;
-    else if (player.field.width == 8 and player.field.height == 8 and
-             player.field.mineCount == 10)
+    else if (width == 8 and height == 8 and mines == 10)
         return 4;
     else
         return -1;
+}
+int Config::getDifficulty() {
+    return getDifficulty(player.field.width, player.field.height, player.field.mineCount);
 }
 
 void Config::handleOption(char option, char *arg, bool from_cli) {
@@ -94,7 +95,7 @@ void Config::handleOption(char option, char *arg, bool from_cli) {
     case 'p':
         replayFileName = cacheDirectory + arg + ".replay";
         playReplay = true;
-        boolDrawCursor = true;
+        drawCursor = true;
         break;
     case 'C': {
         defaultCacheDirectory = false;
@@ -213,10 +214,10 @@ void Config::listScores() {
             case Flagging::BOTH:
                 cout << "all" << endl;
                 break;
-            case Flagging::FLAGGING_ONLY:
+            case Flagging::FLAGGING:
                 cout << "flagging only" << endl;
                 break;
-            case Flagging::NO_FLAGGING_ONLY:
+            case Flagging::NO_FLAGGING:
                 cout << "non-flagging only" << endl;
                 break;
             }
@@ -226,10 +227,10 @@ void Config::listScores() {
             case Finished::BOTH:
                 cout << "all" << endl;
                 break;
-            case Finished::FINISHED_ONLY:
+            case Finished::FINISHED:
                 cout << "won only" << endl;
                 break;
-            case Finished::UNFINISHED_ONLY:
+            case Finished::UNFINISHED:
                 cout << "lost only" << endl;
                 break;
             }
@@ -275,10 +276,7 @@ void Config::listScores() {
         }
 
         vector<Score> filteredScores =
-          filterScores(scores, (int)listFlagging,
-                       (int)listFinished, player.field.width,
-                       player.field.height, player.field.mineCount,
-                       squareSize, player.field.playerName);
+          filterScores(scores, listFlagging, listFinished, player.field.playerName);
 
         //    cout<<"count="<<count<<endl;
 

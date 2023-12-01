@@ -18,28 +18,6 @@ struct Config {
         IOE = 3,
         EXPORT_CSV = 4,
     };
-    enum class Flagging : int {
-        BOTH = 0,
-        FLAGGING_ONLY = 1,
-        NO_FLAGGING_ONLY = 2,
-        MAX = NO_FLAGGING_ONLY,
-    };
-    static inline Flagging getFlaggingOrDefault(int value) {
-        return (0 <= value && value <= (int)Flagging::MAX)
-                ? static_cast<Flagging>(value)
-                : Flagging::BOTH;
-    }
-    enum class Finished : int {
-        BOTH = 0,
-        FINISHED_ONLY = 1,
-        UNFINISHED_ONLY = 2,
-        MAX = UNFINISHED_ONLY,
-    };
-    static inline Finished getFinishedOrDefault(int value) {
-        return (0 <= value && value <= (int)Finished::MAX)
-                ? static_cast<Finished>(value)
-                : Finished::BOTH;
-    }
 
     inline Config() {
 	  player.field.replay.recording=false;
@@ -59,12 +37,12 @@ struct Config {
     GameState gameState = GAME_INITIALIZED;
     List scoreListType = List::TIME;
     Flagging listFlagging = Flagging::BOTH;
-    Finished listFinished = Finished::FINISHED_ONLY;
+    Finished listFinished = Finished::FINISHED;
     string cacheDirectory;
     bool isFlagging;
     bool gamePaused = false;
     bool playReplay = false;
-    bool boolDrawCursor = false;
+    bool drawCursor = false;
 
     string replayFileName;
     bool printScores = false;
@@ -82,6 +60,7 @@ struct Config {
     void setDifficulty(bool force = false);
     // Infer the difficulty being used from the values in player.field.
     int getDifficulty();
+    static int getDifficulty(int width, int height, int mines);
     int targetWidth();
     int targetHeight();
 
@@ -92,5 +71,7 @@ struct Config {
 
     void listScores();
 };
+
+extern Config conf;
 
 #endif
