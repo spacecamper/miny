@@ -466,8 +466,11 @@ vector<Score> loadScores(const string& fname) {
             
         inFile >> version;
 
-        while (!inFile.eof()) {
+        // Need to peek before checking EOF because eof() only returns true
+        // after the EOF char has been read from the stream.
+        while (inFile.peek(), !inFile.eof()) {
             scores.push_back(Score::readNewFromFile(&inFile));
+            inFile.ignore(999, '\n'); // remove newline
         }
         
         break;
