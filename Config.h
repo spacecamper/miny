@@ -80,7 +80,7 @@ struct Config {
     // Update Field to reflect the stated difficulty option, setting those
     // options that have not already been set unless force.
     void setDifficulty(bool force = false);
-    // Get the value of difficulty being used.
+    // Infer the difficulty being used from the values in player.field.
     int getDifficulty();
     int targetWidth();
     int targetHeight();

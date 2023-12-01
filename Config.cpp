@@ -69,10 +69,7 @@ void Config::setDifficulty(bool force) {
     }
 }
 int Config::getDifficulty() {
-    if (player.field.width == 0 and player.field.height == 0 and
-        player.field.mineCount == 0)
-        return 0;
-    else if (player.field.width == 9 and player.field.height == 9 and
+    if (player.field.width == 9 and player.field.height == 9 and
              player.field.mineCount == 10)
         return 1;
     else if (player.field.width == 16 and player.field.height == 16 and
@@ -241,24 +238,17 @@ void Config::listScores() {
 
             switch (getDifficulty()) {
             case -1:
-                cout << player.field.width << "x" << player.field.height << ", "
-                         << player.field.mineCount << " mines" << endl;
+                if (baseDifficulty != 0) {
+                    cout << player.field.width << "x" << player.field.height << ", "
+                    << player.field.mineCount << " mines" << endl;
+                } else {
+                    cout << "beginner, intermediate, expert, beginner classic" << endl;
+                }
                 break;
-            case 0:
-                cout << "beginner, intermediate, expert, beginner classic" << endl;
-                break;
-            case 1:
-                cout << "beginner only" << endl;
-                break;
-            case 2:
-                cout << "intermediate only" << endl;
-                break;
-            case 3:
-                cout << "expert only" << endl;
-                break;
-            case 4:
-                cout << "beginner classic only" << endl;
-                break;
+            case 1: cout << "beginner only" << endl; break;
+            case 2: cout << "intermediate only" << endl; break;
+            case 3: cout << "expert only" << endl; break;
+            case 4: cout << "beginner classic only" << endl; break;
             }
 
             cout << setw(16) << left << "Square size: ";
