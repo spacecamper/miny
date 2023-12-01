@@ -520,13 +520,14 @@ void appendScore(const string& fname, Score& score) {
 
 
 
-void evalScore2v2(ostringstream *scoreString, Score& s, vector<Score>& scoresAll,ScoreCmpFunc compareFunc,int scoreListLength) {
-   
-    // prints the place and percentile of
-     
-    sort(scoresAll.begin(), scoresAll.end(), [&] (const Score& a, const Score& b) { return compareFunc(a, b) > 0; });
+void sortScores(vector<Score>& scores, ScoreCmpFunc by) {
+    sort(scores.begin(), scores.end(), [&] (const Score& a, const Score& b) { return by(a, b) < 0; });
+}
 
-    
+void evalScore2v2(ostringstream *scoreString, Score& s, vector<Score>& scoresAll,ScoreCmpFunc compareFunc,int scoreListLength) {
+    // prints the place and percentile of s
+     
+    sortScores(scoresAll, compareFunc);
 
     int position;
 

@@ -50,6 +50,7 @@ ScoreCmpFunc compareByTime;
 ScoreCmpFunc compareBy3BVs;
 ScoreCmpFunc compareByIOE;
 
+void sortScores(vector<Score>& scores, ScoreCmpFunc by);
 vector<Score> filterScores(const vector<Score>& scores,int fla, int fin, int w, int h, int m, int ss, const string& pname);
 
 void displayScores(const vector<Score>& scores, int limit,bool csv=false);
