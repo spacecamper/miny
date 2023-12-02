@@ -595,18 +595,6 @@ void evalScore(Score s, const vector<Score>& scores, bool oldFinalResultDisplay,
 
     ostringstream scoreString;
 
-    char strAll[50], strNF[50];
-    
-    
-    sprintf(strAll,"all games (%d)",(int)scoresFiltered.size());
-    
-    
-    if (!s.flagging)
-        sprintf(strNF,"all NF games (%d)",(int)scoresFilteredNF.size());
-    else
-        strNF[0]='\0';
-        
-        
     cout << endl << "Your result's ranking (among won ";
 
 
@@ -626,7 +614,9 @@ void evalScore(Score s, const vector<Score>& scores, bool oldFinalResultDisplay,
     scoreString << "        +-----------+----------------------"<<((!s.flagging)?"-----------------------":"")<<"+"<<endl;
     scoreString << "        |           |   compared to        "<<((!s.flagging)?"                       ":"")<<"|"<<endl;
     scoreString << "        |   this    +----------------------"<<((!s.flagging)?"+----------------------":"")<<"+"<<endl;
-    scoreString << "        |   game    |"<<setw(19) <<right<<strAll<<"   |"<<setw(20) <<right<<(!s.flagging? strNF : "")<< "  |"<<endl;
+    scoreString << "        |   game    |"<<setw(19) <<right<<"all games (" + to_string(scoresFiltered.size()) + ")"<<"   |";
+    if (!s.flagging) scoreString << setw(20)<<right<<"all NF games (" + to_string(scoresFiltered.size()) + ")"<<"  |";
+    scoreString << endl;
     scoreString << "        |           |    place    perc.    |"<<((!s.flagging)?"    place    perc.    |":"")<<endl;
     scoreString << "+-------+-----------+----------------------+"<<((!s.flagging)?"----------------------+":"")<<endl;
 
