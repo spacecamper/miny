@@ -85,14 +85,11 @@ vector<Score> filterScores(const vector<Score>& scores, Flagging fla, Finished f
     for (int i=0;i<scores.size();i++) {        
         const Score& s = scores[i];
         Field& f = conf.player.field;
-        bool flagging_matches =
-          ((int)fla & (int)Flagging::FLAGGING and s.flagging)
-          or ((int)fla & (int)Flagging::NO_FLAGGING and not s.flagging);
-        bool finished_matches =
-          ((int)fla & (int)Finished::FINISHED and s.gameWon)
-          or ((int)fla & (int)Finished::UNFINISHED and not s.gameWon);
-
-        if (flagging_matches and finished_matches
+        auto matches = [] (bool flag, int val, int tru, int fals) {
+          return (val & tru and flag) or (val & fals and not flag);
+        };
+        if (matches(s.flagging, (int)fla, (int)Flagging::FLAGGING, (int)Flagging::NO_FLAGGING)
+            and matches(s.gameWon, (int)fin, (int)Finished::FINISHED, (int)Finished::UNFINISHED)
             and (pname == "" or pname == scores[i].name)
             // Use baseDifficulty here as getDifficulty() can't return 0.
             and (conf.baseDifficulty == 0
