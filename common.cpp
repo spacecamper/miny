@@ -2,45 +2,21 @@
  
 using namespace std;
 
-bool isValidName(char *n) {
-
-    char *c=n;
-    char *validChars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.@-";
-            
-
-    while(*c) {
-        if (!strchr(validChars,*c)) {
-            return false;
-        }
-        c++;
-    }
-
-
-    if (strlen(n)>MAX_NAME_LENGTH) {
-        return false;
-    }
-
-    return true;
-    
-
+bool isValidName(const string& s) {
+   return string::npos == s.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_.@-");
 }
 
-
-
-void ordinalNumberSuffix(char *suffix, int n) {
-
+const char* ordinalNumberSuffix(int n) {
     int rem100=n%100;
-
     if (rem100==11 or rem100==12 or rem100==13) {
-        strcpy(suffix,"th");
-        return;
+        return "th";
     }
 
     switch(n%10) {
-    case 1: strcpy(suffix,"st"); break;
-    case 2: strcpy(suffix,"nd"); break;
-    case 3: strcpy(suffix,"rd"); break;
-    default: strcpy(suffix,"th"); break;
+    case 1: return "st";
+    case 2: return "nd";
+    case 3: return "rd";
+    default: return "th";
     }
     
 }

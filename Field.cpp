@@ -6,6 +6,8 @@
 #include <GL/freeglut_ext.h>
 #endif
 
+#include <algorithm>
+#include <string>
 #include <sys/stat.h>
 #include "Config.h"
 #include "common.h"
@@ -18,35 +20,16 @@ using namespace std;
 
 extern void redisplay();
 
-extern bool playReplay;
-extern int gameState;
-extern bool isFlagging;
-extern bool gamePaused;
-
-//extern unsigned short hitMineX, hitMineY;
-extern int squareSize;
-//extern char playerName[21];
-extern char configDirectory[100];
-
-
 Field::Field() {
-
     val3BV=0;
-    
 }
 
 
 bool Field::replayFileNumberExists(long nr) {
     struct stat buffer;  
-    char rfname[100];
-        
-    char tmp[110];
-    strcpy(tmp,configDirectory);
-    sprintf(rfname,"%lu.replay",nr);
-
-    strcat(tmp,rfname);
+    string tmp = conf.cacheDirectory + to_string(nr) + ".replay";
     
-    if (stat(tmp, &buffer) != 0) {
+    if (stat(tmp.c_str(), &buffer) != 0) {
         return false;
     }
 
@@ -82,18 +65,16 @@ long Field::findLowestUnusedReplayNumber() {
 }
 
 void Field::unpauseGame() {
-    gamePaused=false;
+    conf.gamePaused=false;
     timer.unpause();
     replay.recording = true;
     cout << "Game unpaused."<<endl;
 }
 
-void Field::saveReplay(const char *fname, Score *score) {
+void Field::saveReplay(const string& fname, Score *score) {
     ofstream ofile;
     
-    char fullpath[110];
-    strcpy(fullpath,configDirectory);
-    strcat(fullpath,fname);
+    string fullpath = conf.cacheDirectory + fname;
 
     ofile.open (fullpath);
 
@@ -215,23 +196,9 @@ int Field::get3BV() {
 
 
 void Field::checkValues() {
-
-   if (height<2) 
-        height=2;
-    else if (height>MAX_HEIGHT) 
-        height=MAX_HEIGHT;
-    
-
-    if (width<2) 
-        width=2;
-    else if (width>MAX_WIDTH) 
-        width=MAX_WIDTH;
-    
-    if (mineCount>=height*width)
-        mineCount=height*width-2;
-    else if (mineCount<2)
-        mineCount=2;
-
+   height=clamp(height, (short)2, (short)MAX_HEIGHT);
+   width=clamp(width, (short)2, (short)MAX_WIDTH);
+   mineCount=clamp(mineCount, (short)2, (short)(height * width - 2));
 }
 
 
@@ -291,11 +258,11 @@ void Field::init() {
             state[i][j]=9;
         }
     }
-    gameState=GAME_INITIALIZED;
-    isFlagging=false;
+    conf.gameState=Config::GAME_INITIALIZED;
+    conf.isFlagging=false;
     timer.reset();
 
-    gamePaused=false;
+    conf.gamePaused=false;
 
     effectiveClicks=0;
     ineffectiveClicks=0;
@@ -324,7 +291,7 @@ void Field::showStatistics(bool won, Score score, bool playingReplay) {
             cout << setw(8)<<left << "3BV: " << get3BV()<<endl;
         }
         
-        cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
+        cout << "You played " << (conf.isFlagging?"":"non-") << "flagging."<<endl;
         cout << endl;
     }
     else {
@@ -338,7 +305,7 @@ void Field::showStatistics(bool won, Score score, bool playingReplay) {
 void Field::endGame(const bool won) {
     timer.stop();
     replay.recording = false;
-    gameState=won ? GAME_WON : GAME_LOST;
+    conf.gameState=won ? Config::GAME_WON : Config::GAME_LOST;
 
     redisplay();
 
@@ -348,20 +315,20 @@ void Field::endGame(const bool won) {
     Score newScore;
 
     newScore.timeStamp=ts;
-    strcpy(newScore.name,playerName);
+    newScore.name = playerName;
     newScore.width=width;
     newScore.height=height;
     newScore.mines=mineCount;
 
     newScore.time=timeTaken;
     newScore.val3BV=get3BV();
-    newScore.flagging=isFlagging;
+    newScore.flagging=conf.isFlagging;
 
 
     newScore.effectiveClicks=effectiveClicks;
     newScore.ineffectiveClicks=ineffectiveClicks;
 
-    newScore.squareSize=squareSize;
+    newScore.squareSize=conf.squareSize;
     newScore.gameWon=won;
 
     viewClicks();
@@ -371,45 +338,29 @@ void Field::endGame(const bool won) {
     
     
     
-    if(!playReplay) {
-        char fullpath[110];
-        strcpy(fullpath,configDirectory);
-        strcat(fullpath,"scores.dat");
+    if(!conf.playReplay) {
+        string fullpath = conf.cacheDirectory + "scores.dat";
  
-        showStatistics(won,newScore,playReplay);
+        showStatistics(won,newScore,conf.playReplay);
         
         if(won) {
       //      cout << endl << "YOU WIN!" << endl;
       //      cout << "You played " << (isFlagging?"":"non-") << "flagging."<<endl;
             
-            int scoreListLength = ((Config*)glutGetWindowData())->scoreListLength;
-            int oldFinalResultDisplay = ((Config*)glutGetWindowData())->player->field.oldFinalResultDisplay;
+            int oldFinalResultDisplay = conf.player.field.oldFinalResultDisplay;
 
-            Score *scores;
-
-            int count=loadScores(fullpath,&scores);
+            vector<Score> scores = loadScores(fullpath);
 
 
-            int *zero;
-            zero=0;
-            
-            evalScore(newScore,scores, count, width, height, mineCount,oldFinalResultDisplay,scoreListLength); // XXX
+            evalScore(newScore, scores, oldFinalResultDisplay, conf.scoreListLength); // XXX
 
-            free(scores); 
-
-            // find the lowest unused replay file number
-            
             long nr=1;
 
             nr=findLowestUnusedReplayNumber();
             newScore.replayNumber=nr;
             appendScore(fullpath,newScore);
 
-            char rfname[100];
-
-            char tmp[110];
-            strcpy(tmp,configDirectory);
-            sprintf(rfname,"%lu.replay",nr);
+            string rfname = to_string(nr) + ".replay";
 
             saveReplay(rfname,&newScore);
 
@@ -429,10 +380,8 @@ void Field::endGame(const bool won) {
         //showStatistics(won,newScore);
 
 
-        Config* config = (Config*)glutGetWindowData();
-        if (config->player->replayHasScore) {
-            
-            showStatistics(won, config->player->score, playReplay);
+        if (conf.player.replayHasScore) {
+            showStatistics(won, conf.player.score, conf.playReplay);
         }
     }
 }
@@ -497,7 +446,7 @@ void Field::revealSquare(int squareX, int squareY) {
                 revealAround(squareX,squareY);
             }
 
-            if (gameState==GAME_INITIALIZED or gameState==GAME_PLAYING) {
+            if (conf.gameState==Config::GAME_INITIALIZED or conf.gameState==Config::GAME_PLAYING) {
                 
                 bool notFinished=false;
 
@@ -557,24 +506,24 @@ void Field::viewClicks() {
 }
 
 void Field::startGame(int squareX, int squareY) {
-    if (!playReplay)
+    if (!conf.playReplay)
         placeMines(squareX,squareY);
 
     timer.start();
-    gameState=GAME_PLAYING;
+    conf.gameStarted();
 }
 
 void Field::click(int x,int y,int button) {
 
-    int squareX=(x-FIELD_X)/squareSize;
-    int squareY=(y-FIELD_Y)/squareSize;
+    int squareX=(x-FIELD_X)/conf.squareSize;
+    int squareY=(y-FIELD_Y)/conf.squareSize;
 
 
-    if (!replay.recording and !playReplay and !gamePaused) {
+    if (!replay.recording and !conf.playReplay and !conf.gamePaused) {
         replay.recording = true;
     }    
 
-    if (gameState==GAME_INITIALIZED and button==GLUT_LEFT_BUTTON) {
+    if (conf.gameState==Config::GAME_INITIALIZED and button==GLUT_LEFT_BUTTON) {
         startGame(squareX, squareY);
     }
     
@@ -590,9 +539,9 @@ void Field::click(int x,int y,int button) {
             }
             else if(button==GLUT_RIGHT_BUTTON) {
                 state[squareX][squareY]=10;
-                if (!isFlagging) {
+                if (!conf.isFlagging) {
                     cout<<"You are now playing with flagging."<<endl;
-                    isFlagging=true;
+                    conf.isFlagging=true;
                 }
                 effectiveClicks++;
             }
@@ -613,7 +562,7 @@ void Field::click(int x,int y,int button) {
             ineffectiveClicks++;
         }
         
-        if (gameState==0)
+        if (conf.gameState==0)
             viewClicks();
     }
 }
