@@ -599,13 +599,14 @@ void evalScore(Score s, const vector<Score>& scores, bool oldFinalResultDisplay,
 
 
     switch (conf.getDifficulty()) {
-        case 1: cout << "Beginner";
-        case 2: cout << "Intermediate";
-        case 3: cout << "Expert";
-        case 4: cout << "Beginner classic";
+        case 1: cout << "Beginner"; break;
+        case 2: cout << "Intermediate"; break;
+        case 3: cout << "Expert"; break;
+        case 4: cout << "Beginner Classic"; break;
         default:
           Field& f = conf.player.field;
           cout << "'" << f.width << "x" << f.height << ", " << f.mineCount << " mines\'";
+          break;
     }
     cout << " results)"<<endl<<endl;
     
