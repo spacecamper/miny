@@ -10,24 +10,25 @@
   #:use-module (gnu packages gl))
 
 
-(define* (git-checkout-archive name git-dir #:optional (commit "HEAD"))
+(define (git-vc-files name path)
   (computed-file
-   (string-append name ".tar.gz")
+   name
    (with-imported-modules
 	'((guix build utils))
-	#~(let ((git #$(file-append (@ (gnu packages version-control) git) "/bin/git")))
-		(use-modules (guix build utils))
-		(symlink #$(local-file (string-append git-dir "/.git")
-							   (string-append name ".git")
-							   #:recursive? #t)
-				 ".git")
-		(invoke git "archive" #$commit "-o" #$output)))))
+	#~(begin
+	   (use-modules (guix build utils))
+	   (copy-recursively #$(local-file path #:recursive? #t) #$output)
+	   (chdir #$output)
+	   (invoke
+		#$(file-append (@ (gnu packages version-control) git) "/bin/git")
+		"clean" "-fdX") ;; Remove gitignored files.
+	   (delete-file-recursively (string-append #$output "/.git"))))))
 
 (define miny
   (package
     (name "miny")
     (version "0.6.0")
-    (source (git-checkout-archive name (dirname (current-filename))))
+    (source (git-vc-files name (dirname (current-filename))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
