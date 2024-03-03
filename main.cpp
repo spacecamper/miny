@@ -196,7 +196,7 @@ void drawBackground(int fieldWidth, int fieldHeight) {
             48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
     glColor3f(0,0,0);
-    drawRect(conf.targetWidth()-(BORDER_WIDTH+DISPLAY_BORDER_WIDTH+48),
+    drawRect(conf.targetWidth()-(BORDER_WIDTH+DISPLAY_BORDER_WIDTH+48)+1,
             BORDER_WIDTH,
             48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
@@ -448,7 +448,7 @@ void drawScene() {
 
         glColor3f(.5,.5,.5);
         
-        drawRect(FIELD_X + .5, FIELD_Y + .5, conf.player.field.width*conf.squareSize - 1, conf.player.field.height*conf.squareSize - 1);
+        drawRect(FIELD_X, FIELD_Y, conf.player.field.width*conf.squareSize + 1, conf.player.field.height*conf.squareSize + 1);
 
     }
     else {
