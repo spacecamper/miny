@@ -406,7 +406,7 @@ void displayElapsedTime(long etime) {
 
     if (etime>999) etime=999;
 
-    const int dx=conf.targetWidth()-BORDER_WIDTH-16;
+    const int dx=conf.targetWidth()-BORDER_WIDTH-16 + 1;
     const int dy=BORDER_WIDTH+DISPLAY_BORDER_WIDTH;
 
     for (int i=0;i<3;i++) {
