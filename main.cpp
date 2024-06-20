@@ -4,20 +4,18 @@
  * (c) 2015-2019, 2021, 2023 spacecamper
  */
 
-#include <stdlib.h>
 #include <iostream>
 #include <math.h>
 
 #include <unistd.h>
-#include <stdio.h>
-#include <string.h>
+#include <getopt.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <list>
+#include <vector>
 #include <iomanip>
 
 #ifdef __APPLE__
@@ -40,33 +38,19 @@
 
 #define VERSION "0.6.0"
 
-
-
-
-// TODO prevent buffer overflows (strcpy and strcat)
-// TODO free allocated memory (after using scores from loadScores and filterScores is finished)
-
 using namespace std;
-
-
-int windowWidth, windowHeight, originalWidth, originalHeight;
-int squareSize;
-
-int gameState; // -1 - initialized, 0 - playing, 1 - lost, 2 - won
-char option_char;
-char configDirectory[100];
-bool isFlagging;
-bool gamePaused;
-bool playReplay;
-bool boolDrawCursor;
 
 void redisplay() {
     glutPostRedisplay();
 }
 
 
-bool directoryExists( const char* pzPath )
+bool fileExists(string& path) {
+    return access(path.c_str(), F_OK) == 0;
+}
+bool directoryExists(const string& str)
 {
+    const char* pzPath = str.c_str();
     if ( pzPath == NULL) return false;
 
     DIR *pDir;
@@ -86,17 +70,7 @@ bool directoryExists( const char* pzPath )
 // ----------------------- GRAPHICS -------------------- //
 
 void drawRect(float x, float y, float w, float h) {
-    glBegin(GL_TRIANGLES);
-
-    glVertex2f(x,y);
-    glVertex2f(x+w,y);
-    glVertex2f(x,y+h);
-
-    glVertex2f(x,y+h);
-    glVertex2f(x+w,y+h);
-    glVertex2f(x+w,y);
-
-    glEnd();
+    glRectf(x, y, x+w, y+h);
 }
 
 void drawDigitRect(int i, int x, int y, float zoom=1) {
@@ -207,6 +181,13 @@ void drawFlag(int squareSize, int x, int y) {
     glEnd();
 }
 
+void horizontalLine(float x, float y, float length) {
+    drawRect(x, y, length, 1);
+}
+void verticalLine(float x, float y, float length) {
+    drawRect(x, y, 1, length);
+}
+
 void drawBackground(int fieldWidth, int fieldHeight) {
     // highlight boxes for in game statistics    
     glColor3f(0,0,0);
@@ -215,31 +196,25 @@ void drawBackground(int fieldWidth, int fieldHeight) {
             48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
     glColor3f(0,0,0);
-    drawRect(originalWidth-(BORDER_WIDTH+DISPLAY_BORDER_WIDTH+48),
+    drawRect(conf.targetWidth()-(BORDER_WIDTH+DISPLAY_BORDER_WIDTH+48)+1,
             BORDER_WIDTH,
             48+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
     // new game button
     glColor3f(1,1,0);
-    drawRect(originalWidth/2-12-DISPLAY_BORDER_WIDTH/2,
+    drawRect(conf.targetWidth()/2-12-DISPLAY_BORDER_WIDTH/2,
             BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH,
             24+DISPLAY_BORDER_WIDTH);
 
     // grid lines
     glColor3f(.3,.3,.3);
-    glBegin(GL_LINES); 
     for (int i=0;i<fieldHeight+1;i++) {
-        glVertex2f(FIELD_X,FIELD_Y+i*squareSize);
-        glVertex2f(FIELD_X+fieldWidth*squareSize,FIELD_Y+i*squareSize);
+        horizontalLine(FIELD_X, FIELD_Y+i*conf.squareSize, fieldWidth*conf.squareSize + 1);
     }
     for (int i=0;i<fieldWidth+1;i++) {
-        glVertex2f(FIELD_X+i*squareSize,FIELD_Y);
-        glVertex2f(FIELD_X+i*squareSize,FIELD_Y+fieldHeight*squareSize);
+        verticalLine(FIELD_X+i*conf.squareSize, FIELD_Y, fieldHeight*conf.squareSize + 1);
     }
-    glEnd();
-
-
 }
 
 void drawMine(int x, int y, int squareSize) {
@@ -375,10 +350,10 @@ void drawField(Field field, int squareSize){
 
                 glColor3f(.5,.5,.5);
                 
-                drawRect(x1, y1, squareSize-1, squareSize-1);
+                glRectf(x1 + 1, y1 + 1, x2, y2);
             }
             if ((field.state[x][y]==9 or field.state[x][y]==11) 
-                 and (gameState==GAME_LOST or gameState==GAME_WON)
+                 and (conf.gameState==Config::GAME_LOST or conf.gameState==Config::GAME_WON)
                  and field.isMine(x,y)
                 ) { // unflagged mine after game
                                 
@@ -387,11 +362,11 @@ void drawField(Field field, int squareSize){
             }
             if(field.state[x][y]==11) { // Hit mine
                 glColor3f(1,0,0);
-                drawRect(x1, y1, squareSize-1, squareSize-1);
+                glRectf(x1 + 1, y1 + 1, x2, y2);
             }
             if (field.state[x][y]==10) {  // flag
                 // cross out flag where there is no mine
-                if (gameState==GAME_LOST and !field.isMine(x,y)) {
+                if (conf.gameState==Config::GAME_LOST and !field.isMine(x,y)) {
                     const short crossGap=.1*squareSize;
                     
                     glColor3f(0,0,0);
@@ -431,7 +406,7 @@ void displayElapsedTime(long etime) {
 
     if (etime>999) etime=999;
 
-    const int dx=originalWidth-BORDER_WIDTH-16;
+    const int dx=conf.targetWidth()-BORDER_WIDTH-16 + 1;
     const int dy=BORDER_WIDTH+DISPLAY_BORDER_WIDTH;
 
     for (int i=0;i<3;i++) {
@@ -457,38 +432,30 @@ void drawScene() {
     glClearColor(.7, .7, .7, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glOrtho(0.0, windowWidth, windowHeight, 0.0, -1.0, 10.0);
+    glOrtho(0.0, conf.windowWidth, conf.windowHeight, 0.0, -1.0, 10.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    Config* config = (Config*)glutGetWindowData();
-
-    //cout<< config->player->field.timer.calculateElapsedTime() << endl;
-
-    if(!config) { // if the field hasn't yet been configured
-        return;
-    }
-
-    if (boolDrawCursor) {
-        drawCursor(config->player->cursorX, config->player->cursorY);
+    if (conf.drawCursor) {
+        drawCursor(conf.player.cursorX, conf.player.cursorY);
     }
     
-    displayRemainingMines(config->player->field.calculateRemainingMines());
+    displayRemainingMines(conf.player.field.calculateRemainingMines());
 
-    displayElapsedTime(config->player->field.timer.calculateElapsedTime()/1000);
+    displayElapsedTime(conf.player.field.timer.calculateElapsedTime()/1000);
 
-    if (gamePaused) {    // hide field when game is paused
+    if (conf.gamePaused) {    // hide field when game is paused
 
         glColor3f(.5,.5,.5);
         
-        drawRect(FIELD_X + .5, FIELD_Y + .5, config->player->field.width*squareSize - 1, config->player->field.height*squareSize - 1);
+        drawRect(FIELD_X, FIELD_Y, conf.player.field.width*conf.squareSize + 1, conf.player.field.height*conf.squareSize + 1);
 
     }
     else {
-        drawField(config->player->field, squareSize);
+        drawField(conf.player.field, conf.squareSize);
     }
 
-    drawBackground(config->player->field.width, config->player->field.height);    
+    drawBackground(conf.player.field.width, conf.player.field.height);
 
     glutSwapBuffers();
 }
@@ -496,40 +463,34 @@ void drawScene() {
 // -------------------------- GLUT ----------------------- //
 
 void handleResize(int w, int h) {
-    windowWidth=w;
-    windowHeight=h;
-    glViewport(0, 0, windowWidth, windowHeight);
+    conf.windowWidth=w;
+    conf.windowHeight=h;
+    glViewport(0, 0, conf.windowWidth, conf.windowHeight);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 }
 
 void keyDown(unsigned char key, int x, int y) {
-    
-    Config* config = (Config*)glutGetWindowData();
-
-    config->player->handleInput(-((int)key), 0, 0);
+    conf.handleInput(key);
+    conf.player.handleInput(-((int)key), 0, 0);
 }
 
 void mouseClick(int button, int mState, int x, int y) {
-    if (!gamePaused and mState==GLUT_DOWN) {
-        Config* config = (Config*)glutGetWindowData();
-        config->player->handleInput(button, x, y);
+    if (!conf.gamePaused and mState==GLUT_DOWN) {
+        conf.player.handleInput(button, x, y);
     }
 }
 
 void mouseMove(int x, int y) {
-    Config* const config = (Config*)glutGetWindowData();
-    config->player->handleInput(-1, x, y);
+    conf.player.handleInput(-1, x, y);
 }
 
 
 void update(int value) {
     glutPostRedisplay();
     
-    Player* player = ((Config*)glutGetWindowData())->player;
-
-    if(!(player->playStep(false))){
-        playReplay=false;
+    if(!(conf.player.playStep(false))){
+        conf.playReplay=false;
     }
 
     // On my computer the first argument here being zero causes the game to register two events close to each other about every 16 ms instead of one event about every 8 ms. This might worsen the experience especially on monitors with higher refresh rate.
@@ -537,215 +498,90 @@ void update(int value) {
 }
 
 
-void initGraph(Config* config) {
+void initGraph() {
 
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    windowWidth=FIELD_X+config->player->field.width*config->squareSize+BORDER_WIDTH;
-    windowHeight=FIELD_Y+config->player->field.height*config->squareSize+BORDER_WIDTH;
+    conf.windowWidth=conf.targetWidth();
+    conf.windowHeight=conf.targetHeight();
 
-    originalWidth=windowWidth;
-    originalHeight=windowHeight;
-
-    glutInitWindowSize(windowWidth, windowHeight);
+    glutInitWindowSize(conf.windowWidth, conf.windowHeight);
         
-    char title[100];
+    string title = "Miny v" VERSION ". Player: ";
+    title += conf.player.field.playerName;
 
-    strcpy(title,"Miny v");
-    strcpy(title+6,VERSION);
-    strcpy(title+6+strlen(VERSION),". Player: ");
-    strcpy(title+16+strlen(VERSION),config->player->field.playerName);
-
-    glutCreateWindow(title);
+    glutCreateWindow(title.c_str());
            
     glEnable(GL_DEPTH_TEST);
                             
-    glutSetWindowData((void*)config);
     glutDisplayFunc(drawScene);
     glutKeyboardFunc(keyDown);
     glutReshapeFunc(handleResize);
 
-    if(!playReplay) {
+    if(!conf.playReplay) {
         glutMouseFunc(mouseClick);
         glutPassiveMotionFunc(mouseMove);
         glutMotionFunc(mouseMove);
     }
 }
 
-void displayReplay(char replayFileName[100], Config* config) {
-    if (config->player->loadReplay(replayFileName)) {
+void displayReplay() {
+    if (conf.player.loadReplay(conf.replayFileName)) {
         exit(1);
     }
-    config->squareSize=squareSize;
 
-    config->player->field.init();
+    conf.player.field.init();
     cout << "Playing replay..." << endl;
-    initGraph(config);
+    initGraph();
 
-    config->player->playStep(true);
+    conf.player.playStep(true);
     glutTimerFunc(0, update, 0);
 }
 
-void listScores(int listScoresType, int scoreListLength, int listFlagging, int listFinished, Config* config) {
-    // TODO 'other' setups may produce too high 3BV/s etc and break layout
 
-    char fullpath[110];
-    strcpy(fullpath,configDirectory);
-    strcat(fullpath,"scores.dat");
+void beginGame() {
+    conf.player.field.checkValues();
 
-    Score *scores;
-    int count=loadScores(fullpath,&scores);
-
-    if (count==0) {      // no scores in score file
-        if (listScoresType!=4)
-            cout<<"No high scores yet."<<endl;
-    }
-    else {
-        if (listScoresType!=4) {    // if not display as csv, then info about filter and sort
-            cout << endl << "Displaying scores."<<endl;
-            cout << setw(16)<<left<<"Sorted by: ";
-
-            int (*compareFunc)(const void *,const void *)=NULL;
-            switch(listScoresType) {
-            case 1:
-                cout << "time" << endl;
-                compareFunc=compareByTime; break;
-            case 2:
-                cout << "3BV/s" << endl;
-                compareFunc=compareBy3BVs; break;
-            case 3:
-                cout << "IOE" << endl;
-                compareFunc=compareByIOE; break;
-            }
-
-            cout << setw(16)<<left<<"Flagging: ";
-            switch (listFlagging) {
-            case 0: cout << "all"<<endl; break;
-            case 1: cout << "flagging only"<<endl; break;
-            case 2: cout << "non-flagging only"<<endl; break;
-            }
-
-            cout << setw(16)<<left<<"Won: ";
-            switch (listFinished) {
-            case 0: cout << "all"<<endl; break;
-            case 1: cout << "won only"<<endl; break;
-            case 2: cout << "lost only"<<endl; break;
-            }
-
-            cout << setw(16)<<left<<"Difficulty: ";
-
-            
-            bool standardDifficulty=false;
-
-
-            if (config->player->field.width==0 and config->player->field.height==0 and config->player->field.mineCount==0) {
-                cout << "beginner, intermediate, expert, beginner classic"<<endl; 
-                standardDifficulty=true;
-            }
-            else if (config->player->field.width==9 and config->player->field.height==9 and config->player->field.mineCount==10) {
-                cout << "beginner only"<<endl; 
-                standardDifficulty=true;
-            }
-            else if (config->player->field.width==16 and config->player->field.height==16 and config->player->field.mineCount==40) {
-                cout << "intermediate only"<<endl; 
-                standardDifficulty=true;
-            }
-            else if (config->player->field.width==30 and config->player->field.height==16 and config->player->field.mineCount==99) {
-                cout << "expert only"<<endl; 
-                standardDifficulty=true;
-            }
-            else if (config->player->field.width==8 and config->player->field.height==8 and config->player->field.mineCount==10) {
-                cout << "beginner classic only"<<endl; 
-                standardDifficulty=true;
-            }
-            
-
-
-            if (!standardDifficulty) 
-                cout << config->player->field.width << "x" << config->player->field.height << ", " << config->player->field.mineCount << " mines" << endl;
-            
-
-
-            cout << setw(16)<<left<<"Square size: ";
-            if (squareSize!=0)
-                cout <<squareSize<<endl;
-            else
-                cout << "all"<<endl;
-
-            cout << setw(16)<<left<<"Player name: ";
-            if (!strcmp(config->player->field.playerName,""))
-                cout<<"all"<<endl;
-            else
-                cout<<config->player->field.playerName<<endl;
-
-            cout << setw(16)<<left<<"Count: ";
-            if (scoreListLength!=0)
-                cout <<scoreListLength<<endl;
-            else
-                cout << "all"<<endl;
-        
-            cout<<endl;
-
-            qsort(scores,count,sizeof(Score),compareFunc);
-        }
-
-
-
-        Score *filteredScores;
-
-
-        count=filterScores(scores, count, &filteredScores,listFlagging, listFinished,
-            config->player->field.width, config->player->field.height, config->player->field.mineCount, squareSize,config->player->field.playerName);
-
-    //    cout<<"count="<<count<<endl;
-
-        displayScores(filteredScores,count,scoreListLength,listScoresType==4);
-
-        cout<<endl;
-        free(scores);
-    }
-}
-
-void beginGame(Config* config) {
-    
-    config->player->field.checkValues();    
-
-    initGraph(config);
-    config->player->field.init();
+    initGraph();
+    conf.player.field.init();
 
     glutTimerFunc(50, update, 0);
 }
 
-void configureSize(int difficulty, Field* field) {
-    if (field->width!=0 and field->height!=0 and field->mineCount!=0) {  // if these values were specified on the command line
-        difficulty=-1;      // prevent altering them in the switch
+bool findArgFile(string& file) {
+    // Try $XDG_CONFIG_HOME/miny
+    char* confdir = getenv("XDG_CONFIG_HOME");
+    if (confdir) {
+        file = confdir;
+        file += "/miny/default.args";
+        if (fileExists(file)) return true;
     }
-    switch(difficulty) {
-        case 0:
-            field->height=0;
-            field->width=0;
-            field->mineCount=0;
-            break;
-        case 1:
-            field->height=9;
-            field->width=9;
-            field->mineCount=10;
-            break;
-        case 2:
-            field->height=16;
-            field->width=16;
-            field->mineCount=40;
-            break;
-        case 3:
-            field->height=16;
-            field->width=30;
-            field->mineCount=99;
-            break;
-        case 4:
-            field->height=8;
-            field->width=8;
-            field->mineCount=10;
-            break;
-    } 
+
+    // Try ~/.config/miny
+    file = getenv("HOME");
+    file += "/.config/miny/default.args";
+    if (fileExists(file)) return true;
+
+    // Try ~/.miny
+    file = getenv("HOME");
+    file += "/.miny/default.args";
+    if (fileExists(file)) return true;
+
+    return false;
+}
+
+void handleArgs(int argc, char* const argv[]) {
+    const static option long_opts[2] = { {"help", 0, NULL, 'H'}, {} };
+
+    optind = 1;
+    char option_char;
+    while ((option_char = getopt_long(argc, argv, "Hd:s:w:h:m:n:p:t3f:cg:il:C:o", long_opts, NULL)) != -1) {
+        conf.handleOption(option_char, optarg);
+        if (option_char == 'H')
+           exit(0);
+        else if(option_char == '?')
+           exit(1);
+    }
+    
 }
 
 int main(int argc, char** argv) {
@@ -753,217 +589,97 @@ int main(int argc, char** argv) {
 
     glutInit(&argc, argv);
 
-    Player player;
-
-    player.field.height=0;
-    player.field.width=0;
-    player.field.mineCount=0;
-    player.field.replay.recording=false;
-
-    
-    gameState=GAME_INITIALIZED;
-    gamePaused=false;
-    boolDrawCursor=false;
-
-    char replayName[100];
-    char replayFileName[110];
-    int listScoresType=0; // 0 - none, 1 - time, 2 - 3bv/s, 3 - ioe, 4 - export as csv
-
-    int difficulty=2;   // 0-all of 1 to 4; 1-beg; 2-int; 3-exp; 4-beg classic
-    int listFlagging=0;  // 0-both, 1-flagging, 2-nf
-    int listFinished=1; //  0-both, 1-finished, 2-unfinished
-    int scoreListLength=MAX_HS;        // how many scores to display
-
-    bool defaultConfigDirectory=true;
-
-    strcpy(configDirectory,getenv("HOME"));
-    strcat(configDirectory,"/.miny/");
-
-    player.field.playerName[0]='\0';
-
-    strcpy(player.field.playerName,"");
-
-    player.field.oldFinalResultDisplay=false;
-
-    while ((option_char = getopt (argc, argv, "d:s:w:h:m:n:p:t3f:cg:il:C:o")) != -1) {
-        switch (option_char) {  
-            case 'o':
-                player.field.oldFinalResultDisplay=true;
-                
-                break;
-            case 'd': 
-                difficulty=atoi(optarg);
-                break;
-            case 's': 
-                squareSize=atoi(optarg);
-                break;
-            case 'm': 
-                player.field.mineCount=atoi(optarg);
-                break;
-            case 'w': 
-                player.field.width=atoi(optarg);
-                break;
-            case 'h': 
-                player.field.height=atoi(optarg);
-                break;
-            case 'n':
-                if (strlen(optarg)<20)
-                    strcpy(player.field.playerName,optarg);
-                else
-                    strncpy(player.field.playerName,optarg,20);
-                
-                break;
-            case 'p':
-                strcpy(replayName,optarg);
-                playReplay=true;
-                boolDrawCursor=true;
-                break;
-            case 'l':
-                scoreListLength=atoi(optarg);
-                break;
-            case '3':
-                listScoresType=2;
-                break;
-            case 't':
-                listScoresType=1;
-                break;
-            case 'i':
-                listScoresType=3;
-                break;
-
-            case 'f':
-                listFlagging=optarg[0]-'0';
-                break;
-            case 'g':
-                listFinished=optarg[0]-'0';
-                break;
-            case 'c':
-                listScoresType=4;
-                break;
-            case 'C': {
-                int length=strlen(optarg);
-
-                if (optarg[strlen(optarg)-1]!='/') 
-                    length++;
-
-                if (length>101) {
-                    cout<<"Config directory path must be shorter than 100 characters. Exiting."<<endl;
-                    exit(1);
-                }
-                else {
-                    defaultConfigDirectory=false;
-                    strcpy(configDirectory,optarg);
-                    if (optarg[strlen(optarg)-1]!='/') 
-                        strcat(configDirectory,"/");
-                }
-                break;
-                }
-            case '?':
-                exit(1);
-
+    string home = getenv("HOME");
+    char *xdgDataHome = getenv("XDG_DATA_HOME");
+    if (xdgDataHome) {
+        conf.cacheDirectory = xdgDataHome;
+    } else {
+        conf.cacheDirectory = home + "/.local/share";
+    }
+    conf.cacheDirectory += "/miny/";
+    // default to the old file if it exists and the new one doesn't
+    // also check that config_home exists before putting stuff there
+    if (!directoryExists(conf.cacheDirectory) ) {
+        string oldMinyDir = home;
+        oldMinyDir += "/.miny/";
+        if (directoryExists(oldMinyDir)) {
+            conf.cacheDirectory = oldMinyDir;
         }
     }
-    
-    if (listScoresType==0 and squareSize==0) {
-        squareSize=50;
+
+    conf.player.field.oldFinalResultDisplay=false;
+
+    string fileName;
+    if (findArgFile(fileName)) {
+        std::ifstream file(fileName, ios_base::in);
+        string str;
+        getline(file, str);
+        vector<string> argsStrs;
+        vector<char*> args { nullptr };
+        const char* space = " \t";
+        size_t j = str.find_first_of(space);
+        if (j == string::npos && str.size() > 0) j = str.size();
+        for (size_t i = 0; i != string::npos && j != string::npos;) {
+            argsStrs.push_back(str.substr(i, j - i));
+            cout << argsStrs.back() << endl;
+            args.push_back(&argsStrs.back()[0]);
+            i = str.find_first_not_of(space, j);
+            if (i == string::npos) break;
+            j = str.find_first_of(space, i);
+            if (j == string::npos) j = str.size();
+        }
+        handleArgs((int)args.size(), &args[0]);
     }
 
+    handleArgs(argc, argv);
 
-    if (strlen(player.field.playerName)!=0 && !isValidName(player.field.playerName)) {
-        cout << "Name can be max. 20 characters long and can only contain the characters a-z, "
-            <<endl<<"A-Z, 0-9, underscore (_), dot (.), at sign (@) and dash (-)."<<endl;
+    // Set the difficulty after other args have been set so that only the final
+    // value -d argument affects the values used.
+    conf.setDifficulty();
+
+    if (conf.player.field.playerName != "" && !isValidName(conf.player.field.playerName)) {
+        cout << "Name can can only contain the characters a-z, A-Z, 0-9, underscore (_), dot" << endl
+             << "(.), at sign (@) and dash (-)." << endl;
         exit(1);   
     }
 
 
-    if (listScoresType!=4) {
+    if (conf.scoreListType!=Config::List::EXPORT_CSV) {
         cout<<"Miny v"<<VERSION<<" (c) 2015-2019, 2021, 2023 spacecamper"<<endl;
-        cout << "See README for info and help."<<endl;
+        cout << "See README or --help for info and help."<<endl;
     }
 
     // config directory
 
-    if (!directoryExists(configDirectory)) {
-        if (defaultConfigDirectory) {
-            if (system("mkdir ~/.miny")) {
+    if (!directoryExists(conf.cacheDirectory)) {
+        if (conf.defaultCacheDirectory) {
+            if (execlp("mkdir", "mkdir", conf.cacheDirectory.c_str(), NULL)) {
                 cerr << "Error creating config directory. Exiting." << endl;
                 exit(1);
             }
-        }
-        else {
+        } else {
             cout << "Specified config directory doesn't exist. Please create it first." << endl;
             exit(1);
         }
-            
     }
 
-    if (playReplay) {
-        strcpy(replayFileName,configDirectory);       
-        strcat(replayFileName,replayName);
-        strcat(replayFileName,".replay");
+    if (conf.printScores) { // list scores
+        conf.listScores();
+        exit(0);
     }
-    
-    Config config;
-
-    config.windowWidth=windowWidth;
-    config.windowHeight=windowHeight;
-    config.originalWidth=originalWidth;
-    config.originalHeight=originalHeight;
-    config.squareSize=squareSize;
-    config.player=&player;
-    config.scoreListLength=scoreListLength;
-
-    if (playReplay) {
-        displayReplay(replayFileName, &config);
-    }
-    else { 
-        
-        configureSize(difficulty, &(player.field));
-        
-        if (listScoresType!=0) { // list scores
-            listScores(listScoresType, scoreListLength, listFlagging, listFinished, &config);
+    if (conf.playReplay) {
+        displayReplay();
+    } else {
+        if (conf.player.field.playerName == "") {
+            if (isValidName(getenv("USER"))) {
+                conf.player.field.playerName = getenv("USER");
+            } else {
+                conf.player.field.playerName = "unnamed";
+            }
         }
-        else {
-           // play
- 
- 
-           // set player name to username if not entered with -n and username is a valid name, else set it to "unnamed"
-
-            if (strlen(player.field.playerName)==0) {      
-                if (isValidName(getenv("USER")))       
-                    if (strlen(getenv("USER"))>20) {
-                        strncpy(player.field.playerName,getenv("USER"),20);
-                        player.field.playerName[21]='\0';
-                    }
-                    else {
-                        strcpy(player.field.playerName,getenv("USER"));
-                    }
-                else {
-                    strcpy(player.field.playerName,"unnamed");
-                }
-            }
-
-          /*  if (config.squareSize==0) {
-                config.squareSize=35;
-            }*/
-
-            if (config.squareSize<3) {
-                config.squareSize=3;
-            }
-            else if (config.squareSize>100) {
-                config.squareSize=100;
-            }
-
-            squareSize=config.squareSize;
-
-            beginGame(&config);
-        }
+        cout << "You are playing as " << conf.player.field.playerName << "." << endl;
+        beginGame();
     }
-
-    if(listScoresType==0){
-        glutMainLoop();
-    }
-
+    glutMainLoop();
     return 0;
-
 }

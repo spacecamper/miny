@@ -1,9 +1,10 @@
 #include "common.h"
 #include "scores.h"
+#include "Config.h"
 
 Score::Score() {
     timeStamp=0;
-    strcpy(name,"not-set-yet");
+    name = "name-not-set";
     //strcpy(replayFile,"*");
     replayNumber=0;
     width=0;
@@ -20,69 +21,43 @@ Score::Score() {
 
 }
 
-float Score::getIOE() {
+float Score::getIOE() const {
     return (float)val3BV/(float)(effectiveClicks+ineffectiveClicks);
 }
 
-float Score::get3BVs() {
+float Score::get3BVs() const {
     //cout << "val3BV=" << val3BV <<end;
     return 1000*(float)val3BV/time;
 }
 
 void Score::writeToFile(ofstream *f) {
-
     *f << timeStamp << " " << name << " " << replayNumber << " " << width << " " << height <<
          " " << mines << " " << time << " " << val3BV << " " << flagging << " " << effectiveClicks <<
          " " << ineffectiveClicks << " " << squareSize << " " << gameWon << endl;
-
-
 }
 
 void Score::readFromFile(ifstream *f) {
-
-
     *f >> timeStamp >> name >> replayNumber >> width >> height >> mines >> time >> val3BV >> flagging >> effectiveClicks >> ineffectiveClicks >> squareSize >> gameWon;
-
-//    if (loadReplay) 
-  //      cout << val3BV << endl;
-
-
-//     cout << name << " "<<time<<endl;
-
+}
+Score Score::readNewFromFile(ifstream *f) {
+    Score ret;
+    ret.readFromFile(f);
+    return ret;
 }
 
+int compareByTime(const Score& a,const Score& b) {
 
-
-
-int compareByTime(const void *a,const void *b) {
-
-    if ( (*(Score*)a).time <  (*(Score*)b).time ) return -1;
-    if ( (*(Score*)a).time >  (*(Score*)b).time ) return 1;
+    if ( a.time <  b.time ) return -1;
+    if ( a.time >  b.time ) return 1;
 
     return 0;
 
 }
 
-int compareBy3BVs(const void *a,const void *b) {
+int compareBy3BVs(const Score& a,const Score& b) {
 
-    float v1=(*(Score*)a).get3BVs();
-    float v2=(*(Score*)b).get3BVs();
-
- /*   v1=1000*(*(Score*)a).val3BV/(*(Score*)a).time;
-    v2=1000*(*(Score*)b).val3BV/(*(Score*)b).time;
-*/
-    if ( v1 <  v2 ) return 1;
-    if ( v1 >  v2 ) return -1;
-
-    return 0;
-
-}
-
-
-int compareByIOE(const void *a,const void *b) {
-
-    float v1=1000*(*(Score*)a).getIOE();
-    float v2=1000*(*(Score*)b).getIOE();
+    float v1=a.get3BVs();
+    float v2=b.get3BVs();
 
     if ( v1 <  v2 ) return 1;
     if ( v1 >  v2 ) return -1;
@@ -92,57 +67,38 @@ int compareByIOE(const void *a,const void *b) {
 }
 
 
-int filterScores(Score *scores, int count, Score **filteredScores, int fla, int fin, int w, int h, int m, int ss, char *pname) {
+int compareByIOE(const Score& a,const Score& b) {
 
-    *filteredScores=new Score[count];    // just allocate array of the same size for the filtered scores
+    float v1=1000*a.getIOE();
+    float v2=1000*b.getIOE();
+
+    if ( v1 <  v2 ) return 1;
+    if ( v1 >  v2 ) return -1;
+
+    return 0;
+
+}
 
 
-    int counter=0;
-
-    for (int i=0;i<count;i++) {        
-            
-
-        bool isBeg=scores[i].width==9 and scores[i].height==9 and scores[i].mines==10;
-        bool isInt=scores[i].width==16 and scores[i].height==16 and scores[i].mines==40;
-        bool isExp=scores[i].width==30 and scores[i].height==16 and scores[i].mines==99;
-        bool isBegC=scores[i].width==8 and scores[i].height==8 and scores[i].mines==10;
-        bool isStandard=isBeg or isInt or isExp or isBegC;
-
-        if (    // flagging
-            ((fla==0) or (fla==1 and scores[i].flagging) or (fla==2 and !scores[i].flagging))
-        
-            and
-                // finished
-            ((fin==0) or (fin==1 and scores[i].gameWon) or (fin==2 and !scores[i].gameWon))
-        
-            and 
-                    // difficulty
-            /*((dif==0 and isStandard) or (dif==1 and isBeg) or (dif==2 and isInt) or (dif==3 and isExp)
-                or (dif==4 and isBegC))*/
-            (
-                (scores[i].width==w and scores[i].height==h and scores[i].mines==m)
-                or
-                (w==0 and h==0 and m==0 and isStandard) // XXX BUG - for non-standard sizes scores can't be filtered for nf without specifying w,h,m
-            )
-
-            and 
-                // square size
-            (ss==0 or scores[i].squareSize==ss)
-
-            and 
-                // player name
-            (pname[0]=='\0' or !strcmp(pname,scores[i].name))
-
-            ) {
-
-                (*filteredScores)[counter]=scores[i];
-                counter++;
-            
+vector<Score> filterScores(const vector<Score>& scores, Flagging fla, Finished fin, const string& pname) {
+    vector<Score> filteredScores;
+    for (int i=0;i<scores.size();i++) {        
+        const Score& s = scores[i];
+        Field& f = conf.player.field;
+        auto matches = [] (bool flag, int val, int tru, int fals) {
+          return (val & tru and flag) or (val & fals and not flag);
+        };
+        if (matches(s.flagging, (int)fla, (int)Flagging::FLAGGING, (int)Flagging::NO_FLAGGING)
+            and matches(s.gameWon, (int)fin, (int)Finished::FINISHED, (int)Finished::UNFINISHED)
+            and (pname == "" or pname == scores[i].name)
+            // Use baseDifficulty here as getDifficulty() can't return 0.
+            and (conf.baseDifficulty == 0
+                 or (s.width == f.width and s.height == f.height and s.mines == f.mineCount))
+        ) {
+            filteredScores.push_back(s);
         }
     }
-
-    return counter;
-
+    return filteredScores;
 }
 
 
@@ -161,8 +117,8 @@ unsigned int intLength(int n)
     return length;
 }
 
-void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
-    if (count==0) {
+void displayScores(const vector<Score>& scores, int limit,bool csv /*=false*/) {
+    if (scores.size()==0) {
         if (!csv) 
             cout << "No scores for this game setup yet." << endl;
         return;
@@ -174,12 +130,12 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
     
         if (limit==0)
-            outputCount=count;
+            outputCount=scores.size();
         else
-            if (limit<count)
+            if (limit<scores.size())
                 outputCount=limit;
             else
-                outputCount=count;
+                outputCount=scores.size();
 
 
         int tw=terminalWidth();
@@ -194,8 +150,8 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
         for (int i=0;i<outputCount;i++) {
 
-            if (strlen(scores[i].name)>maxNameLen)
-                maxNameLen=strlen(scores[i].name);
+            if (scores[i].name.size()>maxNameLen)
+                maxNameLen=scores[i].name.size();
 
             int currentTimeLen=intLength(scores[i].time);
             if (currentTimeLen>maxTimeLen) 
@@ -312,16 +268,13 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
           
             // difficulty
 
-            if (scores[i].width==8 and scores[i].height==8 and scores[i].mines==10)
-                currentLine  <<"  "<< "beC";
-            else if (scores[i].width==9 and scores[i].height==9 and scores[i].mines==10)
-                currentLine  <<"  "<< "beg";
-            else if (scores[i].width==16 and scores[i].height==16 and scores[i].mines==40)
-                currentLine  <<"  "<< "int";
-            else if (scores[i].width==30 and scores[i].height==16 and scores[i].mines==99)
-                currentLine  <<"  "<< "exp";
-            else
-                currentLine  <<"  "<< "oth";
+            switch (Config::getDifficulty(scores[i].width, scores[i].height, scores[i].mines)) {
+                case 1: currentLine  <<"  "<< "beg"; break;
+                case 2: currentLine  <<"  "<< "int"; break;
+                case 3: currentLine  <<"  "<< "exp"; break;
+                case 4: currentLine  <<"  "<< "beC"; break;
+                default: currentLine  <<"  "<< "oth"; break;
+            }
 
             // date and time
 
@@ -348,7 +301,7 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
     else {
         cout << "dateOfGame,timeOfGame,width,height,mines,difficulty,won,time,3BV/s,IOE,3BV,flagging,name,effectiveClicks,ineffectiveClicks,squareSize,replay"<<endl;
 
-        for (int i=0;i<count;i++) {        
+        for (int i=0;i<scores.size();i++) {        
                     
             ostringstream currentLine;
 
@@ -453,27 +406,21 @@ void displayScores(Score *scores, int count,int limit,bool csv /*=false*/) {
 
 }
 
-
-
-
-int loadScores(char *fname, Score **scores) {
-
-
-    *scores=NULL;
+vector<Score> loadScores(const string& fname) {
+    vector<Score> scores;
     std::ifstream inFile(fname); 
 
-    if (!inFile.is_open())
-        return 0;
-
+    if (!inFile.is_open()) {
+        cout << "File read error." << endl;
+        exit(1);
+    }
+  
     int version;
 
     //inFile.read((char *) &version, 4);
 
     inFile >> version;
 
-    Score tmps;
-    int count=0;
-        
     switch(version) {
     case SCORE_FILE_VERSION:
     {
@@ -487,33 +434,12 @@ int loadScores(char *fname, Score **scores) {
         inFile.open(fname);
             
         inFile >> version;
-        while (!inFile.eof()) {
-            tmps.readFromFile(&inFile);
-          //  inFile.read((char *) &tmphs, sizeof(Score));
-          //  cout << "hs "<<count<< " replay: "<<tmphs.replayFile<<endl;
-            count++; 
-        }
-        count--;
-    //    cout << "Counted "<<count<<" scores in score file."<<endl;
 
-        if (count==0)
-            break;
-
-
-        inFile.close();
-        inFile.open(fname);
-
-        //inFile.read((char *) &version, 4);
-
-
-        inFile >> version;
-
-        *scores=new Score[count];
-        
-
-        for (int i=0;i<count;i++) {
-            (*scores)[i].readFromFile(&inFile);
-
+        // Need to peek before checking EOF because eof() only returns true
+        // after the EOF char has been read from the stream.
+        while (inFile.peek(), !inFile.eof()) {
+            scores.push_back(Score::readNewFromFile(&inFile));
+            inFile.ignore(999, '\n'); // remove newline
         }
         
         break;
@@ -521,19 +447,15 @@ int loadScores(char *fname, Score **scores) {
     default:
         cerr << "Unsupported score file version. Try upgrading to the newest version of the program."<<endl;
         exit(1);
-        count=0;
         break;
     }
 
     inFile.close();
-
-    
-    return count;
-
+    return scores;
 }
 
 
-void appendScore(char *fname, Score score) {
+void appendScore(const string& fname, Score& score) {
 
  //   cout << "Opening score file... "<<flush;
     
@@ -570,41 +492,28 @@ void appendScore(char *fname, Score score) {
 
 
 
-bool evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int countAll,int (*compareFunc)(const void *,const void *),int scoreListLength) {
-   
-    // prints the place and percentile of
-     
-    qsort(scoresAll,countAll,sizeof(Score),compareFunc);
+void sortScores(vector<Score>& scores, ScoreCmpFunc by) {
+    sort(scores.begin(), scores.end(), [&] (const Score& a, const Score& b) { return by(a, b) < 0; });
+}
 
-    
+void evalScore2v2(ostringstream *scoreString, Score& s, vector<Score>& scoresAll,ScoreCmpFunc compareFunc,int scoreListLength) {
+    // prints the place and percentile of s
+     
+    sortScores(scoresAll, compareFunc);
 
     int position;
-    char suffix[3];
 
-    for (position=0;position<countAll;position++) {   // "position" is the position of the score currently being evaluated among scoresAll
-        if (compareFunc((const void*) &s,(const void*) &scoresAll[position])<0)
+    for (position=0;position<scoresAll.size();position++) {   // "position" is the position of the score currently being evaluated among scoresAll
+        if (compareFunc(s, scoresAll[position])<0)
             break;
     }
 
-    ordinalNumberSuffix(suffix,position+1);
-
-    float percentile;
-    /*
-    if (position==1) {
-        percentile=100;
-    }
-    else {*/
-
-
-        percentile=100*(float) (countAll-position+1)/(float)(countAll+1);     // fix this so that percentile is reported correctly
-//    }                                                                        // eg 0 when a score ranks as last
+    float percentile = 100*(1 - (float)position/(scoresAll.size() - 1));
                                                                                 
                      
-    cout ;
-    
     *scoreString << right << fixed << 
         setw(7) << setprecision(0) << (position+1) <<   // position
-       /* setw(2) <<*/ suffix <<                            // suffix (-st, -th)
+       /* setw(2) <<*/     ordinalNumberSuffix(position+1) <<                            // suffix (-st, -th)
         setw(10) << setprecision(3) << percentile << " ";       // percentile
 
    // *scoreString << ' ';
@@ -613,7 +522,7 @@ bool evalScore2v2(ostringstream *scoreString, Score s, Score *scoresAll,int coun
 }
 
 
-int evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score *scoresFiltered,int countFiltered,Score *scoresFilteredNF,int countFilteredNF,int (*compareFunc)(const void *,const void *),int scoreListLength) {
+void evalScoreMid(ostringstream *scoreString,string criterionName, Score s,vector<Score>& scoresFiltered,vector<Score>& scoresFilteredNF,int (*compareFunc)(const Score&,const Score&),int scoreListLength) {
 
     // compare how this score ranks against older ones based on compareFunc 
 
@@ -645,14 +554,14 @@ int evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score 
 
     *scoreString<<" |";
     // f+nf
-    evalScore2v2(scoreString,s,scoresFiltered,countFiltered,compareFunc,scoreListLength) ;   
+    evalScore2v2(scoreString,s,scoresFiltered,compareFunc,scoreListLength) ;   
     
     
     
     if (!s.flagging) {
         // nf only
         *scoreString<<"  |";
-        evalScore2v2(scoreString,s,scoresFilteredNF,countFilteredNF,compareFunc,scoreListLength);
+        evalScore2v2(scoreString,s,scoresFilteredNF,compareFunc,scoreListLength);
     }
             
     *scoreString<<"  | "<<endl;
@@ -660,7 +569,7 @@ int evalScoreMid(ostringstream *scoreString,string criterionName, Score s,Score 
     
 
 
-void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldFinalResultDisplay, int scoreListLength) {
+void evalScore(Score s, const vector<Score>& scores, bool oldFinalResultDisplay, int scoreListLength) {
 
     // compare how this score ranks against older ones
 
@@ -678,48 +587,27 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldF
         
     cout<<"3BV: "<<s.val3BV/1.0<<endl;
 
-
-
-    Score *scoresFiltered;
-    Score *scoresFilteredNF;
-    
-    char zero='\0';
-
     // only won games from the current difficulty
-    int countFiltered=filterScores(scores, count,&scoresFiltered,0,1,w,h,m,0,&zero); 
-     
+    vector<Score> scoresFiltered = filterScores(scores, Flagging::BOTH, Finished::FINISHED, "");
     // same but only NF scores
-    int countFilteredNF=filterScores(scores, count,&scoresFilteredNF,2,1,w,h,m,0,&zero); 
+    vector<Score> scoresFilteredNF = filterScores(scores, Flagging::NO_FLAGGING, Finished::FINISHED, "");
     
 
     ostringstream scoreString;
 
-    char strAll[50], strNF[50];
-    
-    
-    sprintf(strAll,"all games (%d)",countFiltered+1);
-    
-    
-    if (!s.flagging)
-        sprintf(strNF,"all NF games (%d)",countFilteredNF+1);
-    else
-        strNF[0]='\0';
-        
-        
     cout << endl << "Your result's ranking (among won ";
 
 
-    if (w==9 and h==9 and m==10)
-        cout << "Beginner";
-    else if (w==16 and h==16 and m==40)
-        cout << "Intermediate";
-    else if (w==30 and h==16 and m==99)
-        cout << "Expert";
-    else if (w==8 and h==8 and m==10)
-        cout << "Beginner classic";
-    else
-        cout << "'" << w << "x" << h << ", " << m << " mines\'";
-            
+    switch (conf.getDifficulty()) {
+        case 1: cout << "Beginner"; break;
+        case 2: cout << "Intermediate"; break;
+        case 3: cout << "Expert"; break;
+        case 4: cout << "Beginner Classic"; break;
+        default:
+          Field& f = conf.player.field;
+          cout << "'" << f.width << "x" << f.height << ", " << f.mineCount << " mines\'";
+          break;
+    }
     cout << " results)"<<endl<<endl;
     
     cout << "Percentiles are approximate, see README for details." << endl << endl ;
@@ -727,15 +615,17 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldF
     scoreString << "        +-----------+----------------------"<<((!s.flagging)?"-----------------------":"")<<"+"<<endl;
     scoreString << "        |           |   compared to        "<<((!s.flagging)?"                       ":"")<<"|"<<endl;
     scoreString << "        |   this    +----------------------"<<((!s.flagging)?"+----------------------":"")<<"+"<<endl;
-    scoreString << "        |   game    |"<<setw(19) <<right<<strAll<<"   |"<<setw(20) <<right<<(!s.flagging? strNF : "")<< "  |"<<endl;
+    scoreString << "        |   game    |"<<setw(19) <<right<<"all games (" + to_string(scoresFiltered.size()) + ")"<<"   |";
+    if (!s.flagging) scoreString << setw(20)<<right<<"all NF games (" + to_string(scoresFiltered.size()) + ")"<<"  |";
+    scoreString << endl;
     scoreString << "        |           |    place    perc.    |"<<((!s.flagging)?"    place    perc.    |":"")<<endl;
     scoreString << "+-------+-----------+----------------------+"<<((!s.flagging)?"----------------------+":"")<<endl;
 
 //                  | Time  |   6.317 s |    296th    78.180   |    259th    68.727   | 
 
-    evalScoreMid(&scoreString,"Time",s,scoresFiltered,countFiltered,scoresFilteredNF,countFilteredNF,compareByTime,scoreListLength);
-    evalScoreMid(&scoreString,"3BV/s",s,scoresFiltered,countFiltered,scoresFilteredNF,countFilteredNF,compareBy3BVs,scoreListLength);
-    evalScoreMid(&scoreString,"IOE",s,scoresFiltered,countFiltered,scoresFilteredNF,countFilteredNF,compareByIOE,scoreListLength);
+    evalScoreMid(&scoreString,"Time",s,scoresFiltered,scoresFilteredNF,compareByTime,scoreListLength);
+    evalScoreMid(&scoreString,"3BV/s",s,scoresFiltered,scoresFilteredNF,compareBy3BVs,scoreListLength);
+    evalScoreMid(&scoreString,"IOE",s,scoresFiltered,scoresFilteredNF,compareByIOE,scoreListLength);
     
     
     
@@ -746,9 +636,5 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldF
         
     
     cout<<scoreString.str();
-
- 
-    free(scoresFiltered);
-
 }
 

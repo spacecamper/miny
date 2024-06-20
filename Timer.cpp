@@ -1,15 +1,10 @@
+#include "Config.h"
 #include "Timer.h"
 #include "common.h"
 
-
-extern int gameState;
-extern bool gamePaused;
-
-
-
 long Timer::calculateTimeSinceStart() {
     
-    if (gameState==GAME_INITIALIZED)
+    if (conf.gameState==Config::GAME_INITIALIZED)
         return 0;
     else {
 
@@ -30,11 +25,11 @@ long Timer::calculateTimeSinceStart() {
 
 long Timer::calculateTimePaused() {
 
-    if (gameState==GAME_INITIALIZED) {
+    if (conf.gameState==Config::GAME_INITIALIZED) {
         return 0;
     }
-    else if (gameState==GAME_PLAYING) {
-        if (gamePaused) {
+    else if (conf.gameState==Config::GAME_PLAYING) {
+        if (conf.gamePaused) {
             return totalTimePaused+calculateTimeSinceStart()-pausedSince;
         }
         else {
@@ -58,13 +53,13 @@ long Timer::calculateElapsedTime() {
 
     
 
-    if (gameState==GAME_PLAYING) {
+    if (conf.gameState==Config::GAME_PLAYING) {
 
 
         elapsedTime=calculateTimeSinceStart()-calculateTimePaused();
         
     }
-    else if (gameState==GAME_LOST or gameState==GAME_WON) {
+    else if (conf.gameState==Config::GAME_LOST or conf.gameState==Config::GAME_WON) {
 
         seconds  = timeFinished.tv_sec  - timeStarted.tv_sec;
         useconds = timeFinished.tv_usec - timeStarted.tv_usec;
