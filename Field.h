@@ -11,7 +11,7 @@ class Field {
 public:
     short width, height;
     short mineCount;
-    char playerName[21];
+    string playerName;
     
     bool oldFinalResultDisplay;
     
@@ -40,7 +40,7 @@ private:
     int get3BV();
     void startGame(int, int);
     void placeMines(int firstClickX, int firstClickY);
-    void saveReplay(const char*,Score*);
+    void saveReplay(const string&,Score*);
     long findLowestUnusedReplayNumber();
     void revealAround(int squareX, int squareY);
     bool adjacentMinesFlagged(int squareX,int squareY);

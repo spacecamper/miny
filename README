@@ -37,9 +37,9 @@ COMPILING AND PLAYING
  While playing, you can see how many effective / ineffective clicks you have
  made.
 
- After every game the replay is saved in the .miny subdirectory of the user's 
- home directory as 'last.replay'. Replays for won games are also saved as 
- [number].replay. See below for how to play them.
+ After every game the replay is saved as 'last.replay' in the cache directory.
+ This defaults to $XDG_DATA_HOME/miny, or failing that ~/.miny. Replays for won
+ games are also saved as [number].replay. See below for how to play them.
 
 
 CURRENT GAME RESULTS TABLE
@@ -68,6 +68,16 @@ MOUSE AND KEYBOARD CONTROLS
 
  To quit press Escape or Q.
 
+ Before a game has started or after it has ended, some command line switches can
+ be entered with the keys they use. Those that need a numeric argument take it
+ as a prefix typed out before they are entered. The backspace key will clear
+ this prefix.
+
+ Examples:
+
+ t    list scores for current difficulty by time
+ 3d   change to difficultry 3
+ l    list all scores (the default prefix is 0)
 
 OPTIONS
 
@@ -78,8 +88,8 @@ OPTIONS
  -n?  player name. If this option is missing, system username is used.
  -d?  difficulty - 0, 1, 2, 3 or 4 (1 - Beginner, 2 - Intermediate (default), 
       3 - Expert, 4 - Beginner Classic, 0 - all of the preceding four. 0 can
-      be used when displaying scores) If -w, -h and -m are set, this option
-      is ignored.
+      be used when displaying scores) If -w, -h and -m are set, will only set
+	  the values those did not.
  -s?  square size in pixels (3 to 100, default=35)
  -m?  number of mines (min=2, max depends on field dimensions)
  -w?  field width (2 to 100)
@@ -90,6 +100,7 @@ OPTIONS
 
  -t   list best times for the selected setup
  -3   list best 3BV/s for the selected setup
+ -B   alias for -3
  -i   list best IOEs for the selected setup
  -c   list results as CSV, e.g. for further analysis in Excel/Calc. Scores are
       listed in the order they were achieved, i.e. ordered by date. The -l 
@@ -111,9 +122,19 @@ OPTIONS
  -p?  play replay file. Value is by default either 'last' for the last played 
       game or a number found in the Rep column of the high score table for 
       other games.
- -C?  config directory different to the default $HOME/.miny
+ -C?  cache directory different to the default $XDG_DATA_HOME/miny or $HOME/.miny
  -o   display the currently finished game result the more brief, old way
+ -H   display this message
+ --help alias for -H
 
+
+DEFAULT OPTIONS
+
+ Miny can be provided with a default set of arguments to use each time it runs.
+ Miny will look for these in $XDG_CONFIG_HOME/miny/default.args,
+ ~/.config/miny/default.args, and ~/.miny/default.args. Place the desired
+ commandline arguments on a single line sepparated by spaces in one of these
+ files.
 
 NOTES
  
@@ -121,7 +142,7 @@ NOTES
  about played games. There currently isn't and probably won't be a tool to 
  convert old scores to the new system. If you don't want to keep them, you 
  can delete *.hiscore (and whichever *.replay you don't want) files from your 
- $HOME/.miny directory.
+ cache directory.
 
 
 EXAMPLES
