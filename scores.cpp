@@ -727,9 +727,29 @@ void evalScore(Score s, Score *scores, int count, int w, int h, int m, bool oldF
     scoreString << "        +-----------+----------------------"<<((!s.flagging)?"-----------------------":"")<<"+"<<endl;
     scoreString << "        |           |   compared to        "<<((!s.flagging)?"                       ":"")<<"|"<<endl;
     scoreString << "        |   this    +----------------------"<<((!s.flagging)?"+----------------------":"")<<"+"<<endl;
+    scoreString << "        |   game    |"<<setw(19) <<right<<strAll<<"   |" ;
+
+    if (!s.flagging) {
+        scoreString<<setw(20)<<right<<strNF <<"  |";    
+    }
+    
+    scoreString<<endl;
+    
+
+
+//scoreString << "        |   game    |"<<setw(19) <<right<<strAll<<"   |" <<setw(20)<<right<<(!s.flagging? strNF : "")<< "  |"<<endl;
+    scoreString << "        |           |    place    perc.    |"<<((!s.flagging)?"    place    perc.    |":"")<<endl;
+    scoreString << "+-------+-----------+----------------------+"<<((!s.flagging)?"----------------------+":"")<<endl;
+
+/*
+    scoreString << "        +-----------+----------------------"<<((!s.flagging)?"-----------------------":"")<<"+"<<endl;
+    scoreString << "        |           |   compared to        "<<((!s.flagging)?"                       ":"")<<"|"<<endl;
+    scoreString << "        |   this    +----------------------"<<((!s.flagging)?"+----------------------":"")<<"+"<<endl;
     scoreString << "        |   game    |"<<setw(19) <<right<<strAll<<"   |"<<setw(20) <<right<<(!s.flagging? strNF : "")<< "  |"<<endl;
     scoreString << "        |           |    place    perc.    |"<<((!s.flagging)?"    place    perc.    |":"")<<endl;
     scoreString << "+-------+-----------+----------------------+"<<((!s.flagging)?"----------------------+":"")<<endl;
+
+*/
 
 //                  | Time  |   6.317 s |    296th    78.180   |    259th    68.727   | 
 
