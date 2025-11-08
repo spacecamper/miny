@@ -53,7 +53,7 @@ CURRENT GAME RESULTS TABLE
  Percentile is a number between 0 and 100 saying how many percent of results 
  were worse than this game. 100 means this is the best result of all, 50 
  means this is the middle result etc. The higher this number is, the better.
- As of now this number is not exact but gives an approximate idea of how your
+ As of now this number is not exact but gives a good enough idea of how your
  game ranks.
 
  
