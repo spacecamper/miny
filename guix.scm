@@ -9,36 +9,36 @@
                 #:prefix license:)
   #:use-module (gnu packages gl))
 
-
-(define (git-vc-files name path)
-  (computed-file
-   name
-   (with-imported-modules
-	'((guix build utils))
-	#~(begin
-	   (use-modules (guix build utils))
-	   (copy-recursively #$(local-file path #:recursive? #t) #$output)
-	   (chdir #$output)
-	   (invoke
-		#$(file-append (@ (gnu packages version-control) git) "/bin/git")
-		"clean" "-fdX") ;; Remove gitignored files.
-	   (delete-file-recursively (string-append #$output "/.git"))))))
+(define (git-not-ignored? file stat)
+  (define old-cwd (getcwd))
+  (chdir (dirname file))
+  (define keep?
+    (and (not (equal? file (canonicalize-path ".git")))
+	 (with-output-to-file "/dev/null"
+	   (lambda ()
+	     (= 1 (status:exit-val (system* "git" "check-ignore" file)))))))
+  (chdir old-cwd)
+  keep?)
 
 (define miny
   (package
     (name "miny")
     (version "0.6.0")
-    (source (git-vc-files name (dirname (current-filename))))
+    (source (local-file "." name #:recursive? #t #:select? git-not-ignored?))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (delete 'configure)
-                  (replace 'install
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let* ((out (assoc-ref outputs "out"))
-                             (bin (string-append out "/bin")))
-                        (install-file "miny" bin)))))
-       #:tests? #f))
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'configure)
+		   (add-before 'build 'print-names
+		     (lambda* (#:key #:allow-other-keys)
+		       (invoke "ls")))
+		   (replace 'install
+		     (lambda* (#:key outputs #:allow-other-keys)
+		       (let* ((out (assoc-ref outputs "out"))
+			      (bin (string-append out "/bin")))
+			 (install-file "miny" bin)))))
+      #:tests? #f))
     (inputs (list freeglut))
     (home-page "https://github.com/spacecamper/miny")
     (synopsis "Minesweeper")

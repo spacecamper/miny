@@ -506,10 +506,7 @@ void initGraph() {
 
     glutInitWindowSize(conf.windowWidth, conf.windowHeight);
         
-    string title = "Miny v" VERSION ". Player: ";
-    title += conf.player.field.playerName;
-
-    glutCreateWindow(title.c_str());
+    glutCreateWindow("Miny");
            
     glEnable(GL_DEPTH_TEST);
                             
