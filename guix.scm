@@ -30,9 +30,6 @@
      (list
       #:phases #~(modify-phases %standard-phases
                    (delete 'configure)
-		   (add-before 'build 'print-names
-		     (lambda* (#:key #:allow-other-keys)
-		       (invoke "ls")))
 		   (replace 'install
 		     (lambda* (#:key outputs #:allow-other-keys)
 		       (let* ((out (assoc-ref outputs "out"))
